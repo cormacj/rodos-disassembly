@@ -1,10 +1,16 @@
 # rodos-disassembly
 This is a work in progress disassembly of RODOS v2.19.
 
-Tools needed:
+As of now this does compile to a binary exact copy of the official V2.19 rom.
+
+###Tools needed
 linux: z80asm and z80dasm
 
-As of now this does compile to a binary exact copy of the official V2.19 rom.
+
+###COMPILING
+
+Do this:
+`z80asm RODOS-219-wip.asm -o RODOS-219-wip.rom`
 
 ###TODO
 * More documentation
