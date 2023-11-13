@@ -1,0 +1,9 @@
+ROM_TYPE: start 0xc000 end 0xc001 type bytedata
+ROM_VERSION: start 0xc001 end 0xc004 type bytedata
+COMMAND_TABLE: start 0xc004 end 0xc006 type worddata
+RSX_COMMANDS: start 0xc0c0 end 0xc1ca type bytedata
+RODOS_OFF_MSG: start 0xc24b end 0xc258 type bytedata
+RODOS_MSGS: start 0xfcc0 end 0xffc7 type bytedata
+STR_LOADING: start 0xd14c end 0xd155 type bytedata
+STR_SAVING: start 0xd155 end 0xd15d type bytedata
+STR_CLI_RUN_DISC: start 0xc4be end 0xc4cb type bytedata
