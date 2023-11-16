@@ -217,6 +217,7 @@ lc0c8h: ;I'm not sure why this label is pointed at the last byte of RODOS ROM
 	; defb 66+128
 RSX_COMMANDS_end:
 	nop			;c1ca	00 	.
+
 ROM_INIT:
 	call sub_c1f9h		;c1cb	cd f9 c1 	. . .
 	call KL_CURR_SELECTION		;c1ce	cd 12 b9 	. . .
@@ -586,10 +587,15 @@ sub_c3c3h:
 	ld b,001h		;c3e1	06 01 	. .
 	jp lde74h		;c3e3	c3 74 de 	. t .
 lc3e6h:
-	ret pe			;c3e6	e8 	.
-	jp lcbfch+1		;c3e7	c3 fd cb 	. . .
-	dec c			;c3ea	0d 	.
-	sub (hl)			;c3eb	96 	.
+	db 0e8h,0c3h
+sub_c3e8h:
+;This is a z80dasm fixup - theres a call to mid z80dasm instruction so it misses a label.
+	RES        0x2,(IY+0xd) ;ram:c3e8 fd cb 0d 96
+	; z80dasm started at the db 0c3h part above, and missed that theres a call into here.
+	; Old instructions were:
+	; jp lcbfch+1		;c3e7	c3 fd cb 	. . .
+	; dec c			;c3ea	0d 	.
+	; sub (hl)			;c3eb	96		.
 	ld a,(hl)			;c3ec	7e 	~
 	cp 03ah		;c3ed	fe 3a 	. :
 	jp nc,lc47dh		;c3ef	d2 7d c4 	. } .
@@ -2299,7 +2305,7 @@ lcfb4h:
 	ldir		;cfd9	ed b0 	. .
 	ld hl,0bef0h		;cfdb	21 f0 be 	! . .
 	xor a			;cfde	af 	.
-	call 0c3e8h		;cfdf	cd e8 c3 	. . .
+	call sub_c3e8h		;cfdf	cd e8 c3 	. . .
 	jr nc,lcff1h		;cfe2	30 0d 	0 .
 	xor a			;cfe4	af 	.
 	call KL_FAR_PCHL		;cfe5	cd 1b 00 	. . .
@@ -4472,7 +4478,7 @@ ldf62h:
 	ld ix,0bee0h		;df78	dd 21 e0 be 	. ! . .
 	call sub_edb6h		;df7c	cd b6 ed 	. . .
 	jp nz,lfb8dh		;df7f	c2 8d fb 	. . .
-	call 0f07ch		;df82	cd 7c f0 	. | .
+	call lf07ch		;df82	cd 7c f0 	. | .
 	jp nz,MSG_BAD_DIR		;df85	c2 9b fb 	. . .
 	ld a,0ffh		;df88	3e ff 	> .
 	ld (iy+040h),a		;df8a	fd 77 40 	. w @
@@ -4796,7 +4802,7 @@ le1e9h:
 	jp nz,lda0ah		;e209	c2 0a da 	. . .
 	ld hl,lff43h		;e20c	21 43 ff 	! C .
 	call DISPLAY_MSG		;e20f	cd 6a d9 	. j .
-	call 0f0d0h		;e212	cd d0 f0 	. . .
+	call sub_0f0d0h		;e212	cd d0 f0 	. . .
 	push ix		;e215	dd e5 	. .
 	pop hl			;e217	e1 	.
 	srl h		;e218	cb 3c 	. <
@@ -4825,7 +4831,7 @@ le242h:
 	ld (ix+006h),049h		;e24d	dd 36 06 49 	. 6 . I
 	ld (ix+007h),0ceh		;e251	dd 36 07 ce 	. 6 . .
 	ld hl,0bef0h		;e255	21 f0 be 	! . .
-	call 0c3e8h		;e258	cd e8 c3 	. . .
+	call sub_c3e8h		;e258	cd e8 c3 	. . .
 	jp nc,MSG_CANT_FIND_AMSDOS		;e25b	d2 b6 fb 	. . .
 	xor a			;e25e	af 	.
 	call KL_FAR_PCHL		;e25f	cd 1b 00 	. . .
@@ -5101,7 +5107,7 @@ le4a3h:
 	ld (ix+007h),0ceh		;e4ae	dd 36 07 ce 	. 6 . .
 le4b2h:
 	ld hl,0bef0h		;e4b2	21 f0 be 	! . .
-	call 0c3e8h		;e4b5	cd e8 c3 	. . .
+	call sub_c3e8h		;e4b5	cd e8 c3 	. . .
 	jp nc,MSG_UNKNOWN_FILE_SYSTEM		;e4b8	d2 c6 fb 	. . .
 	ld (0bf02h),hl		;e4bb	22 02 bf 	" . .
 	ld hl,(0bc9ch)		;e4be	2a 9c bc 	* . .
@@ -5522,7 +5528,7 @@ le842h:
 	ld (ix+008h),0d4h		;e851	dd 36 08 d4 	. 6 . .
 le855h:
 	ld hl,0bef0h		;e855	21 f0 be 	! . .
-	call 0c3e8h		;e858	cd e8 c3 	. . .
+	call sub_c3e8h		;e858	cd e8 c3 	. . .
 	jp nc,MSG_UNKNOWN_FILE_SYSTEM		;e85b	d2 c6 fb 	. . .
 	xor a			;e85e	af 	.
 	call KL_FAR_PCHL		;e85f	cd 1b 00 	. . .
@@ -5656,7 +5662,7 @@ sub_e97ah:
 	ld a,(ix-00ch)		;e97a	dd 7e f4 	. ~ .
 	ld (iy+004h),a		;e97d	fd 77 04 	. w .
 	res 2,(iy+041h)		;e980	fd cb 41 96 	. . A .
-	call 0f07ch		;e984	cd 7c f0 	. | .
+	call lf07ch		;e984	cd 7c f0 	. | .
 	ret nz			;e987	c0 	.
 	ld b,(iy+037h)		;e988	fd 46 37 	. F 7
 	ld c,(iy+038h)		;e98b	fd 4e 38 	. N 8
@@ -5806,7 +5812,7 @@ sub_eac1h:
 	call sub_efd5h		;eaca	cd d5 ef 	. . .
 	ret			;eacd	c9 	.
 leaceh:
-	call 0f07ch		;eace	cd 7c f0 	. | .
+	call lf07ch		;eace	cd 7c f0 	. | .
 	ld b,(iy+037h)		;ead1	fd 46 37 	. F 7
 	ld c,(iy+038h)		;ead4	fd 4e 38 	. N 8
 	jr nz,lea86h		;ead7	20 ad 	  .
@@ -6023,7 +6029,7 @@ lec9eh:
 	push de			;eca4	d5 	.
 	push hl			;eca5	e5 	.
 	push bc			;eca6	c5 	.
-	call 0f07ch		;eca7	cd 7c f0 	. | .
+	call lf07ch		;eca7	cd 7c f0 	. | .
 	jr nz,lecf8h		;ecaa	20 4c 	  L
 	pop bc			;ecac	c1 	.
 	ld a,0ffh		;ecad	3e ff 	> .
@@ -6569,6 +6575,7 @@ sub_f010h:
 	ld e,a			;f020	5f 	_
 	ld (iy+012h),000h		;f021	fd 36 12 00 	. 6 . .
 	jp lefdbh		;f025	c3 db ef 	. . .
+lf028h:
 	call sub_ef8bh		;f028	cd 8b ef 	. . .
 	jp nc,lda0ah		;f02b	d2 0a da 	. . .
 	ld de,00012h		;f02e	11 12 00 	. . .
@@ -6618,15 +6625,23 @@ lf064h:
 	cp a			;f071	bf 	.
 	ret			;f072	c9 	.
 lf073h:
-	nop			;f073	00 	.
-	add a,b			;f074	80 	.
-	ld b,b			;f075	40 	@
-	jr nz,lf088h		;f076	20 10 	  .
-	ex af,af'			;f078	08 	. '
-	inc b			;f079	04 	.
-	ld (bc),a			;f07a	02 	.
-	ld bc,028cdh		;f07b	01 cd 28 	. . (
-	ret p			;f07e	f0 	.
+	;Z80dasm decided this was code, but it wasn't.
+	;This was the code.
+	; nop			;f073	00 	.
+	; add a,b			;f074	80 	.
+	; ld b,b			;f075	40 	@
+	; jr nz,lf088h		;f076	20 10 	  .
+	; ex af,af'			;f078	08 	. '
+	; inc b			;f079	04 	.
+	; ld (bc),a			;f07a	02 	.
+	; ld bc,028cdh		;f07b	01 cd 28 	. . (
+	;This data is actually what is used:
+	db 00h,80h,40h,20h,10h,08h,04h,02h,01h
+	; 										 DAT_ram_f07b                                    XREF[1]:     FUN_ram_f028:f06c(R)
+	; ram:f07b 01              undefined1 01h
+
+lf07ch:
+	call lf028h
 	ret nz			;f07f	c0 	.
 	or (hl)			;f080	b6 	.
 	ld (hl),a			;f081	77 	w
@@ -6680,7 +6695,9 @@ lf0c7h:
 	ld a,a			;f0c8	7f 	
 	cp a			;f0c9	bf 	.
 	rst 18h			;f0ca	df 	.
-	dw  0f7efh ;z80dasm didn't understand this bit. So here is how this works
+	dw  l0f7efh ;z80dasm didn't understand this bit. So here is how this works
+	;
+
 	; 007   &0018   FAR CALL (RST 3)
 	;     Action: Calls a routine anywhere in RAM or ROM
 	;     Entry:  No entry conditions - all  the  registers apart from IY
@@ -6706,19 +6723,23 @@ lf0c7h:
 	;                 upper and lower ROMs
 	;             When it is retumed  from,  the  ROM selection and state
 	;             are restored to their settings before the RST 3 command
+
+	;Notes here: TODO
+	;These next bytes aren't instructions, but neither are they apparently used AFAIK
 	db 0fbh 			;f0cd	fb 	.
 	defb 0fdh,0feh
-	;0cdh	;illegal sequence		;f0ce	fd fe cd 	. . .
-	;adc a,e			;f0d1	8b 	.
-; ram:f0c7 00              ??         00h
-; ram:f0c8 7f              ??         7Fh    
-; ram:f0c9 bf              ??         BFh
-; ram:f0ca df              ??         DFh
-; ram:f0cb ef              ??         EFh
-; ram:f0cc f7              ??         F7h
-; ram:f0cd fb              ??         FBh
-; ram:f0ce fd              ??         FDh
 
+	;Here is what Ghidra thought of this section.
+; ram:f0c7 00              ??         00h = nop
+; ram:f0c8 7f              ??         7Fh = ld a,a   
+; ram:f0c9 bf              ??         BFh = cp a
+; ram:f0ca df              ??         DFh	= rst 18h (aka rst 3)
+; ram:f0cb ef              ??         EFh = rst l
+; ram:f0cc f7              ??         F7h  = rst h
+; ram:f0cd fb              ??         FBh  = ??
+; ram:f0ce fd              ??         FDh  = ??
+
+sub_0f0d0h:
 	call sub_ef8bh
 	jp nc,lda0ah		;f0d3	d2 0a da 	. . .
 	ld ix,RESET_ENTRY_RST_0		;f0d6	dd 21 00 00 	. ! . .
@@ -7785,6 +7806,7 @@ sub_f7e8h:
 	ld de,0becfh		;f7e8	11 cf be 	. . .
 	inc hl			;f7eb	23 	#
 	ld bc,0000ch		;f7ec	01 0c 00 	. . .
+l0f7efh: ;Called from an RST 18 (maybe?)
 	ldir		;f7ef	ed b0 	. .
 	ld a,02eh		;f7f1	3e 2e 	> .
 	ld (de),a			;f7f3	12 	.
@@ -8227,25 +8249,35 @@ sub_faa0h:
 	xor a			;fae7	af 	.
 	ret			;fae8	c9 	.
 lfae9h:
-	ret nz			;fae9	c0 	.
+	db 0c0h
 lfaeah:
-	call nz,sub_c6c5h		;faea	c4 c5 c6 	. . .
-	rst 0			;faed	c7 	.
-	call z,0cecdh		;faee	cc cd ce 	. . .
-	rst 8			;faf1	cf 	.
-	call nc,sub_d6d5h		;faf2	d4 d5 d6 	. . .
-	rst 10h			;faf5	d7 	.
-	call c,sub_deddh		;faf6	dc dd de 	. . .
-	rst 18h			;faf9	df 	.
-	call po,sub_e6e5h		;fafa	e4 e5 e6 	. . .
-	rst 20h			;fafd	e7 	.
-	call pe,sub_eeedh		;fafe	ec ed ee 	. . .
-	rst 28h			;fb01	ef 	.
-	call p,sub_f6f5h		;fb02	f4 f5 f6 	. . .
-	rst 30h			;fb05	f7 	.
-	call m,lfefdh		;fb06	fc fd fe 	. . .
-	rst 38h			;fb09	ff 	.
-	ret nz			;fb0a	c0 	.
+	db 0c4h,0c5h,0c6h,0c7h,0cch,0cdh,0ceh,0cfh
+	db 0d4h,0d5h,0d6h,0d7h,0dch,0ddh,0deh,0dfh
+	db 0e4h,0e5h,0e6h,0e7h,0ech,0edh,0eeh,0efh
+	db 0f4h,0f5h,0f6h,0f7h,0fch,0fdh,0feh,0ffh
+	db 0c0h
+;
+; Z80dasm assumed that the above was this code. It was not.
+; lfae9h:
+; 	ret nz			;fae9	c0 	.
+; lfaeah:
+; 	call nz,sub_c6c5h		;faea	c4 c5 c6 	. . .
+; 	rst 0			;faed	c7 	.
+; 	call z,0cecdh		;faee	cc cd ce 	. . .
+; 	rst 8			;faf1	cf 	.
+; 	call nc,sub_d6d5h		;faf2	d4 d5 d6 	. . .
+; 	rst 10h			;faf5	d7 	.
+; 	call c,sub_deddh		;faf6	dc dd de 	. . .
+; 	rst 18h			;faf9	df 	.
+; 	call po,sub_e6e5h		;fafa	e4 e5 e6 	. . .
+; 	rst 20h			;fafd	e7 	.
+; 	call pe,sub_eeedh		;fafe	ec ed ee 	. . .
+; 	rst 28h			;fb01	ef 	.
+; 	call p,sub_f6f5h		;fb02	f4 f5 f6 	. . .
+; 	rst 30h			;fb05	f7 	.
+; 	call m,lfefdh		;fb06	fc fd fe 	. . .
+; 	rst 38h			;fb09	ff 	.
+; 	ret nz			;fb0a	c0 	.
 sub_fb0bh:
 	ld a,001h		;fb0b	3e 01 	> .
 	ld (iy+00bh),a		;fb0d	fd 77 0b 	. w .

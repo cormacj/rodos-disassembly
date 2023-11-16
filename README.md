@@ -2,6 +2,9 @@
 This is a work in progress disassembly of RODOS v2.19.
 As of now this does compile to a binary exact copy of the official V2.19 rom.
 
+This is not relocatable as yet. Any code that causes a shift (eg adding a NOP after RSX definitions)
+causes the ROM to fail upload load.
+
 **Tools needed**
 
 linux: z80asm and z80dasm
