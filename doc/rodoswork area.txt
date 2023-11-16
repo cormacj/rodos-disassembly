@@ -1,0 +1,20 @@
+In code this is usually referenced to by IY
+
+0 1 RODOS rom number
+1 1 CPM rom number
+3 1 Current drive letter, eg, A,B,C,D,E,F etc
+4 1 Current drive number, See appendix A
+11 1 Expansion Ram count (in 16k blocks)
+12 1 Start prbuff bank
+18 1 Current side of disc (0 or 1)
+23 2 Address of input buffer (file header)
+25 2 Address of input buffer (sector block)
+27 2 Address of output buffer (header)
+29 2 Address of output buffer (sector block)
+66 1 Home drive number for |CD
+67 1 Home drive letter for |CD
+68 1 Home track for |CD
+69 1 Home sector for |CD
+
+
+iy+3 - current drive number

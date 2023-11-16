@@ -228,7 +228,7 @@ SYNOPSIS |DRIVE,"drive_letter"
 DESCRIPTION
 With a drive letter (in quotes - both upper or lower case) sets the
 given drive as the default drive.
-Eg. |DRIVE,""B" sets the default drive to drive B.
+Eg. |DRIVE,"B" sets the default drive to drive B.
 
 With an additional drive number, this command sets a 'logical'
 drive letter to a 'physical' drive. i.e. the drive given by the
@@ -1693,7 +1693,7 @@ The error numbers and messages are as follows
 APPENDIX F
 PATCHING FOR USE WITH HARD DISCS OR OTHER RAMS FOR SILICON DISC
 
-To set up RODOS for wuse with hard discs of silicon discs, some
+To set up RODOS for use with hard discs of silicon discs, some
 knowledge of machine code is required as some RSX's must be set up.
 First a few ROM addresses must be looked up (Commands |^D |^E and |^F)
 and then stored. RSX's must then be set up for these 3 commands.
