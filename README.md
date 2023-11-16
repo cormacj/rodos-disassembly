@@ -22,5 +22,17 @@ Do this:
         F49F: ld de,0becah		;f49f	11 c0 be 	. . .
         F52E:	ld hl,0becah		;f52e	21 c0 be 	! . .
         Both these originally were using 0bec0h
-
+* [ ] New Bug: zap/rom buffer is overwritten after 21 characters by 9 characters of Ascii(255)
 * [ ] Fully document the work area (the only scan of the manual faded out partway through that section.)
+
+**DEBUG NOTES**
+Test command:
+|zap,12,"12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"
+Notes:
+At 30 characters, we get a bunch of ASCII 255s in the buffer
+At 60 characters, we hit the |CLI strings
+At 70 characters, it zaps all roms
+
+Solutions?
+1. I need to add a check for length
+2. Find a better buffer space - most blank areas seem to non-useful. So #1 is best option.

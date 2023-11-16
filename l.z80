@@ -233,7 +233,7 @@ ROM_INIT:
 	ld a,03dh		;c1d3	3e 3d 	> =
   ;The 03dh here is the D key. Pressing D disables the ROM on boot.
 	call CHECK_FOR_KEY_PRESSED		;c1d5	cd 59 c2 	. Y .
-  ;sub_c259 is the keyboard test thing. Looks like it bypassed the rom call.
+  ;That is the keyboard test thing. Looks like it bypassed the usual rom call.
 	pop hl			;c1d8	e1 	.
 	jr nz,PRINT_RODOS_OFF		;c1d9	20 59 	  Y
 lc1dbh:
