@@ -7242,7 +7242,7 @@ sub_f3fdh:
 	ret			;f410	c9 	.
 RSX_ZAP:
 	cp 010h		;f411	fe 10 	. .
-	;jp nc,MSG_TOO_MANY_PARAMETERS		;f413	d2 9f fb 	. . .
+	jp nc,MSG_TOO_MANY_PARAMETERS		;f413	d2 9f fb 	. . .
 	ld b,010h		;f416	06 10 	. .
 	ld hl,0bf13h		;f418	21 13 bf 	!
 lf41bh:
@@ -7279,7 +7279,6 @@ lf450h:
 	xor a			;f450	af 	.
 	ld (0bf12h),a		;f451	32 12 bf 	2 . .
 lf454h:
-call DUMP_BUFFER
 	call JUMP_RESTORE		;f454	cd 37 bd 	. 7 .
 	ld de,0bf00h		;f457	11 00 bf 	. . .
 	ld hl,KL_ROM_WALK		;f45a	21 cb bc 	! . .
@@ -7319,6 +7318,7 @@ sub_f48bh:
 	and a			;f49c	a7 	.
 	ret z			;f49d	c8 	.
 	push bc			;f49e	c5
+	;//TODO - BUGFIX
 	;Next part takes the command parameter from |ZAP and stores it in the buffers
 	;Orginally this next line read: ld de,0bec0h
 	ld de,0becah		;f49f	11 c0 be 	. . .
@@ -7445,7 +7445,7 @@ lf51bh:
 	ld a,(0bebfh)		;f528	3a bf be 	: . .
 	and a			;f52b	a7 	.
 	jr z,lf53eh		;f52c	28 10 	( .
-;;TODO - BUGFIX: This fixes the ROM/ZAP parameter issue
+;;TODO - BUGFIX: This fixes the ROM/ZAP parameter
 ;	ld hl,0bec0h		;f52e	21 c0 be 	! . .
 	ld hl,0becah		;f52e	21 c0 be 	! . .
 
@@ -8604,46 +8604,46 @@ VERSION_MSG:
 	defb 000h		;ffc5	00 	.
 	defb 000h		;ffc6	00 	.
 RODOS_MSGS_end:
-DUMP_BUFFER:
-	push hl
-	push bc
-	ld hl,POST_BOOT_MSG
-	;ld hl, 0xbe00 ;XXXX
-	;ld hl,0x9603
-	ld b,255
-Bufloop:
-	ld a,(hl)
-	push hl
-	push af
-	and 0F0h
-	rrca
-	rrca
-	rrca
-	rrca
-	call PrintNibble
-	pop af
-	and 0Fh
-	call PrintNibble
-	ld a,' '
-	call TXT_OUTPUT
-	pop hl
-	inc hl
-	djnz Bufloop
-	call KM_WAIT_KEY
-	pop bc
-	pop hl
-
-ret
-
-PrintNibble:
-    add a, '0' ; Convert to ASCII
-    cp '9' + 1 ; Check if the result is greater than '9'
-    jr c, PrintCharacter ; Jump to PrintCharacter if less than or equal to '9'
-    add a, 'A' - '9' - 1 ; Adjust for characters 'A' to 'F'
-
-PrintCharacter:
-    call TXT_OUTPUT
-    ret ; Return from subroutine
+; DUMP_BUFFER:
+; 	push hl
+; 	push bc
+; 	ld hl,POST_BOOT_MSG
+; 	;ld hl, 0xbe00 ;XXXX
+; 	;ld hl,0x9603
+; 	ld b,255
+; Bufloop:
+; 	ld a,(hl)
+; 	push hl
+; 	push af
+; 	and 0F0h
+; 	rrca
+; 	rrca
+; 	rrca
+; 	rrca
+; 	call PrintNibble
+; 	pop af
+; 	and 0Fh
+; 	call PrintNibble
+; 	ld a,' '
+; 	call TXT_OUTPUT
+; 	pop hl
+; 	inc hl
+; 	djnz Bufloop
+; 	call KM_WAIT_KEY
+; 	pop bc
+; 	pop hl
+;
+; ret
+;
+; PrintNibble:
+;     add a, '0' ; Convert to ASCII
+;     cp '9' + 1 ; Check if the result is greater than '9'
+;     jr c, PrintCharacter ; Jump to PrintCharacter if less than or equal to '9'
+;     add a, 'A' - '9' - 1 ; Adjust for characters 'A' to 'F'
+;
+; PrintCharacter:
+;     call TXT_OUTPUT
+;     ret ; Return from subroutine
 
 ; CALL_TESTER:
 ; 	call lc234h
