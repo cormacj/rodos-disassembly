@@ -22,7 +22,9 @@ Do this:
         F49F: ld de,0becah		;f49f	11 c0 be 	. . .
         F52E:	ld hl,0becah		;f52e	21 c0 be 	! . .
         Both these originally were using 0bec0h
-* [ ] New Bug: zap/rom buffer is overwritten after 21 characters by 9 characters of Ascii(255)
+* [X] New Bug: zap/rom buffer is overwritten after 21 characters by 9 characters of Ascii(255)
+        I set a limit of 21 characters for the |zap/|Roms message parameter
+         
 * [ ] Fully document the work area (the only scan of the manual faded out partway through that section.)
 
 **DEBUG NOTES**
@@ -34,5 +36,5 @@ At 60 characters, we hit the |CLI strings
 At 70 characters, it zaps all roms
 
 Solutions?
-1. I need to add a check for length
+1. I need to add a check for length/max length
 2. Find a better buffer space - most blank areas seem to non-useful. So #1 is best option.
