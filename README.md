@@ -15,7 +15,9 @@ l.z80: This is the work-in-progress code thats being documented.
 linux: z80asm and z80dasm
 
 **Supplemental tools**
+
 `tools/generate_string_locations.sh`
+
 This tool will search a ROM for strings and produce a blockfile for use with `z80dasm -b`.
 
 The goal is to help tag these locations and stop z80dasm from confusing these as code.
