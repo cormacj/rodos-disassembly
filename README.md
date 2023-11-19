@@ -14,6 +14,21 @@ l.z80: This is the work-in-progress code thats being documented.
 
 linux: z80asm and z80dasm
 
+**Supplemental tools**
+`tools/generate_string_locations.sh`
+This tool will search a ROM for strings and produce a blockfile for use with `z80dasm -b`.
+
+The goal is to help tag these locations and stop z80dasm from confusing these as code.
+
+Note that once it's finished, you'll have to edit the results and clean out anything thats not obviously a string.
+
+The output file format is:
+`lc0c3h: start 0xc0c3 end 0xc0cb type bytedata ;db "RODOS RO"`
+
+
+Usage:
+./generate_string_locations.sh RODOS219.ROM  >blockfile.txt
+
 **COMPILING**
 
 Do this:
