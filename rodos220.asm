@@ -62,16 +62,12 @@ RSX_MKDIR:	equ 0xdf64
 
 
 ; BLOCK 'ROM_TYPE' (start 0xc000 end 0xc001)
-ROM_TYPE_start:
+ROM_TYPE:
 	defb 001h		;c000	01 	.
-ROM_TYPE_end:
 
 ; BLOCK 'ROM_VERSION' (start 0xc001 end 0xc004)
-ROM_VERSION_start:
-	defb 002h		;c001	02 	.
-	defb 001h		;c002	01 	.
-	defb 009h		;c003	09 	.
-ROM_VERSION_end:
+ROM_VERSION: ;c001 - c003
+ 	defb 2,2,0
 
 ; BLOCK 'COMMAND_TABLE' (start 0xc004 end 0xc006)
 COMMAND_TABLE_start:
@@ -8601,7 +8597,7 @@ MSG_RETRY_IGNORE_CANCEL:
 VERSION_MSG:
 	defb 00fh		;ff95	0f 	.
 	defb 002h		;ff96	02 	.
-	defb ' RODOS V2.19 '
+	defb ' RODOS V2.20 '
 	defb 0a4h		;ffa4	a4 	.
 	defb ' Romantic Robot U.K. Ltd.{{'
 	defb 00fh		;ffc0	0f 	.

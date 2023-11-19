@@ -5,6 +5,11 @@ As of now this does compile to a binary exact copy of the official V2.19 rom.
 This is not relocatable as yet. Any code that causes a shift (eg adding a NOP after RSX definitions)
 causes the ROM to fail upload load.
 
+**Important Files**
+rodos219.asm: This will compile to a binary match of the existing v2.19 rom. Comments are still a work in progress. Updated sometimes.
+rodos220.asm: This is v2.19 with the zap buffer bug fixed.
+l.z80: This is the work-in-progress code thats being documented.
+
 **Tools needed**
 
 linux: z80asm and z80dasm
@@ -24,10 +29,13 @@ Do this:
         Both these originally were using 0bec0h
 * [X] New Bug: zap/rom buffer is overwritten after 21 characters by 9 characters of Ascii(255)
         I set a limit of 21 characters for the |zap/|Roms message parameter
-         
+
 * [ ] Fully document the work area (the only scan of the manual faded out partway through that section.)
 
 **DEBUG NOTES**
+RODOS 2.13 works as documented, up to 32 chars. Will have to look at that.
+Rodos 2.15 has the bug with things being overwritten at start.
+
 Test command:
 |zap,12,"12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"
 Notes:
