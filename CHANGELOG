@@ -1,0 +1,6 @@
+RODOS 2.19 - Last known SOUND_RELEASE
+RODOS 2.20 - Patched versions
+- Fixed a bug where |zap,12,"samplecommand" would not work as documented.
+  This was being overwritten by relocated code.
+  Moved the command buffer from 0xbec0 to 0xbf20
+  Bonus for this is that the possible command length has changed from 31 (in V2.13) to 100 now.

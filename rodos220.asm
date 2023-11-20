@@ -1,8 +1,12 @@
 ; z80dasm 1.1.6
 ; command line: z80dasm -b blockfile.txt -g 0xc000 -S Firmware_labels.txt -s syms.txt -r default -l -t -v RODOS219.ROM
 
-org	0c000h
-POST_BOOT_MSG: equ 0xbec1
+org	0xc000
+;ROM_SELECT_RELOCATE_AREA: equ 0xbf10 ;in 2.19 it was 0xbec0 ;in 2.13 this is be80 - was that change an error or a bugfix?
+ROM_SELECT_RELOCATE_AREA: equ 0xbec0 ;in 2.19 it was 0xbec0 ;in 2.13 this is be80 - was that change an error or a
+;be80 - |format triggers a AMSDOS? error
+POST_BOOT_MSG: equ 0xbec0
+BOOT_CMD_AREA: equ 0xbf20 ;0xbec0 ;Used for |zap,12,"do something" etc.
 ;This is where the |zap and |rom store the command data.
 ;The first 10 characters are stomped on by what looks like calls
 
@@ -116,7 +120,7 @@ COMMAND_TABLE_end:
 	jp RSX_ERA		;c072	c3 59 d6 	. Y .
 	jp RSX_EB		;c075	c3 49 d8 	. I .
 	jp RSX_LS		;c03c	c3 ce cc 	. . .
-;jp DUMP_BUFFER //for debug and exploration (comment out rsx_ls)
+;jp DUMP_BUFFER ;for debug and exploration (comment out rsx_ls)
 	jp RSX_MKDIR		;c07b	c3 64 df 	. d .
 	jp RSX_C		;c07e	c3 c7 d7 	. . .
 	jp RSX_INFO		;c081	c3 5d d1 	. ] .
@@ -260,11 +264,11 @@ sub_c1f9h:
 	xor 008h		;c202	ee 08 	. .
 	ld c,a			;c204	4f 	O
 	ld hl,RSX_COMMANDS		;c205	21 c0 c0 	! . .
-	call 0bec0h		;c208	cd c0 be 	. . .
+	call ROM_SELECT_RELOCATE_AREA		;c208	cd c0 be 	. . .
 	cp 052h		;c20b	fe 52 	. R
 	jr nz,lc21dh		;c20d	20 0e 	  .
 	ld hl,lc0c8h		;c20f	21 c8 c0 	! . .
-	call 0bec0h		;c212	cd c0 be 	. . .
+	call ROM_SELECT_RELOCATE_AREA		;c212	cd c0 be 	. . .
 	cp 0cdh		;c215	fe cd 	. .
 	jr nz,lc21dh		;c217	20 04 	  .
 	pop de			;c219	d1 	.
@@ -604,23 +608,23 @@ sub_c3e8h:
 	push bc			;c3fc	c5 	.
 	call sub_d95eh		;c3fd	cd 5e d9 	. ^ .
 	pop bc			;c400	c1 	.
-	ld hl,ROM_VERSION_end		;c401	21 04 c0 	! . .
-	call 0bec0h		;c404	cd c0 be 	. . .
+	ld hl,COMMAND_TABLE_start		;c401	21 04 c0 	! . .
+	call ROM_SELECT_RELOCATE_AREA		;c404	cd c0 be 	. . .
 	ld e,a			;c407	5f 	_
 	inc hl			;c408	23 	#
-	call 0bec0h		;c409	cd c0 be 	. . .
+	call ROM_SELECT_RELOCATE_AREA		;c409	cd c0 be 	. . .
 	ld h,a			;c40c	67 	g
 	ld l,e			;c40d	6b 	k
 	push hl			;c40e	e5 	.
-	ld hl,ROM_TYPE_start		;c40f	21 00 c0 	! . .
-	call 0bec0h		;c412	cd c0 be 	. . .
+	ld hl,ROM_TYPE		;c40f	21 00 c0 	! . .
+	call ROM_SELECT_RELOCATE_AREA		;c412	cd c0 be 	. . .
 	pop hl			;c415	e1 	.
 	cp 001h		;c416	fe 01 	. .
 	jr nz,lc433h		;c418	20 19 	  .
 	ld de,0beb0h		;c41a	11 b0 be 	. . .
 	push hl			;c41d	e5 	.
 lc41eh:
-	call 0bec0h		;c41e	cd c0 be 	. . .
+	call ROM_SELECT_RELOCATE_AREA		;c41e	cd c0 be 	. . .
 	ld (de),a			;c421	12 	.
 	inc hl			;c422	23 	#
 	inc de			;c423	13 	.
@@ -640,7 +644,7 @@ lc438h:
 	cp 0ffh		;c43a	fe ff 	. .
 	jr z,lc460h		;c43c	28 22 	( "
 lc43eh:
-	call 0bec0h		;c43e	cd c0 be 	. . .
+	call ROM_SELECT_RELOCATE_AREA		;c43e	cd c0 be 	. . .
 	cp (ix+000h)		;c441	dd be 00 	. . .
 	jr nz,lc466h		;c444	20 20
 	inc ix		;c446	dd 23 	. #
@@ -649,8 +653,8 @@ lc43eh:
 	jr z,lc43eh		;c44b	28 f1 	( .
 	pop ix		;c44d	dd e1 	. .
 	push de			;c44f	d5 	.
-	ld hl,ROM_TYPE_start		;c450	21 00 c0 	! . .
-	call 0bec0h		;c453	cd c0 be 	. . .
+	ld hl,ROM_TYPE		;c450	21 00 c0 	! . .
+	call ROM_SELECT_RELOCATE_AREA		;c453	cd c0 be 	. . .
 	pop hl			;c456	e1 	.
 	pop ix		;c457	dd e1 	. .
 	and 07fh		;c459	e6 7f 	. 
@@ -665,14 +669,14 @@ lc460h:
 lc466h:
 	pop ix		;c466	dd e1 	. .
 lc468h:
-	call 0bec0h		;c468	cd c0 be 	. . .
+	call ROM_SELECT_RELOCATE_AREA		;c468	cd c0 be 	. . .
 	inc hl			;c46b	23 	#
 	bit 7,a		;c46c	cb 7f 	. 
 	jr z,lc468h		;c46e	28 f8 	( .
 	inc de			;c470	13 	.
 	inc de			;c471	13 	.
 	inc de			;c472	13 	.
-	call 0bec0h		;c473	cd c0 be 	. . .
+	call ROM_SELECT_RELOCATE_AREA		;c473	cd c0 be 	. . .
 	and a			;c476	a7 	.
 	jr nz,lc438h		;c477	20 bf 	  .
 	pop ix		;c479	dd e1 	. .
@@ -739,23 +743,23 @@ RSX_HELP:
 	call PRINT_EXTRA_BLANK_LINE		;c4fd	cd 7d d9 	. } .
 	call sub_d95eh		;c500	cd 5e d9 	. ^ .
 	ld c,(ix+000h)		;c503	dd 4e 00 	. N .
-	ld hl,ROM_TYPE_start		;c506	21 00 c0 	! . .
-	call 0bec0h		;c509	cd c0 be 	. . .
+	ld hl,ROM_TYPE		;c506	21 00 c0 	! . .
+	call ROM_SELECT_RELOCATE_AREA		;c509	cd c0 be 	. . .
 	and 07fh		;c50c	e6 7f 	. 
 	cp 003h		;c50e	fe 03 	. .
 	ret nc			;c510	d0 	.
 	call sub_c581h		;c511	cd 81 c5 	. . .
-	ld hl,ROM_VERSION_end		;c514	21 04 c0 	! . .
-	call 0bec0h		;c517	cd c0 be 	. . .
+	ld hl,COMMAND_TABLE_start		;c514	21 04 c0 	! . .
+	call ROM_SELECT_RELOCATE_AREA		;c517	cd c0 be 	. . .
 	ld e,a			;c51a	5f 	_
 	inc hl			;c51b	23 	#
-	call 0bec0h		;c51c	cd c0 be 	. . .
+	call ROM_SELECT_RELOCATE_AREA		;c51c	cd c0 be 	. . .
 	ld d,a			;c51f	57 	W
 	ex de,hl			;c520	eb 	.
 lc521h:
 	ld d,000h		;c521	16 00 	. .
 lc523h:
-	call 0bec0h		;c523	cd c0 be 	. . .
+	call ROM_SELECT_RELOCATE_AREA		;c523	cd c0 be 	. . .
 	and a			;c526	a7 	.
 	jp z,PRINT_EXTRA_BLANK_LINE		;c527	ca 7d d9 	. } .
 	ld e,a			;c52a	5f 	_
@@ -803,8 +807,8 @@ lc571h:
 	djnz lc55bh		;c575	10 e4 	. .
 	ret			;c577	c9 	.
 sub_c578h:
-	ld hl,ROM_TYPE_start		;c578	21 00 c0 	! . .
-	call 0bec0h		;c57b	cd c0 be 	. . .
+	ld hl,ROM_TYPE		;c578	21 00 c0 	! . .
+	call ROM_SELECT_RELOCATE_AREA		;c57b	cd c0 be 	. . .
 	cp 003h		;c57e	fe 03 	. .
 	ret nc			;c580	d0 	.
 sub_c581h:
@@ -820,18 +824,18 @@ sub_c581h:
 	pop af			;c592	f1 	.
 	call nc,sub_c5f0h		;c593	d4 f0 c5 	. . .
 	call TXT_OUTPUT		;c596	cd 5a bb 	. Z .
-	ld hl,ROM_VERSION_end		;c599	21 04 c0 	! . .
-	call 0bec0h		;c59c	cd c0 be 	. . .
+	ld hl,COMMAND_TABLE_start		;c599	21 04 c0 	! . .
+	call ROM_SELECT_RELOCATE_AREA		;c59c	cd c0 be 	. . .
 	ld e,a			;c59f	5f 	_
 	inc hl			;c5a0	23 	#
-	call 0bec0h		;c5a1	cd c0 be 	. . .
+	call ROM_SELECT_RELOCATE_AREA		;c5a1	cd c0 be 	. . .
 	ld d,a			;c5a4	57 	W
 	ex de,hl			;c5a5	eb 	.
 	call sub_c5ebh		;c5a6	cd eb c5 	. . .
 	push bc			;c5a9	c5 	.
 	ld b,011h		;c5aa	06 11 	. .
 lc5ach:
-	call 0bec0h		;c5ac	cd c0 be 	. . .
+	call ROM_SELECT_RELOCATE_AREA		;c5ac	cd c0 be 	. . .
 	ld e,a			;c5af	5f 	_
 	and 07fh		;c5b0	e6 7f 	. 
 	call TXT_OUTPUT		;c5b2	cd 5a bb 	. Z .
@@ -844,18 +848,18 @@ lc5bbh:
 	djnz lc5bbh		;c5be	10 fb 	. .
 	pop bc			;c5c0	c1 	.
 	call sub_c5ebh		;c5c1	cd eb c5 	. . .
-	ld hl,ROM_TYPE_end		;c5c4	21 01 c0 	! . .
-	call 0bec0h		;c5c7	cd c0 be 	. . .
+	ld hl,ROM_VERSION		;c5c4	21 01 c0 	! . .
+	call ROM_SELECT_RELOCATE_AREA		;c5c7	cd c0 be 	. . .
 	add a,030h		;c5ca	c6 30 	. 0
 	call TXT_OUTPUT		;c5cc	cd 5a bb 	. Z .
 	ld a,02eh		;c5cf	3e 2e 	> .
 	call TXT_OUTPUT		;c5d1	cd 5a bb 	. Z .
 	inc hl			;c5d4	23 	#
-	call 0bec0h		;c5d5	cd c0 be 	. . .
+	call ROM_SELECT_RELOCATE_AREA		;c5d5	cd c0 be 	. . .
 	add a,030h		;c5d8	c6 30 	. 0
 	call TXT_OUTPUT		;c5da	cd 5a bb 	. Z .
 	inc hl			;c5dd	23 	#
-	call 0bec0h		;c5de	cd c0 be 	. . .
+	call ROM_SELECT_RELOCATE_AREA		;c5de	cd c0 be 	. . .
 	add a,030h		;c5e1	c6 30 	. 0
 	call TXT_OUTPUT		;c5e3	cd 5a bb 	. Z .
 	call PRINT_EXTRA_BLANK_LINE		;c5e6	cd 7d d9 	. } .
@@ -3559,16 +3563,67 @@ ld94fh:
 	add a,030h		;d94f	c6 30 	. 0
 	jp TXT_OUTPUT		;d951	c3 5a bb 	. Z .
 ld954h:
+	;This function does this:
+	;Select a ROM and enable it, then select the previous state. Not sure why.
 	push bc			;d954	c5 	.
 	call KL_ROM_SELECT		;d955	cd 0f b9 	. . .
+	; &B90F KL ROM SELECT
+	; ActionSelects an upper ROM and also enables it
+	; EntryC contains the ROM select address of the required ROM
+	; ExitC contains the ROM select address of the previous ROM, and B contains the state of the previous ROM
 	ld a,(hl)			;d958	7e 	~
 	call KL_ROM_DESELECT		;d959	cd 18 b9 	. . .
+; 	&B918 KL ROM DESELECT
+; ActionSelects the previous upper ROM and sets its state
+; EntryC contains me ROM select address of the ROM to be reselected, and B contains the state of the
+; required ROM
+; ExitC contains the ROM select address of me current ROM, B is corrupt, and all others are preserved
+; NotesThis routine reverses the acoon of KL ROM SELECT, and uses the values that it returns in B and C
 	pop bc			;d95c	c1 	.
 	ret			;d95d	c9 	.
 sub_d95eh:
+
+	;BUGFIX: So... this bit copies the ld954 subroutine above to the same buffer used by |ZAP.
+	;The bec0 part is the called - *A LOT* - wtf? Heres the diff between 2.13 and 2.19(aka 2.20)
+	;…/rodos219-src on  main [!?] via 🐍 v3.10.12 🔋 95% ❯ grep bec0 ../rodos213-src/rodos213.z80
+	; 	ld de,0bec0h		;db1a	11 c0 be 	. . .
+	; 	ld hl,0bec0h		;db36	21 c0 be 	! . .
+	; 	ld hl,0bec0h		;dd81	21 c0 be 	! . .
+	; 	ld de,0bec0h		;f4c2	11 c0 be 	. . .
+	; 	ld hl,0bec0h		;f551	21 c0 be 	! . .
+	; …/rodos219-src on  main [!?] via 🐍 v3.10.12 🔋 95% ❯ grep -i bec0 rodos220.asm
+	; POST_BOOT_MSG: equ 0xbec0
+	; 	call 0bec0h		;c208	cd c0 be 	. . .
+	; 	call 0bec0h		;c212	cd c0 be 	. . .
+	; 	call 0bec0h		;c404	cd c0 be 	. . .
+	; 	call 0bec0h		;c409	cd c0 be 	. . .
+	; 	call 0bec0h		;c412	cd c0 be 	. . .
+	; 	call 0bec0h		;c41e	cd c0 be 	. . .
+	; 	call 0bec0h		;c43e	cd c0 be 	. . .
+	; 	call 0bec0h		;c453	cd c0 be 	. . .
+	; 	call 0bec0h		;c468	cd c0 be 	. . .
+	; 	call 0bec0h		;c473	cd c0 be 	. . .
+	; 	call 0bec0h		;c509	cd c0 be 	. . .
+	; 	call 0bec0h		;c517	cd c0 be 	. . .
+	; 	call 0bec0h		;c51c	cd c0 be 	. . .
+	; 	call 0bec0h		;c523	cd c0 be 	. . .
+	; 	call 0bec0h		;c57b	cd c0 be 	. . .
+	; 	call 0bec0h		;c59c	cd c0 be 	. . .
+	; 	call 0bec0h		;c5a1	cd c0 be 	. . .
+	; 	call 0bec0h		;c5ac	cd c0 be 	. . .
+	; 	call 0bec0h		;c5c7	cd c0 be 	. . .
+	; 	call 0bec0h		;c5d5	cd c0 be 	. . .
+	; 	call 0bec0h		;c5de	cd c0 be 	. . .
+	;In 2.13 this was the code
+	; sub_d98fh:
+	; 	ld bc,0000ah		;d98f	01 0a 00 	. . .
+	; 	ld hl,ld985h		;d992	21 85 d9 	! . .
+	; 	ld de,0be80h		;d995	11 80 be 	. . .
+	; 	ldir		;d998	ed b0 	. .
+	; 	ret			;d99a	c9 	.
 	ld bc,0000ah		;d95e	01 0a 00 	. . .
 	ld hl,ld954h		;d961	21 54 d9 	! T .
-	ld de,0bec0h		;d964	11 c0 be 	. . .
+	ld de,ROM_SELECT_RELOCATE_AREA		;d964	11 c0 be 	. . .
 	ldir		;d967	ed b0 	. .
 	ret			;d969	c9 	.
 DISPLAY_MSG:
@@ -4148,7 +4203,7 @@ ldd53h:
 	ld hl,0be85h		;dd53	21 85 be 	! . .
 	ld (hl),086h		;dd56	36 86 	6 .
 	ld (0be83h),hl		;dd58	22 83 be 	" . .
-	ld hl,0bec0h		;dd5b	21 c0 be 	! . .
+	ld hl,ROM_SELECT_RELOCATE_AREA		;dd5b	21 c0 be 	! . .
 	push hl			;dd5e	e5 	.
 	ld a,(0bebfh)		;dd5f	3a bf be 	: . .
 	ld ix,ldd83h		;dd62	dd 21 83 dd 	. ! . .
@@ -7309,11 +7364,11 @@ sub_f48bh:
 	pop bc			;f494	c1 	.
 	inc ix		;f495	dd 23 	. #
 	inc ix		;f497	dd 23 	. #
-	;If length of string is >21 set a=21 BUGFIX for buffer overflow
-	cp 21
-	jr c,Str_Len_Ok
-	ld a,21
-Str_Len_Ok:
+; 	;If length of string is >21 set a=21 BUGFIX for buffer overflow
+; 	cp 21
+; 	jr c,Str_Len_Ok
+; 	ld a,21
+; Str_Len_Ok:
 	ld (0bebfh),a		;f499	32 bf be 	2 . .
 	and a			;f49c	a7 	.
 	ret z			;f49d	c8 	.
@@ -7321,11 +7376,13 @@ Str_Len_Ok:
 	;//TODO - BUGFIX
 	;Next part takes the command parameter from |ZAP and stores it in the buffers
 	;Orginally this next line read: ld de,0bec0h
-	;0becah is the destination buffer
+	;That clashed with the zap,rom functions.
+	;I've reverted this (for now) to the BE80 which worked well in v2.13
+	;BOOT_CMD_AREA is the destination buffer
 	;HL is the string parameter
 	;A is the length of the string
 
-	ld de,0becah		;f49f	11 c0 be 	. . .
+	ld de,BOOT_CMD_AREA		;f49f	11 c0 be 	. . .
 	ld c,a			;f4a2	4f 	O
 	ld b,000h		;f4a3	06 00 	. .
 	ldir		;f4a5	ed b0 	. .
@@ -7449,9 +7506,9 @@ lf51bh:
 	ld a,(0bebfh)		;f528	3a bf be 	: . .
 	and a			;f52b	a7 	.
 	jr z,lf53eh		;f52c	28 10 	( .
-;;TODO - BUGFIX: This fixes the ROM/ZAP parameter
-;	ld hl,0bec0h		;f52e	21 c0 be 	! . .
-	ld hl,0becah		;f52e	21 c0 be 	! . .
+;;TODO - BUGFIX: This fixes the ROM/ZAP parameter, was ROM_SELECT_RELOCATE_AREA
+;	ld hl,ROM_SELECT_RELOCATE_AREA		;f52e	21 c0 be 	! . .
+	ld hl,BOOT_CMD_AREA		;f52e	21 c0 be 	! . .
 
 	ld b,08ch		;f531	06 8c 	. .
 	ld c,a			;f533	4f 	O
@@ -8608,47 +8665,54 @@ VERSION_MSG:
 	defb 000h		;ffc5	00 	.
 	defb 000h		;ffc6	00 	.
 RODOS_MSGS_end:
-DUMP_BUFFER:
-	push hl
-	push bc
-	ld hl,POST_BOOT_MSG
-	;ld hl, 0xbe00 ;XXXX
-	;ld hl,0x9603
-	ld b,255
-Bufloop:
-	ld a,(hl)
-	push hl
-	push af
-	and 0F0h
-	rrca
-	rrca
-	rrca
-	rrca
-	call PrintNibble
-	pop af
-	and 0Fh
-	call PrintNibble
-	ld a,' '
-	call TXT_OUTPUT
-	pop hl
-	inc hl
-	djnz Bufloop
-	call KM_WAIT_KEY
-	pop bc
-	pop hl
 
-ret
-
-PrintNibble:
-    add a, '0' ; Convert to ASCII
-    cp '9' + 1 ; Check if the result is greater than '9'
-    jr c, PrintCharacter ; Jump to PrintCharacter if less than or equal to '9'
-    add a, 'A' - '9' - 1 ; Adjust for characters 'A' to 'F'
-
-PrintCharacter:
-    call TXT_OUTPUT
-		call KM_WAIT_KEY
-    ret ; Return from subroutine
+; DUMP_BUFFER:
+; 	;push hl
+; 	;push bc
+; 	ld hl,POST_BOOT_MSG
+; 	;ld hl, 0xbe00 ;XXXX
+; 	;ld hl,0x9603
+; 	ld b,255
+; 	ld d,16
+; Bufloop:
+; 	ld a,(hl)
+; 	push hl
+; 	push af
+; 	and 0F0h
+; 	rrca
+; 	rrca
+; 	rrca
+; 	rrca
+; 	call PrintNibble
+; 	pop af
+; 	and 0Fh
+; 	call PrintNibble
+; 	ld a,' '
+; 	dec d
+; 	call z,NL
+; 	call TXT_OUTPUT
+; 	pop hl
+; 	inc hl
+; 	djnz Bufloop
+; 	;call KM_WAIT_KEY
+; 	;pop bc
+; 	;pop hl
+;
+; ret
+; NL:
+; 	call PRINT_NEWLINE
+; 	ld d,16
+; 	ret
+; PrintNibble:
+;     add a, '0' ; Convert to ASCII
+;     cp '9' + 1 ; Check if the result is greater than '9'
+;     jr c, PrintCharacter ; Jump to PrintCharacter if less than or equal to '9'
+;     add a, 'A' - '9' - 1 ; Adjust for characters 'A' to 'F'
+;
+; PrintCharacter:
+;     call TXT_OUTPUT
+; 		;call KM_WAIT_KEY
+;     ret ; Return from subroutine
 
 ; CALL_TESTER:
 ; 	call lc234h
