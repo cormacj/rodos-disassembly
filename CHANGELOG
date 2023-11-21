@@ -1,6 +1,7 @@
-RODOS 2.19 - Last known SOUND_RELEASE
-RODOS 2.20 - Patched versions
-- Fixed a bug where |zap,12,"samplecommand" would not work as documented.
-  This was being overwritten by relocated code.
-  Moved the command buffer from 0xbec0 to 0xbf20
+RODOS 2.19 - Last known official release
+
+RODOS 2.20 - November, 2023 - New Patched Version
+- Fixed a bug where |zap,12,"print"+chr$(34)+"Rom 12 turned off"+chr$(13) would not work as documented.
+  This was being overwritten by relocated code, meaning on reboot it was displaying garbage.
+  I've moved the command buffer for |zap and |rom from 0xbec0 to 0xbf20 to correct this bug.
   Bonus for this is that the possible command length has changed from 31 (in V2.13) to 100 now.

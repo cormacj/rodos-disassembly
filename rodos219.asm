@@ -7318,11 +7318,6 @@ sub_f48bh:
 	and a			;f49c	a7 	.
 	ret z			;f49d	c8 	.
 	push bc			;f49e	c5
-	;//TODO - BUGFIX
-	;Next part takes the command parameter from |ZAP and stores it in the buffers
-	;Orginally this next line read: ld de,0bec0h
-	;0becah is the destination buffer
-	;HL is the string parameter
 	ld de,0bec0h		;f49f	11 c0 be 	. . .
 	ld c,a			;f4a2	4f 	O
 	ld b,000h		;f4a3	06 00 	. .
@@ -7447,8 +7442,6 @@ lf51bh:
 	ld a,(0bebfh)		;f528	3a bf be 	: . .
 	and a			;f52b	a7 	.
 	jr z,lf53eh		;f52c	28 10 	( .
-;;TODO - BUGFIX: This fixes the ROM/ZAP parameter
-;	ld hl,0bec0h		;f52e	21 c0 be 	! . .
 	ld hl,0bec0h		;f52e	21 c0 be 	! . .
 
 	ld b,08ch		;f531	06 8c 	. .

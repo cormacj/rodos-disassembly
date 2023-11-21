@@ -2,6 +2,8 @@ help:
 	$(info make validate  - check to see if the working asm file compiles to a binary match with RODOS219)
 	$(info make diffs - If you have a binary difference this uses a brief diff so you can see where the drift happened)
 	$(info make fullcompare - If you have a binary difference this puts up a side-by-side diff so you can see where the drift happened)
+	$(info make run - Build and run the rom in Caprice32)
+	$(info make release - generate a zip file suitable for uploading)
 
 validate:
 		#z80asm -v rodos220.asm && diff RODOS219.ROM a.bin && echo "\nRODOS219 and compile match"
