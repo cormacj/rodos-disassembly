@@ -6,7 +6,7 @@ org	0xc000
 ROM_SELECT_RELOCATE_AREA: equ 0xbec0 ;in 2.19 it was 0xbec0 ;in 2.13 this is be80 - was that change an error or a
 ;be80 - |format triggers a AMSDOS? error
 POST_BOOT_MSG: equ 0xbec0
-BOOT_CMD_AREA: equ 0xbf20 ;0xbec0 ;Used for |zap,12,"do something" etc.
+BOOT_CMD_AREA: equ 0xbf30 ;0xbec0 ;Used for |zap,12,"do something" etc.
 ;This is where the |zap and |rom store the command data.
 ;The first 10 characters are stomped on by what looks like calls
 

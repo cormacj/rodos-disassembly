@@ -1,0 +1,33 @@
+About this release
+------------------
+This is NOT an official version of RODOS. This is a patch and update to RODOS V2.19.
+I'm not affiliated with Romantic Robot and I've never worked with them. I just really like RODOS.
+
+Background
+----------
+There was a bug introduced in V2.15 that corrupted a feature of the |ZAP and |ROMS commands.
+I reported this to Romantic Robot way back in the day but it was never fixed. I use this feature for
+development purposes, and the only work around was to generate a DISC file that would auto run on boot
+but it's annoying.
+
+How?
+----
+I had time, and I became curious about the nature of the bug, so I disassembled the ROM and looked into what
+was going on. I discovered that there were memory location conflicts with some code that was relocated to allow
+RODOS to interact with other ROMS while preserving its own state.
+I've updated these buffer locations to lower the chances of conflict and overwrites.
+
+Future
+------
+The ROM still has some buffer overflow issues, and have these existed since V2.13 at least.
+I'm not planning on putting a lot of time into this, but I could fix them. If there are bugs or features you
+would like, open an issue on github at https://github.com/cormacj/rodos-disassembly/issues and if it seems
+possible and I have time I'll work on it.
+The amount of space left in this rom is fairly limited. There's still an issue with the disassembly not being
+fully complete, so the code fails if current memory locations shift.
+
+TL;DR bugs can be fixed, but new features are hard.
+
+Bug reporting.
+-------------
+You can use my github to report issues on this: https://github.com/cormacj/rodos-disassembly/issues
