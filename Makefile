@@ -4,7 +4,8 @@ help:
 	$(info make fullcompare - If you have a binary difference this puts up a side-by-side diff so you can see where the drift happened)
 
 validate:
-		z80asm -v rodos220.asm && diff RODOS219.ROM a.bin && echo "\nRODOS219 and compile match"
+		#z80asm -v rodos220.asm && diff RODOS219.ROM a.bin && echo "\nRODOS219 and compile match"
+		z80asm -v rodos220.asm && ./validate-size.sh a.bin
 
 fullcompare:
 		z80asm rodos220.asm && ~/Amstrad/utils/dum.py a.bin -o 0xc000 >new.txt && diff -y original.txt new.txt |less
@@ -14,11 +15,9 @@ diffs:
 
 run:
 		z80asm rodos220.asm && cp a.bin ~/Amstrad/ROM/ && cap32 ~/Amstrad/blankdisc.dsk
-# edit : main.o kbd.o command.o display.o \
-#        insert.o search.o files.o utils.o
-#         cc -o edit main.o kbd.o command.o display.o \
-#                    insert.o search.o files.o utils.o
-#
-# clean :
-#         rm edit main.o kbd.o command.o display.o \
-#            insert.o search.o files.o utils.o
+
+release:
+		rm -v Release/* && z80asm -v -o Release/rodos220.rom rodos220.asm && ./validate-size.sh Release/rodos220.rom && zip -v -j Release/rodos220.zip CHANGELOG Release/rodos220.rom && echo "Release made!"
+
+clean:
+		rm a.bin
