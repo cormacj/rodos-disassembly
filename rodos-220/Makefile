@@ -6,20 +6,19 @@ help:
 	$(info make release - generate a zip file suitable for uploading)
 
 validate:
-		#z80asm -v rodos220.asm && diff RODOS219.ROM a.bin && echo "\nRODOS219 and compile match"
 		z80asm -v rodos220.asm && ./validate-size.sh a.bin
 
 fullcompare:
-		z80asm rodos220.asm && ~/Amstrad/utils/dum.py a.bin -o 0xc000 >new.txt && diff -y original.txt new.txt |less
+		z80asm rodos220.asm && ./dum.py a.bin -o 0xc000 >new.txt && ./dum.py RODOS219.ROM -o 0c0000 >original.txt && diff -W150 -y original.txt new.txt |less
 
 diffs:
-		z80asm rodos220.asm && ~/Amstrad/utils/dum.py a.bin -o 0xc000 >new.txt && diff original.txt new.txt
+		z80asm rodos220.asm && ./dum.py a.bin -o 0xc000 >new.txt && ./dum.py RODOS219.ROM -o 0xc000 >original.txt && diff -s original.txt new.txt
 
 run:
 		z80asm rodos220.asm && cp a.bin ~/Amstrad/ROM/ && cap32 ~/Amstrad/blankdisc.dsk
 
 release:
-		rm -v Release/* && z80asm -v -o Release/rodos220.rom rodos220.asm && ./validate-size.sh Release/rodos220.rom && zip -v -j Release/rodos220.zip CHANGELOG Release/rodos220.rom && echo "Release made!"
+		rm -v Release/* && z80asm -v -o Release/rodos220.rom rodos220.asm && ./validate-size.sh Release/rodos220.rom && zip -v -j Release/rodos220.zip CHANGELOG Release/rodos.rom && echo "Release made!"
 
 clean:
-		rm a.bin
+		rm a.bin new.txt original.txt
