@@ -2,9 +2,12 @@
 ; command line: z80dasm -b blockfile.txt -g 0xc000 -S Firmware_labels.txt -s syms.txt -r default -l -t -v RODOS219.ROM
 
 org	0c000h
-POST_BOOT_MSG: equ 0xbec1
+POST_BOOT_MSG: equ 0xbec1  ;This location is overwritten by the relocation code in ROM_SELECT_DESELECT_RELOCATED - fixed in v2.20
 ;This is where the |zap and |rom store the command data.
 ;The first 10 characters are stomped on by what looks like calls
+ROM_SELECT_DESELECT_RELOCATED:equ 0xbec0
+
+DISK_ERROR_MESSAGE_FLAG: equ 0xbe78
 
 RESET_ENTRY_RST_0:	equ 0x0000
 LOW_JUMP_RST_1:	equ 0x0008
@@ -62,25 +65,31 @@ RSX_MKDIR:	equ 0xdf64
 
 
 ; BLOCK 'ROM_TYPE' (start 0xc000 end 0xc001)
-ROM_TYPE_start:
+ROM_TYPE:
+; The ROM type can be one of the following values:
+; a. External Foreground &00
+; b. Background &01
+; c. Extension Foreground &02
+; d. Internal (i.e. BASIC) &80
 	defb 001h		;c000	01 	.
-ROM_TYPE_end:
 
 ; BLOCK 'ROM_VERSION' (start 0xc001 end 0xc004)
-ROM_VERSION_start:
+ROM_VERSION:
+;Aka v2.19
 	defb 002h		;c001	02 	.
 	defb 001h		;c002	01 	.
 	defb 009h		;c003	09 	.
-ROM_VERSION_end:
+
 
 ; BLOCK 'COMMAND_TABLE' (start 0xc004 end 0xc006)
-COMMAND_TABLE_start:
+COMMAND_TABLE:
+	;This is a vector to the address of where the RSX names are defined.
 	;defw 0c0c0h		;c004	c0 c0 	. .
 	defw RSX_COMMANDS_start
 	;This is the location of the commands
-COMMAND_TABLE_end:
 
-;all the jumps
+RSX_JUMPS:
+;all the jumps - must be in the same order as the command names.
 	jp ROM_INIT		;c006	c3 cb c1 	. . .
 	jp RSX_CLS		;c009	c3 42 d4 	. B .
 	jp RSX_DISK		;c00c	c3 26 de 	. & .
@@ -120,7 +129,6 @@ COMMAND_TABLE_end:
 	jp RSX_ERA		;c072	c3 59 d6 	. Y .
 	jp RSX_EB		;c075	c3 49 d8 	. I .
 	jp RSX_LS		;c03c	c3 ce cc 	. . .
-;jp DUMP_BUFFER //for debug and exploration (comment out rsx_ls)
 	jp RSX_MKDIR		;c07b	c3 64 df 	. d .
 	jp RSX_C		;c07e	c3 c7 d7 	. . .
 	jp RSX_INFO		;c081	c3 5d d1 	. ] .
@@ -148,6 +156,10 @@ RSX_COMMANDS:
 
 ; BLOCK 'RSX_COMMANDS' (start 0xc0c0 end 0xc1ca)
 RSX_COMMANDS_start:
+	;Each RSX name must end with the last letter + 0x80h
+	;Therefore |CLS is defined here as defb 'CL','S'+0x80 and due to how this
+	;was disassembled becomes defb "CL",0d3h
+
 	defb "RODOS RO"
 lc0c8h: ;I'm not sure why this label is pointed at the last byte of RODOS ROM
 	defb 0cdh ;RODOS ROM
@@ -219,6 +231,8 @@ RSX_COMMANDS_end:
 	nop			;c1ca	00 	.
 
 ROM_INIT:
+;This is the start of the ROM initialise routines.
+
 	call sub_c1f9h		;c1cb	cd f9 c1 	. . .
 	call KL_CURR_SELECTION		;c1ce	cd 12 b9 	. . .
 
@@ -259,16 +273,22 @@ sub_c1f9h:
 	push hl			;c1f9	e5 	.
 	push bc			;c1fa	c5 	.
 	push de			;c1fb	d5 	.
-	call sub_d95eh		;c1fc	cd 5e d9 	. ^ .
+	call sub_RELOCATE_ROM_SELECT_DESELECT		;c1fc	cd 5e d9 	. ^ .
 	call KL_CURR_SELECTION		;c1ff	cd 12 b9 	. . .
+	; 006   &B912   KL CURR SELECTION
+	;       Action: Gets the ROM select address of the current ROM
+	;       Entry:  No entry conditions
+	;       Exit:   A contains the ROM select  address  of the current ROM,
+	;               and all other registers are preserved
+
 	xor 008h		;c202	ee 08 	. .
 	ld c,a			;c204	4f 	O
 	ld hl,RSX_COMMANDS		;c205	21 c0 c0 	! . .
-	call 0bec0h		;c208	cd c0 be 	. . .
+	call ROM_SELECT_DESELECT_RELOCATED		;c208	cd c0 be 	. . .
 	cp 052h		;c20b	fe 52 	. R
 	jr nz,lc21dh		;c20d	20 0e 	  .
 	ld hl,lc0c8h		;c20f	21 c8 c0 	! . .
-	call 0bec0h		;c212	cd c0 be 	. . .
+	call ROM_SELECT_DESELECT_RELOCATED		;c212	cd c0 be 	. . .
 	cp 0cdh		;c215	fe cd 	. .
 	jr nz,lc21dh		;c217	20 04 	  .
 	pop de			;c219	d1 	.
@@ -277,7 +297,7 @@ sub_c1f9h:
 	ret			;c21c	c9 	.
 lc21dh:
 	pop de			;c21d	d1 	.
-	call sub_f4d8		;c21e	cd d8 f4 	. . .
+	call DETERMINE_BASIC_VERSION		;c21e	cd d8 f4 	. . .
 	pop bc			;c221	c1 	.
 	pop hl			;c222	e1 	.
 	ret nz			;c223	c0 	.
@@ -296,7 +316,7 @@ lc227h:
 PRINT_RODOS_OFF:
 	push hl			;c234	e5 	.
 	push bc			;c235	c5 	.
-	call sub_f4d8		;c236	cd d8 f4 	. . .
+	call DETERMINE_BASIC_VERSION		;c236	cd d8 f4 	. . .
 	pop bc			;c239	c1 	.
 	ld a,h			;c23a	7c 	|
 	pop hl			;c23b	e1 	.
@@ -309,12 +329,25 @@ PRINT_RODOS_OFF:
 	pop af			;c247	f1 	.
 	jp lda0fh		;c248	c3 0f da 	. . .
 RODOS_OFF_MSG:
-
-; BLOCK 'RODOS_OFF_MSG' (start 0xc24b end 0xc258)
-RODOS_OFF_MSG_start:
 	defb '* RODOS OFF *',05ch
-RODOS_OFF_MSG_end:
+
 CHECK_FOR_KEY_PRESSED:
+;Entry: A=Amstrad hardware key number
+;I'm assuming that this replicates the KM_READ_CHAR bios call
+;
+; {
+;   undefined2 in_AF;
+;   byte bVar1;
+;
+;   FUN_ram_c290();
+;   bVar1 = (byte)((ushort)in_AF >> 8);
+;   DAT_ram_bf06 = (bVar1 & 7) * '\b' + 'F';
+;   SUB_ram_bf05 = 0xcb;
+;   DAT_ram_bf07 = 0xc9;
+;   func_0xbf05(&DAT_ram_bee0 + ((char)bVar1 >> 3 & 0xf),param_1);
+;   return;
+; }
+
 	push af			;c259	f5 	.
 	call sub_c290h		;c25a	cd 90 c2 	. . .
 	pop af			;c25d	f1 	.
@@ -335,6 +368,11 @@ CHECK_FOR_KEY_PRESSED:
 	sla a		;c275	cb 27 	. '
 	and 038h		;c277	e6 38 	. 8
 	add a,046h		;c279	c6 46 	. F
+;OK.... this next bit is stowing code
+;but its wierd. it builts bf05 as:
+;bf05: &CB,A calculated above,&C9
+;CB is a bit operation.
+;C9 - ret
 	ld (0bf06h),a		;c27b	32 06 bf 	2 . .
 	ld a,0cbh		;c27e	3e cb 	> .
 	ld (0bf05h),a		;c280	32 05 bf 	2 . .
@@ -439,7 +477,7 @@ INITIALISE_VARIABLES:
 	ld (iy+042h),a		;Home drive number for |CD   ;c33f	fd 77 42 	. w B
 	ld (iy+043h),a		;Home drive letter for |CD   ;c342	fd 77 43 	. w C
 	ld (iy+044h),a		;Home track for |CD          ;c345	fd 77 44 	. w D
-	ld (0be78h),a		;c348	32 78 be 	2 x .
+	ld (DISK_ERROR_MESSAGE_FLAG),a		;c348	32 78 be 	2 x .
 	dec a			;c34b	3d 	=
 	ld (iy+04fh),a		;c34c	fd 77 4f 	. w O
 	ld (iy+03fh),a		;c34f	fd 77 3f 	. w ?
@@ -585,9 +623,10 @@ sub_c3c3h:
 	add hl,de			;c3dd	19 	.
 	ld de,KL_FIND_COMMAND		;c3de	11 d4 bc 	. . .
 	ld b,001h		;c3e1	06 01 	. .
-	jp lde74h		;c3e3	c3 74 de 	. t .
+	jp MAKE_JP_AT_DE_USING_HL		;c3e3	c3 74 de 	. t .
 lc3e6h:
-	db 0e8h,0c3h
+	;db 0e8h,0c3h
+	dw sub_c3e8h ;Vector to the sub below. Used in sub_c3c3h
 sub_c3e8h:
 ;This is a z80dasm fixup - theres a call to mid z80dasm instruction so it misses a label.
 	RES        0x2,(IY+0xd) ;ram:c3e8 fd cb 0d 96
@@ -606,25 +645,25 @@ sub_c3e8h:
 	inc hl			;c3fa	23 	#
 	push hl			;c3fb	e5 	.
 	push bc			;c3fc	c5 	.
-	call sub_d95eh		;c3fd	cd 5e d9 	. ^ .
+	call sub_RELOCATE_ROM_SELECT_DESELECT		;c3fd	cd 5e d9 	. ^ .
 	pop bc			;c400	c1 	.
-	ld hl,ROM_VERSION_end		;c401	21 04 c0 	! . .
-	call 0bec0h		;c404	cd c0 be 	. . .
+	ld hl,COMMAND_TABLE		;c401	21 04 c0 	! . .
+	call ROM_SELECT_DESELECT_RELOCATED		;c404	cd c0 be 	. . .
 	ld e,a			;c407	5f 	_
 	inc hl			;c408	23 	#
-	call 0bec0h		;c409	cd c0 be 	. . .
+	call ROM_SELECT_DESELECT_RELOCATED		;c409	cd c0 be 	. . .
 	ld h,a			;c40c	67 	g
 	ld l,e			;c40d	6b 	k
 	push hl			;c40e	e5 	.
-	ld hl,ROM_TYPE_start		;c40f	21 00 c0 	! . .
-	call 0bec0h		;c412	cd c0 be 	. . .
+	ld hl,ROM_TYPE		;c40f	21 00 c0 	! . .
+	call ROM_SELECT_DESELECT_RELOCATED		;c412	cd c0 be 	. . .
 	pop hl			;c415	e1 	.
 	cp 001h		;c416	fe 01 	. .
 	jr nz,lc433h		;c418	20 19 	  .
 	ld de,0beb0h		;c41a	11 b0 be 	. . .
 	push hl			;c41d	e5 	.
 lc41eh:
-	call 0bec0h		;c41e	cd c0 be 	. . .
+	call ROM_SELECT_DESELECT_RELOCATED		;c41e	cd c0 be 	. . .
 	ld (de),a			;c421	12 	.
 	inc hl			;c422	23 	#
 	inc de			;c423	13 	.
@@ -637,14 +676,14 @@ lc41eh:
 	pop hl			;c430	e1 	.
 	jr nc,lc460h		;c431	30 2d 	0 -
 lc433h:
-	ld de,COMMAND_TABLE_end		;c433	11 06 c0 	. . .
+	ld de,RSX_JUMPS		;c433	11 06 c0 	. . .
 	pop ix		;c436	dd e1 	. .
 lc438h:
 	push ix		;c438	dd e5 	. .
 	cp 0ffh		;c43a	fe ff 	. .
 	jr z,lc460h		;c43c	28 22 	( "
 lc43eh:
-	call 0bec0h		;c43e	cd c0 be 	. . .
+	call ROM_SELECT_DESELECT_RELOCATED		;c43e	cd c0 be 	. . .
 	cp (ix+000h)		;c441	dd be 00 	. . .
 	jr nz,lc466h		;c444	20 20
 	inc ix		;c446	dd 23 	. #
@@ -653,8 +692,8 @@ lc43eh:
 	jr z,lc43eh		;c44b	28 f1 	( .
 	pop ix		;c44d	dd e1 	. .
 	push de			;c44f	d5 	.
-	ld hl,ROM_TYPE_start		;c450	21 00 c0 	! . .
-	call 0bec0h		;c453	cd c0 be 	. . .
+	ld hl,ROM_TYPE		;c450	21 00 c0 	! . .
+	call ROM_SELECT_DESELECT_RELOCATED		;c453	cd c0 be 	. . .
 	pop hl			;c456	e1 	.
 	pop ix		;c457	dd e1 	. .
 	and 07fh		;c459	e6 7f 	. 
@@ -669,14 +708,14 @@ lc460h:
 lc466h:
 	pop ix		;c466	dd e1 	. .
 lc468h:
-	call 0bec0h		;c468	cd c0 be 	. . .
+	call ROM_SELECT_DESELECT_RELOCATED		;c468	cd c0 be 	. . .
 	inc hl			;c46b	23 	#
 	bit 7,a		;c46c	cb 7f 	. 
 	jr z,lc468h		;c46e	28 f8 	( .
 	inc de			;c470	13 	.
 	inc de			;c471	13 	.
 	inc de			;c472	13 	.
-	call 0bec0h		;c473	cd c0 be 	. . .
+	call ROM_SELECT_DESELECT_RELOCATED		;c473	cd c0 be 	. . .
 	and a			;c476	a7 	.
 	jr nz,lc438h		;c477	20 bf 	  .
 	pop ix		;c479	dd e1 	. .
@@ -741,25 +780,25 @@ RSX_HELP:
 	and a			;c4fa	a7 	.
 	jr z,lc550h		;c4fb	28 53 	( S
 	call PRINT_EXTRA_BLANK_LINE		;c4fd	cd 7d d9 	. } .
-	call sub_d95eh		;c500	cd 5e d9 	. ^ .
+	call sub_RELOCATE_ROM_SELECT_DESELECT		;c500	cd 5e d9 	. ^ .
 	ld c,(ix+000h)		;c503	dd 4e 00 	. N .
-	ld hl,ROM_TYPE_start		;c506	21 00 c0 	! . .
-	call 0bec0h		;c509	cd c0 be 	. . .
+	ld hl,ROM_TYPE		;c506	21 00 c0 	! . .
+	call ROM_SELECT_DESELECT_RELOCATED		;c509	cd c0 be 	. . .
 	and 07fh		;c50c	e6 7f 	. 
 	cp 003h		;c50e	fe 03 	. .
 	ret nc			;c510	d0 	.
 	call sub_c581h		;c511	cd 81 c5 	. . .
-	ld hl,ROM_VERSION_end		;c514	21 04 c0 	! . .
-	call 0bec0h		;c517	cd c0 be 	. . .
+	ld hl,COMMAND_TABLE		;c514	21 04 c0 	! . .
+	call ROM_SELECT_DESELECT_RELOCATED		;c517	cd c0 be 	. . .
 	ld e,a			;c51a	5f 	_
 	inc hl			;c51b	23 	#
-	call 0bec0h		;c51c	cd c0 be 	. . .
+	call ROM_SELECT_DESELECT_RELOCATED		;c51c	cd c0 be 	. . .
 	ld d,a			;c51f	57 	W
 	ex de,hl			;c520	eb 	.
 lc521h:
 	ld d,000h		;c521	16 00 	. .
 lc523h:
-	call 0bec0h		;c523	cd c0 be 	. . .
+	call ROM_SELECT_DESELECT_RELOCATED		;c523	cd c0 be 	. . .
 	and a			;c526	a7 	.
 	jp z,PRINT_EXTRA_BLANK_LINE		;c527	ca 7d d9 	. } .
 	ld e,a			;c52a	5f 	_
@@ -787,7 +826,7 @@ lc54bh:
 lc550h:
 	ld (0bf0fh),a		;c550	32 0f bf 	2 . .
 	call PRINT_EXTRA_BLANK_LINE		;c553	cd 7d d9 	. } .
-	call sub_d95eh		;c556	cd 5e d9 	. ^ .
+	call sub_RELOCATE_ROM_SELECT_DESELECT		;c556	cd 5e d9 	. ^ .
 	ld b,010h		;c559	06 10 	. .
 lc55bh:
 	ld a,010h		;c55b	3e 10 	> .
@@ -807,8 +846,8 @@ lc571h:
 	djnz lc55bh		;c575	10 e4 	. .
 	ret			;c577	c9 	.
 sub_c578h:
-	ld hl,ROM_TYPE_start		;c578	21 00 c0 	! . .
-	call 0bec0h		;c57b	cd c0 be 	. . .
+	ld hl,ROM_TYPE		;c578	21 00 c0 	! . .
+	call ROM_SELECT_DESELECT_RELOCATED		;c57b	cd c0 be 	. . .
 	cp 003h		;c57e	fe 03 	. .
 	ret nc			;c580	d0 	.
 sub_c581h:
@@ -824,18 +863,18 @@ sub_c581h:
 	pop af			;c592	f1 	.
 	call nc,sub_c5f0h		;c593	d4 f0 c5 	. . .
 	call TXT_OUTPUT		;c596	cd 5a bb 	. Z .
-	ld hl,ROM_VERSION_end		;c599	21 04 c0 	! . .
-	call 0bec0h		;c59c	cd c0 be 	. . .
+	ld hl,COMMAND_TABLE		;c599	21 04 c0 	! . .
+	call ROM_SELECT_DESELECT_RELOCATED		;c59c	cd c0 be 	. . .
 	ld e,a			;c59f	5f 	_
 	inc hl			;c5a0	23 	#
-	call 0bec0h		;c5a1	cd c0 be 	. . .
+	call ROM_SELECT_DESELECT_RELOCATED		;c5a1	cd c0 be 	. . .
 	ld d,a			;c5a4	57 	W
 	ex de,hl			;c5a5	eb 	.
 	call sub_c5ebh		;c5a6	cd eb c5 	. . .
 	push bc			;c5a9	c5 	.
 	ld b,011h		;c5aa	06 11 	. .
 lc5ach:
-	call 0bec0h		;c5ac	cd c0 be 	. . .
+	call ROM_SELECT_DESELECT_RELOCATED		;c5ac	cd c0 be 	. . .
 	ld e,a			;c5af	5f 	_
 	and 07fh		;c5b0	e6 7f 	. 
 	call TXT_OUTPUT		;c5b2	cd 5a bb 	. Z .
@@ -848,18 +887,18 @@ lc5bbh:
 	djnz lc5bbh		;c5be	10 fb 	. .
 	pop bc			;c5c0	c1 	.
 	call sub_c5ebh		;c5c1	cd eb c5 	. . .
-	ld hl,ROM_TYPE_end		;c5c4	21 01 c0 	! . .
-	call 0bec0h		;c5c7	cd c0 be 	. . .
+	ld hl,ROM_VERSION		;c5c4	21 01 c0 	! . .
+	call ROM_SELECT_DESELECT_RELOCATED		;c5c7	cd c0 be 	. . .
 	add a,030h		;c5ca	c6 30 	. 0
 	call TXT_OUTPUT		;c5cc	cd 5a bb 	. Z .
 	ld a,02eh		;c5cf	3e 2e 	> .
 	call TXT_OUTPUT		;c5d1	cd 5a bb 	. Z .
 	inc hl			;c5d4	23 	#
-	call 0bec0h		;c5d5	cd c0 be 	. . .
+	call ROM_SELECT_DESELECT_RELOCATED		;c5d5	cd c0 be 	. . .
 	add a,030h		;c5d8	c6 30 	. 0
 	call TXT_OUTPUT		;c5da	cd 5a bb 	. Z .
 	inc hl			;c5dd	23 	#
-	call 0bec0h		;c5de	cd c0 be 	. . .
+	call ROM_SELECT_DESELECT_RELOCATED		;c5de	cd c0 be 	. . .
 	add a,030h		;c5e1	c6 30 	. 0
 	call TXT_OUTPUT		;c5e3	cd 5a bb 	. Z .
 	call PRINT_EXTRA_BLANK_LINE		;c5e6	cd 7d d9 	. } .
@@ -937,7 +976,7 @@ lc647h:
 	ld b,001h		;c654	06 01 	. .
 	push ix		;c656	dd e5 	. .
 	ld ix,lc664h		;c658	dd 21 64 c6 	. ! d .
-	call sub_de7eh		;c65c	cd 7e de 	. ~ .
+	call GENERATE_RST18_AT_HL		;c65c	cd 7e de 	. ~ .
 	pop ix		;c65f	dd e1 	. .
 	ld (hl),000h		;c661	36 00 	6 .
 	ret			;c663	c9 	.
@@ -1325,7 +1364,7 @@ lc89fh:
 	push bc			;c8a7	c5 	.
 	ld hl,lc86fh		;c8a8	21 6f c8 	! o .
 	push hl			;c8ab	e5 	.
-	ld a,(0be78h)		;c8ac	3a 78 be 	: x .
+	ld a,(DISK_ERROR_MESSAGE_FLAG)		;c8ac	3a 78 be 	: x .
 	and a			;c8af	a7 	.
 	jp nz,lda18h		;c8b0	c2 18 da 	. . .
 	bit 0,(iy+00dh)		;c8b3	fd cb 0d 46 	. . . F
@@ -1343,7 +1382,7 @@ lc8cbh:
 	and a			;c8ce	a7 	.
 	jr nz,lc8e7h		;c8cf	20 16 	  .
 	call sub_cb4ah		;c8d1	cd 4a cb 	. J .
-	ld a,(0be78h)		;c8d4	3a 78 be 	: x .
+	ld a,(DISK_ERROR_MESSAGE_FLAG)		;c8d4	3a 78 be 	: x .
 	and a			;c8d7	a7 	.
 	jr nz,lc8e2h		;c8d8	20 08 	  .
 	call sub_da91h		;c8da	cd 91 da 	. . .
@@ -2396,7 +2435,7 @@ RSX_FS:
 	add hl,de			;d0a5	19 	.
 	ld de,0bf09h		;d0a6	11 09 bf 	. . .
 	ld b,002h		;d0a9	06 02 	. .
-	call lde74h		;d0ab	cd 74 de 	. t .
+	call MAKE_JP_AT_DE_USING_HL		;d0ab	cd 74 de 	. t .
 	ld hl,(0bc78h)		;d0ae	2a 78 bc 	* x .
 	ld a,(0bf0ah)		;d0b1	3a 0a bf 	: . .
 	cp l			;d0b4	bd 	.
@@ -2807,7 +2846,7 @@ ld3c9h:
 	cp 006h		;d3c9	fe 06 	. .
 	jr nz,ld3d4h		;d3cb	20 07 	  .
 	ld a,(ix+000h)		;d3cd	dd 7e 00 	. ~ .
-	ld (0be78h),a		;d3d0	32 78 be 	2 x .
+	ld (DISK_ERROR_MESSAGE_FLAG),a		;d3d0	32 78 be 	2 x .
 	ret			;d3d3	c9 	.
 ld3d4h:
 	cp 007h		;d3d4	fe 07 	. .
@@ -3562,17 +3601,40 @@ sub_d947h:
 ld94fh:
 	add a,030h		;d94f	c6 30 	. 0
 	jp TXT_OUTPUT		;d951	c3 5a bb 	. Z .
-ld954h:
+ROM_SELECT_DESELECT:
+	;This function is never directly called.
+	;This gets relocated at sub_RELOCATE_ROM_SELECT_DESELECT, and all the calls are made to the
+	;relocated area.
+	;My guess is that this is the equivalent of push rom/pop rom
 	push bc			;d954	c5 	.
 	call KL_ROM_SELECT		;d955	cd 0f b9 	. . .
+	; 005   &B90F   KL ROM SELECT
+	;       Action: Selects an upper ROM and also enables it
+	;       Entry:  C contains the ROM select address of the required ROM
+	;       Exit:   C contains the ROM select  address of the previous ROM,
+	;               and B contains the state of the previous ROM
+
 	ld a,(hl)			;d958	7e 	~
 	call KL_ROM_DESELECT		;d959	cd 18 b9 	. . .
+	; 008   &B918   KL ROM DESELECT
+	;       Action: Selects the previous upper ROM and sets its state
+	;       Entry:  C contains me  ROM  select  address  of  the  ROM to be
+	;               reselected, and B contains  the  state  of the required
+	;               ROM
+	;       Exit:   C contains the ROM select address  of the current ROM, B
+	;               is corrupt, and all others are preserved
+	;       Notes:  This routine reverses the acoon  of  KL ROM SELECT, and
+	;               uses the values that it returns in B and C
+
 	pop bc			;d95c	c1 	.
 	ret			;d95d	c9 	.
-sub_d95eh:
+sub_RELOCATE_ROM_SELECT_DESELECT:
+;relocate the code above to 0xbec0.
+;I'm assuming that this is because another rom may swap in
+;and the calls could fail.
 	ld bc,0000ah		;d95e	01 0a 00 	. . .
-	ld hl,ld954h		;d961	21 54 d9 	! T .
-	ld de,0bec0h		;d964	11 c0 be 	. . .
+	ld hl,ROM_SELECT_DESELECT		;d961	21 54 d9 	! T .
+	ld de,ROM_SELECT_DESELECT_RELOCATED		;d964	11 c0 be 	. . .
 	ldir		;d967	ed b0 	. .
 	ret			;d969	c9 	.
 DISPLAY_MSG:
@@ -3889,7 +3951,7 @@ sub_db4ch:
 ldb50h:
 	ld a,(ix+000h)		;db50	dd 7e 00 	. ~ .
 	and a			;db53	a7 	.
-	call z,sub_df0dh		;db54	cc 0d df 	. . .
+	call z,SET_A_TO_020H		;db54	cc 0d df 	. . .
 	call TXT_OUTPUT		;db57	cd 5a bb 	. Z .
 	inc ix		;db5a	dd 23 	. #
 	djnz ldb50h		;db5c	10 f2 	. .
@@ -4152,7 +4214,7 @@ ldd53h:
 	ld hl,0be85h		;dd53	21 85 be 	! . .
 	ld (hl),086h		;dd56	36 86 	6 .
 	ld (0be83h),hl		;dd58	22 83 be 	" . .
-	ld hl,0bec0h		;dd5b	21 c0 be 	! . .
+	ld hl,ROM_SELECT_DESELECT_RELOCATED		;dd5b	21 c0 be 	! . .
 	push hl			;dd5e	e5 	.
 	ld a,(0bebfh)		;dd5f	3a bf be 	: . .
 	ld ix,ldd83h		;dd62	dd 21 83 dd 	. ! . .
@@ -4287,10 +4349,10 @@ RSX_DISK_IN:
 	pop hl			;de34	e1 	.
 	add hl,de			;de35	19 	.
 	ld de,CAS_IN_OPEN		;de36	11 77 bc 	. w .
-	call lde74h		;de39	cd 74 de 	. t .
+	call MAKE_JP_AT_DE_USING_HL		;de39	cd 74 de 	. t .
 	ld b,001h		;de3c	06 01 	. .
 	ld de,CAS_CATALOG		;de3e	11 9b bc 	. . .
-	call lde74h		;de41	cd 74 de 	. t .
+	call MAKE_JP_AT_DE_USING_HL		;de41	cd 74 de 	. t .
 	jp RSX_FS		;de44	c3 9b d0 	. . .
 RSX_DISK_OUT:
 	ld b,005h		;de47	06 05 	. .
@@ -4300,7 +4362,7 @@ RSX_DISK_OUT:
 	pop hl			;de52	e1 	.
 	add hl,de			;de53	19 	.
 	ld de,CAS_OUT_OPEN		;de54	11 8c bc 	. . .
-	jp lde74h		;de57	c3 74 de 	. t .
+	jp MAKE_JP_AT_DE_USING_HL		;de57	c3 74 de 	. t .
 lde5ah:
 	add hl,hl			;de5a	29 	)
 	rst 20h			;de5b	e7 	.
@@ -4324,8 +4386,18 @@ lde64h:
 	and 09bh		;de6f	e6 9b 	. .
 	and 0b9h		;de71	e6 b9 	. .
 	pop hl			;de73	e1 	.
-lde74h:
-	ld a,0c3h		;de74	3e c3 	> .
+MAKE_JP_AT_DE_USING_HL:
+	;This seems to generate some code.
+	;example use:
+	; ld de,0bf09h		;d0a6	11 09 bf 	. . .
+	; ld b,002h		;d0a9	06 02 	. .
+	; call MAKE_JP_AT_DE_USING_HL		;d0ab	cd 74 de 	. t .
+
+	;Generates/patches and address with a jump
+	;address to jump is in HL
+	;address to patch is in DE
+	;So this code makes (DE)=JP (HL)
+	ld a,0c3h		;opcode for "jp" ;de74	3e c3 	> .
 	ld (de),a			;de76	12 	.
 	inc de			;de77	13 	.
 	ld a,l			;de78	7d 	}
@@ -4334,8 +4406,19 @@ lde74h:
 	ld a,h			;de7b	7c 	|
 	ld (de),a			;de7c	12 	.
 	inc de			;de7d	13 	.
-sub_de7eh:
-	ld (hl),0dfh		;de7e	36 df 	6 .
+GENERATE_RST18_AT_HL:
+	;This patches the address at HL
+	;0df is RST 18
+	;The RST &18 instruction works a bit differently. Instead of taking parameters in HL and C, it expects them to be in the program flow directly. This is interesting because all registers are passed as is to the called code. You can use them to pass data to the ROM code, bypassing the usual RSX parameter list.
+				;
+				; 	RST &18;
+				; 	DW table
+				;         RET
+				; table
+				; 	DW &C009 ; Address of code to call
+				; 	DB &04 ; Rom number to connect
+
+	ld (hl),0dfh	;rst &18	;de7e	36 df 	6 .
 	inc hl			;de80	23 	#
 	ld a,l			;de81	7d 	}
 	add a,003h		;de82	c6 03 	. .
@@ -4345,7 +4428,7 @@ sub_de7eh:
 	inc hl			;de88	23 	#
 	ld (hl),a			;de89	77 	w
 	inc hl			;de8a	23 	#
-	ld (hl),0c9h		;de8b	36 c9 	6 .
+	ld (hl),0c9h	;c9=ret	;de8b	36 c9 	6 .
 	inc hl			;de8d	23 	#
 	ld a,(ix+000h)		;de8e	dd 7e 00 	. ~ .
 	ld (hl),a			;de91	77 	w
@@ -4358,7 +4441,7 @@ sub_de7eh:
 	ld a,(iy+000h)		;de9c	fd 7e 00 	. ~ .
 	ld (hl),a			;de9f	77 	w
 	inc hl			;dea0	23 	#
-	djnz lde74h		;dea1	10 d1 	. .
+	djnz MAKE_JP_AT_DE_USING_HL		;dea1	10 d1 	. .
 	ret			;dea3	c9 	.
 	push ix		;dea4	dd e5 	. .
 	push hl			;dea6	e5 	.
@@ -4381,7 +4464,7 @@ ldeb7h:
 	bit 0,(iy+011h)		;debf	fd cb 11 46 	. . . F
 	call nz,sub_defah		;dec3	c4 fa de 	. . .
 	bit 1,(iy+011h)		;dec6	fd cb 11 4e 	. . . N
-	call nz,sub_df00h		;deca	c4 00 df 	. . .
+	call nz,SEND_CHARACTER_TO_PRINTER		;deca	c4 00 df 	. . .
 	bit 2,(iy+011h)		;decd	fd cb 11 56 	. . . V
 	ret nz			;ded1	c0 	.
 	ld hl,(TXT_OUTPUT)		;ded2	2a 5a bb 	* Z .
@@ -4408,24 +4491,27 @@ sub_defah:
 	call CAS_OUT_CHAR		;defb	cd 95 bc 	. . .
 	pop af			;defe	f1 	.
 	ret			;deff	c9 	.
-sub_df00h:
+SEND_CHARACTER_TO_PRINTER:
+	;input:
+	; A=character to print
 	push af			;df00	f5 	.
+	;If A=09 (tab?) set char to SPACE
 	cp 009h		;df01	fe 09 	. .
-	call z,sub_df0dh		;df03	cc 0d df 	. . .
+	call z,SET_A_TO_020H		;df03	cc 0d df 	. . .
 	call MC_PRINT_CHAR		;df06	cd 2b bd 	. + .
-	jr nc,ldf10h		;df09	30 05 	0 .
+	jr nc,CHECK_FOR_ESC		;df09	30 05 	0 .
 	pop af			;df0b	f1 	.
 	ret			;df0c	c9 	.
-sub_df0dh:
+SET_A_TO_020H:
 	ld a,020h		;df0d	3e 20 	>
 	ret			;df0f	c9 	.
-ldf10h:
+CHECK_FOR_ESC:
 	;ESC check
 	ld a,042h		;df10	3e 42 	> B
 	call CHECK_FOR_KEY_PRESSED		;df12	cd 59 c2 	. Y .
 	jr nz,ldf1ah		;df15	20 03 	  .
 	pop af			;df17	f1 	.
-	jr sub_df00h		;df18	18 e6 	. .
+	jr SEND_CHARACTER_TO_PRINTER		;df18	18 e6 	. .
 ldf1ah:
 	res 1,(iy+011h)		;df1a	fd cb 11 8e 	. . . .
 	pop af			;df1e	f1 	.
@@ -4462,7 +4548,7 @@ ldf4fh:
 	pop hl			;df5a	e1 	.
 	add hl,de			;df5b	19 	.
 	ld de,TXT_OUTPUT		;df5c	11 5a bb 	. Z .
-	jp lde74h		;df5f	c3 74 de 	. t .
+	jp MAKE_JP_AT_DE_USING_HL		;df5f	c3 74 de 	. t .
 ldf62h:
 	and h			;df62	a4 	.
 	sbc a,0feh		;df63	de fe 	. .
@@ -4892,15 +4978,15 @@ le29dh:
 le2cah:
 	bit 0,c		;e2ca	cb 41 	. A
 	ld a,052h		;e2cc	3e 52 	> R
-	call z,sub_df0dh		;e2ce	cc 0d df 	. . .
+	call z,SET_A_TO_020H		;e2ce	cc 0d df 	. . .
 	call TXT_OUTPUT		;e2d1	cd 5a bb 	. Z .
 	bit 1,c		;e2d4	cb 49 	. I
 	ld a,057h		;e2d6	3e 57 	> W
-	call z,sub_df0dh		;e2d8	cc 0d df 	. . .
+	call z,SET_A_TO_020H		;e2d8	cc 0d df 	. . .
 	call TXT_OUTPUT		;e2db	cd 5a bb 	. Z .
 	bit 2,c		;e2de	cb 51 	. Q
 	ld a,058h		;e2e0	3e 58 	> X
-	call nz,sub_df0dh		;e2e2	c4 0d df 	. . .
+	call nz,SET_A_TO_020H		;e2e2	c4 0d df 	. . .
 	call TXT_OUTPUT		;e2e5	cd 5a bb 	. Z .
 le2e8h:
 	push ix		;e2e8	dd e5 	. .
@@ -4909,7 +4995,7 @@ le2e8h:
 	ld a,(ix+00ch)		;e2ed	dd 7e 0c 	. ~ .
 	cp 0feh		;e2f0	fe fe 	. .
 	ld a,021h		;e2f2	3e 21 	> !
-	call z,sub_df0dh		;e2f4	cc 0d df 	. . .
+	call z,SET_A_TO_020H		;e2f4	cc 0d df 	. . .
 	call TXT_OUTPUT		;e2f7	cd 5a bb 	. Z .
 	call sub_d8abh		;e2fa	cd ab d8 	. . .
 	pop ix		;e2fd	dd e1 	. .
@@ -7318,7 +7404,7 @@ sub_f48bh:
 	and a			;f49c	a7 	.
 	ret z			;f49d	c8 	.
 	push bc			;f49e	c5
-	ld de,0bec0h		;f49f	11 c0 be 	. . .
+	ld de,ROM_SELECT_DESELECT_RELOCATED		;f49f	11 c0 be 	. . .
 	ld c,a			;f4a2	4f 	O
 	ld b,000h		;f4a3	06 00 	. .
 	ldir		;f4a5	ed b0 	. .
@@ -7379,8 +7465,10 @@ lf4b5h:
 			 ; undefined         A:1            <RETURN>
 				; 							 FUN_ram_f4d8                                    XREF[2]:     FUN_ram_c1f9:c21e(c),
 				;																																						ram:c236(c)
-sub_f4d8:
+DETERMINE_BASIC_VERSION:
 	ld C,0x0 ;f4d8 ram:f4d8 0e 00
+	;ROM 0 is the basic rom
+
 	call KL_PROBE_ROM		;f4da	cd 15 b9 	. . .
 
 	; 007   &B915   KL PROBE ROM
@@ -7398,11 +7486,15 @@ sub_f4d8:
 	ld a,h			;f4dd	7c 	|
 	and a			;f4de	a7 	.
 	ret nz			;f4df	c0 	.
+	;So if the basic version is not zero, then we quit here, so CPC664/CPC6128 etc. anything not a CPC464
+	;Basic 1.0 is CPC464.
+	;I think these next bits poke the bios with the adjusted calls for the 464.
 	ld a,(0bccfh)		;f4e0	3a cf bc 	: . .
 	cp 032h		;f4e3	fe 32 	. 2
 	ret nz			;f4e5	c0 	.
 	ld a,036h		;f4e6	3e 36 	> 6
 	ld (0bccfh),a		;f4e8	32 cf bc 	2 . .
+	;0bccf is part of KL INIT BACK &BCCE
 	ld a,00eh		;f4eb	3e 0e 	> .
 	ld (0b9e0h),a		;f4ed	32 e0 b9 	2 . .
 	xor a			;f4f0	af 	.
@@ -7442,7 +7534,7 @@ lf51bh:
 	ld a,(0bebfh)		;f528	3a bf be 	: . .
 	and a			;f52b	a7 	.
 	jr z,lf53eh		;f52c	28 10 	( .
-	ld hl,0bec0h		;f52e	21 c0 be 	! . .
+	ld hl,ROM_SELECT_DESELECT_RELOCATED		;f52e	21 c0 be 	! . .
 
 	ld b,08ch		;f531	06 8c 	. .
 	ld c,a			;f533	4f 	O
@@ -7572,7 +7664,7 @@ lf607h:
 	add hl,de			;f62a	19 	.
 	ld de,MC_PRINT_CHAR		;f62b	11 2b bd 	. + .
 	ld ix,lf643h		;f62e	dd 21 43 f6 	. ! C .
-	call lde74h		;f632	cd 74 de 	. t .
+	call MAKE_JP_AT_DE_USING_HL		;f632	cd 74 de 	. t .
 	set 1,(iy+00dh)		;f635	fd cb 0d ce 	. . . .
 	xor a			;f639	af 	.
 	ld (iy+00eh),a		;f63a	fd 77 0e 	. w .
@@ -8109,10 +8201,18 @@ RSX_PEEK:
 	ld (hl),000h		;fa15	36 00 	6 .
 	ret			;fa17	c9 	.
 sub_fa18h:
+	;Entry: A = amount of parameters
+	;First check for 3 parameters
+
+	;4 or more is too many
 	cp 004h		;fa18	fe 04 	. .
 	jp nc,MSG_TOO_MANY_PARAMETERS		;fa1a	d2 9f fb 	. . .
+
+	;Less than 3 is too few.
 	cp 003h		;fa1d	fe 03 	. .
 	jp c,MSG_WRONG_PARAMETER_AMT		;fa1f	da 97 fb 	. . .
+
+
 	ld l,(ix+002h)		;fa22	dd 6e 02 	. n .
 	ld h,(ix+003h)		;fa25	dd 66 03 	. f .
 	ld c,(ix+000h)		;fa28	dd 4e 00 	. N .
@@ -8491,7 +8591,7 @@ sub_fc65h:
 	ld a,021h		;fc65	3e 21 	> !
 lfc67h:
 	ld l,a			;fc67	6f 	o
-	ld a,(0be78h)		;fc68	3a 78 be 	: x .
+	ld a,(DISK_ERROR_MESSAGE_FLAG)		;fc68	3a 78 be 	: x .
 	and a			;fc6b	a7 	.
 	jp nz,lda18h		;fc6c	c2 18 da 	. . .
 ERROR_H_RELAY_PROCESS:
