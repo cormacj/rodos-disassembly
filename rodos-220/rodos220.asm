@@ -75,7 +75,6 @@ ROM_VERSION: ;c001 - c003
 
 ; BLOCK 'COMMAND_TABLE' (start 0xc004 end 0xc006)
 COMMAND_TABLE_start:
-	;defw 0c0c0h		;c004	c0 c0 	. .
 	defw RSX_COMMANDS_start
 	;This is the location of the commands
 COMMAND_TABLE_end:

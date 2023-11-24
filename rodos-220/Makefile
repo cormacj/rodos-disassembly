@@ -18,7 +18,8 @@ run:
 		z80asm rodos220.asm && cp a.bin ~/Amstrad/ROM/ && cap32 ~/Amstrad/blankdisc.dsk
 
 release:
-		rm -v Release/* && z80asm -v -o Release/rodos220.rom rodos220.asm && ./validate-size.sh Release/rodos220.rom && zip -v -j Release/rodos220.zip CHANGELOG Release/rodos.rom && echo "Release made!"
+		#rm -v Release/* && 
+		z80asm -v -o Release/rodos220.rom rodos220.asm && ./validate-size.sh Release/rodos220.rom && zip -v -j Release/rodos220.zip CHANGELOG Release/rodos220.rom && echo "Release made!"
 
 clean:
 		rm a.bin new.txt original.txt
