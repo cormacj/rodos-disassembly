@@ -626,8 +626,8 @@ sub_c3c3h:
 	jp MAKE_JP_AT_DE_USING_HL		;c3e3	c3 74 de 	. t .
 lc3e6h:
 	;db 0e8h,0c3h
-	dw sub_c3e8h ;Vector to the sub below. Used in sub_c3c3h
-sub_c3e8h:
+	dw EXECUTE_RSX_COMMAND ;Vector to the sub below. Used in sub_c3c3h
+EXECUTE_RSX_COMMAND:
 ;This is a z80dasm fixup - theres a call to mid z80dasm instruction so it misses a label.
 	RES        0x2,(IY+0xd) ;ram:c3e8 fd cb 0d 96
 	; z80dasm started at the db 0c3h part above, and missed that theres a call into here.
@@ -2344,7 +2344,7 @@ lcfb4h:
 	ldir		;cfd9	ed b0 	. .
 	ld hl,0bef0h		;cfdb	21 f0 be 	! . .
 	xor a			;cfde	af 	.
-	call sub_c3e8h		;cfdf	cd e8 c3 	. . .
+	call EXECUTE_RSX_COMMAND		;cfdf	cd e8 c3 	. . .
 	jr nc,lcff1h		;cfe2	30 0d 	0 .
 	xor a			;cfe4	af 	.
 	call KL_FAR_PCHL		;cfe5	cd 1b 00 	. . .
@@ -3841,7 +3841,7 @@ sub_da85h:
 sub_da91h:
 	push hl			;da91	e5 	.
 	push de			;da92	d5 	.
-	ld hl,ldab3h		;da93	21 b3 da 	! . .
+	ld hl,MSG_TRACK		;da93	21 b3 da 	! . .
 	call DISPLAY_MSG		;da96	cd 6a d9 	. j .
 	ld a,d			;da99	7a 	z
 	call sub_d90fh		;da9a	cd 0f d9 	. . .
@@ -3856,13 +3856,8 @@ sub_da91h:
 	pop de			;dab0	d1 	.
 	pop hl			;dab1	e1 	.
 	ret			;dab2	c9 	.
-ldab3h:
-	ld d,h			;dab3	54 	T
-	ld (hl),d			;dab4	72 	r
-	ld h,c			;dab5	61 	a
-	ld h,e			;dab6	63 	c
-	ld l,e			;dab7	6b 	k
-	jr nz,sub_dabah		;dab8	20 00 	  .
+MSG_TRACK:
+	db "Track ",0
 sub_dabah:
 	ld a,b			;daba	78 	x
 	cp 002h		;dabb	fe 02 	. .
@@ -4913,11 +4908,12 @@ le232h:
 le242h:
 	ld (0beeeh),de		;e242	ed 53 ee be 	. S . .
 	ld ix,0bef0h		;e246	dd 21 f0 be 	. ! . .
-	call sub_e901h		;e24a	cd 01 e9 	. . .
+	call IX_STORE_DISC		;e24a	cd 01 e9 	. . .
+	;Next bit stows "IN"
 	ld (ix+006h),049h		;e24d	dd 36 06 49 	. 6 . I
 	ld (ix+007h),0ceh		;e251	dd 36 07 ce 	. 6 . .
 	ld hl,0bef0h		;e255	21 f0 be 	! . .
-	call sub_c3e8h		;e258	cd e8 c3 	. . .
+	call EXECUTE_RSX_COMMAND		;e258	cd e8 c3 	. . .
 	jp nc,MSG_CANT_FIND_AMSDOS		;e25b	d2 b6 fb 	. . .
 	xor a			;e25e	af 	.
 	call KL_FAR_PCHL		;e25f	cd 1b 00 	. . .
@@ -4968,6 +4964,7 @@ le29dh:
 	pop af			;e2b4	f1 	.
 	cp 02ch		;e2b5	fe 2c 	. ,
 	jr nz,le2cah		;e2b7	20 11 	  .
+	;Print "Dir" one letter at a time
 	ld a,044h		;e2b9	3e 44 	> D
 	call TXT_OUTPUT		;e2bb	cd 5a bb 	. Z .
 	ld a,069h		;e2be	3e 69 	> i
@@ -5178,7 +5175,8 @@ le478h:
 	inc hl			;e488	23 	#
 	dec b			;e489	05 	.
 	cp 02dh		;e48a	fe 2d 	. -
-	jr nz,le478h		;e48c	20 ea 	  .
+	jr nz,le478h		;e48c	20 ea
+	;next bit stows ".IN" 	  .
 	ld (ix-001h),02eh		;e48e	dd 36 ff 2e 	. 6 . .
 	ld (ix+000h),049h		;e492	dd 36 00 49 	. 6 . I
 	ld (ix+001h),0ceh		;e496	dd 36 01 ce 	. 6 . .
@@ -5188,12 +5186,13 @@ le478h:
 	jr le4b2h		;e4a1	18 0f 	. .
 le4a3h:
 	ld ix,0bef0h		;e4a3	dd 21 f0 be 	. ! . .
-	call sub_e901h		;e4a7	cd 01 e9 	. . .
+	call IX_STORE_DISC		;e4a7	cd 01 e9 	. . .
+	;Next bit stows "IN"
 	ld (ix+006h),049h		;e4aa	dd 36 06 49 	. 6 . I
 	ld (ix+007h),0ceh		;e4ae	dd 36 07 ce 	. 6 . .
 le4b2h:
 	ld hl,0bef0h		;e4b2	21 f0 be 	! . .
-	call sub_c3e8h		;e4b5	cd e8 c3 	. . .
+	call EXECUTE_RSX_COMMAND		;e4b5	cd e8 c3 	. . .
 	jp nc,MSG_UNKNOWN_FILE_SYSTEM		;e4b8	d2 c6 fb 	. . .
 	ld (0bf02h),hl		;e4bb	22 02 bf 	" . .
 	ld hl,(0bc9ch)		;e4be	2a 9c bc 	* . .
@@ -5601,6 +5600,7 @@ le813h:
 	ld (0bee2h),hl		;e829	22 e2 be 	" . .
 	ld a,b			;e82c	78 	x
 	ld (0bee4h),a		;e82d	32 e4 be 	2 . .
+	;Next bit stows ".OUT" but T is T+0x80
 	ld (ix-001h),02eh		;e830	dd 36 ff 2e 	. 6 . .
 	ld (ix+000h),04fh		;e834	dd 36 00 4f 	. 6 . O
 	ld (ix+001h),055h		;e838	dd 36 01 55 	. 6 . U
@@ -5608,13 +5608,15 @@ le813h:
 	jr le855h		;e840	18 13 	. .
 le842h:
 	ld ix,0bef0h		;e842	dd 21 f0 be 	. ! . .
-	call sub_e901h		;e846	cd 01 e9 	. . .
+	;Stores\ DISC into IX
+	call IX_STORE_DISC		;e846	cd 01 e9 	. . .
+	;Next bit stows "OUT" but T is T+0x80
 	ld (ix+006h),04fh		;e849	dd 36 06 4f 	. 6 . O
 	ld (ix+007h),055h		;e84d	dd 36 07 55 	. 6 . U
 	ld (ix+008h),0d4h		;e851	dd 36 08 d4 	. 6 . .
 le855h:
 	ld hl,0bef0h		;e855	21 f0 be 	! . .
-	call sub_c3e8h		;e858	cd e8 c3 	. . .
+	call EXECUTE_RSX_COMMAND		;e858	cd e8 c3 	. . .
 	jp nc,MSG_UNKNOWN_FILE_SYSTEM		;e85b	d2 c6 fb 	. . .
 	xor a			;e85e	af 	.
 	call KL_FAR_PCHL		;e85f	cd 1b 00 	. . .
@@ -5689,9 +5691,10 @@ le8f7h:
 	call sub_d6ddh		;e8f9	cd dd d6 	. . .
 	pop ix		;e8fc	dd e1 	. .
 	jp le7a6h		;e8fe	c3 a6 e7 	. . .
-sub_e901h:
+IX_STORE_DISC:
 	ld a,(iy+001h)		;e901	fd 7e 01 	. ~ .
 	ld (ix+000h),a		;e904	dd 77 00 	. w .
+	;Next file stows "DISC."
 	ld (ix+001h),044h		;e907	dd 36 01 44 	. 6 . D
 	ld (ix+002h),049h		;e90b	dd 36 02 49 	. 6 . I
 	ld (ix+003h),053h		;e90f	dd 36 03 53 	. 6 . S

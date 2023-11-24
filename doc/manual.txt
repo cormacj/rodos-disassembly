@@ -1,13 +1,13 @@
-     
- 
+
+
 
 SYSTEM
 Written by Devonahire House
 
 R AN 1w Y
 
- 
-  
+
+
 
 1. Introduction
 
@@ -294,7 +294,7 @@ A special directory name '..' means the 'parent' directory
 (the directory above this one).
 Eg. |CD,".." will set the current directory to the one above.
 
-(you cannot go above / (root)). 
+(you cannot go above / (root)).
 |CD,"../stuff" translates to: 'move up 1 to parent, then
 go into stuff'
 
@@ -309,7 +309,7 @@ Example:
 |CD
 |CD,"B:/tmp"
 
- 
+
 
 **********************************************************
 
@@ -547,7 +547,7 @@ to #94 on side two) [820k]
 
 **********************************************************
 
-INFO 
+INFO
 
 NAME INFO - File information.
 
@@ -602,7 +602,7 @@ Erasing a linked entry will not erase the original file.
 
 Erasing the original file will invalidate all its links.
 
- 
+
 
 WARNING - the new entry holds the position on the disc of the file, so
 if it is deleted (from its original entry ), or saved over, then
@@ -786,7 +786,7 @@ See Also: |DIR, |ERA
 
 **********************************************************
 
- 
+
 
 TITLE
 
@@ -950,7 +950,7 @@ See Also: IDIR
 
 **********************************************************
 
- 
+
 
 NAME ALIAS - Define new command name as old
 
@@ -1290,7 +1290,7 @@ are overidden by the ordering given in the list of ROM numbers. Any
 ROMS in  sockets that are not in the given list are turned off.
 |ROMS on its own disables all ROMS except CPM ROM (if in socket 7).
 
- 
+
 
 NOTE: |ROMS restarts the current language and any program is lost.
 |ROMS with a start up string will ceuse the start up string to be
@@ -1352,7 +1352,7 @@ See Also: |PRINT
 
 **********************************************************
 
- 
+
 
 NAME TDUMP - Text dump of screen to printer.
 
@@ -1408,7 +1408,7 @@ and run a program called PROG.
 
 See Also: |ROMS, |HELP
 
- 
+
 **********************************************************
 
 APPENDIX A
@@ -1533,7 +1533,7 @@ The Directory Entries are each 32 bytes long:
 0 - Directory access byte
 1-16 Filename or Directory name
 17 File Access.byte
-18 tracK of start of file
+18 track of start of file
 19 sector number of start of file
 20 File type
 21-22 File length
@@ -1589,7 +1589,7 @@ created in memory. This header record is outlined below, along with an
 offset from the address returned for the header by the firmware open-
 file routines.
 
- 
+
 
 -15 Buffer type ("O" "I" or "R" ocut/in/random)
 -13/14 Length free in buffer
@@ -1609,7 +1609,7 @@ file routines.
 19/20 Length of file *
 21/22 Location of file *
 23 Not used
-24/25 Logical length * 
+24/25 Logical length *
 26/27 Entry address *
 28 Previous track -- start of 512 byte sector buffer --
 29 Previous sector
