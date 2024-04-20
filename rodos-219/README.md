@@ -2,6 +2,9 @@
 This is a work in progress disassembly of RODOS v2.19.
 As of now this does compile to a binary exact copy of the official V2.19 rom.
 
+**Some Thoughts**
+This ROM is filled with very hacky code. It patches a lot of the BIOS calls, creates indirect calls, etc. It's not always easy to figure out whats going on.
+
 This is not relocatable as yet. Any code that causes a shift (eg adding a NOP after RSX definitions)
 causes the ROM to fail upload load.
 

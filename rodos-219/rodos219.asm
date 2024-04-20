@@ -456,6 +456,8 @@ sub_c2cch:
 	call sub_f541h		;c30f	cd 41 f5 	. A .
 	ld a,004h		;c312	3e 04 	> .
 	ld (iy+00dh),a		;c314	fd 77 0d 	. w .
+	;Ok, so this next bit grabs the code from call TXT_OUTPUT and stores it
+	;at iy+5a to iy+5c
 	ld hl,(0bb5bh)		;c317	2a 5b bb 	* [ .
 	ld a,(TXT_OUTPUT)		;c31a	3a 5a bb 	: Z .
 	ld (iy+05ah),a		;c31d	fd 77 5a 	. w Z
@@ -4343,9 +4345,11 @@ RSX_DISK_IN:
 	push iy		;de32	fd e5 	. .
 	pop hl			;de34	e1 	.
 	add hl,de			;de35	19 	.
+	;So basically CALL CAS_IN_OPEN
 	ld de,CAS_IN_OPEN		;de36	11 77 bc 	. w .
 	call MAKE_JP_AT_DE_USING_HL		;de39	cd 74 de 	. t .
 	ld b,001h		;de3c	06 01 	. .
+	;Call CAS_CATALOG
 	ld de,CAS_CATALOG		;de3e	11 9b bc 	. . .
 	call MAKE_JP_AT_DE_USING_HL		;de41	cd 74 de 	. t .
 	jp RSX_FS		;de44	c3 9b d0 	. . .
@@ -8355,6 +8359,7 @@ sub_faa0h:
 lfae9h:
 	db 0c0h
 lfaeah:
+	;CPC Standard Disk (178k) disk format definition
 	db 0c4h,0c5h,0c6h,0c7h,0cch,0cdh,0ceh,0cfh
 	db 0d4h,0d5h,0d6h,0d7h,0dch,0ddh,0deh,0dfh
 	db 0e4h,0e5h,0e6h,0e7h,0ech,0edh,0eeh,0efh
@@ -8702,6 +8707,7 @@ VERSION_MSG:
 	defb 000h		;ffc5	00 	.
 	defb 000h		;ffc6	00 	.
 RODOS_MSGS_end:
+; Debug code I added to dump what was happening in buffers
 ; DUMP_BUFFER:
 ; 	push hl
 ; 	push bc
