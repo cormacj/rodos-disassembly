@@ -7,8 +7,10 @@ POST_BOOT_MSG: equ 0xbec1  ;This location is overwritten by the relocation code 
 ;The first 10 characters are stomped on by what looks like calls
 ROM_SELECT_DESELECT_RELOCATED:equ 0xbec0
 
+;RODOS error message store
 DISK_ERROR_MESSAGE_FLAG: equ 0xbe78
 
+;Standard CPC BIOS call locations
 RESET_ENTRY_RST_0:	equ 0x0000
 LOW_JUMP_RST_1:	equ 0x0008
 KL_LOW_PCHL:	equ 0x000b
@@ -63,7 +65,11 @@ MC_SEND_PRINTER:	equ 0xbd31
 JUMP_RESTORE:	equ 0xbd37
 RSX_MKDIR:	equ 0xdf64
 
-
+;Workspace offset definitions
+;This typically shows up in code as something like "ld (iy+WS_CURRENT_DRIVE_LETTER),a" or "ld a,(iy+WS_CURRENT_DRIVE_LETTER)"
+;In this case 003h is actually "Current Drive Letter" so I'm creating some EQUs for readability
+WS_CURRENT_DRIVE_LETTER: equ 003h ;Current Drive Letter
+WS_DRIVE_NUMBER: 				 equ 004h ;Current Drive Number (mostly used when patching (See Appendix F))
 ; BLOCK 'ROM_TYPE' (start 0xc000 end 0xc001)
 ROM_TYPE:
 ; The ROM type can be one of the following values:
@@ -71,6 +77,8 @@ ROM_TYPE:
 ; b. Background &01
 ; c. Extension Foreground &02
 ; d. Internal (i.e. BASIC) &80
+
+	;Define this as a background ROM
 	defb 001h		;c000	01 	.
 
 ; BLOCK 'ROM_VERSION' (start 0xc001 end 0xc004)
@@ -149,6 +157,7 @@ RSX_JUMPS:
 	jp RSX_CLI		;c0ae	c3 fc f1 	. . .
 	jp RSX_ACCESS		;c0b1	c3 36 cd 	. 6 .
 	jp RSX_COPY		;c0b4	c3 bd cd 	. . .
+  ;See page 27 of the RODOS Manul for more details about how to use these.
 	jp RSX_HIDDEN_04		;c0b7	c3 cb c7 	. . .
 	jp RSX_HIDDEN_05		;c0ba	c3 aa c7 	. . .
 	jp RSX_HIDDEN_06		;c0bd	c3 06 c9 	. . .
@@ -161,7 +170,7 @@ RSX_COMMANDS_start:
 	;was disassembled becomes defb "CL",0d3h
 
 	defb "RODOS RO"
-lc0c8h: ;I'm not sure why this label is pointed at the last byte of RODOS ROM
+lc0c8h: ;I'm not sure why this label is pointed at the last byte of RODOS ROM, unless its the start of the command table-1
 	defb 0cdh ;RODOS ROM
 	;RSX Command table definitions (Command name, with last letter+128)
 	defb "CL",0d3h ;CLS
@@ -222,15 +231,16 @@ lc0c8h: ;I'm not sure why this label is pointed at the last byte of RODOS ROM
 	defb 'D',0xcf ; DO
 	defb 'ACCES',0xd3 ; ACCESS
 	defb 'COP',0xd9 ; COPY
+	;See page 27 of the RODOS Manul for more details about how to use these next commands
 	defb 084h		;Hidden command 4 aka ^D
 	defb 085h		;Hidden command 5 aka ^E
 	defb 086h		;Hidden command 6 aka ^F
-	; dm 'D'
-	; defb 66+128
 RSX_COMMANDS_end:
-	nop			;c1ca	00 	.
-
+  ;The end of RSX definitions must end with zero.
+	defb 0
+;=======================================================================
 ROM_INIT:
+;=======================================================================
 ;This is the start of the ROM initialise routines.
 
 	call sub_c1f9h		;c1cb	cd f9 c1 	. . .
@@ -756,7 +766,7 @@ SETUP_ENTER_KEY_STRINGS:
 
 ; BLOCK 'STR_CLI_RUN_DISK' (start 0xc4be end 0xc4cb)
 STR_CLI_RUN_DISK_start:
-  defb '|CLI',13,'RUN"DISC',13 ; adding a ' to make my editor happy
+  defb '|CLI',13,'RUN"DISC',13 ; adding a ' to make my editor happy otherwise it thinks the string was left open (it was)
 STR_CLI_RUN_DISK_end:
 CHECK_FOR_CPM_ROM:
 	ld ix,0bee0h		;c4cc	dd 21 e0 be 	. ! . .
@@ -776,7 +786,10 @@ lc4efh:
 	add a,030h		;c4ef	c6 30 	. 0
 	ld (iy+001h),a		;c4f1	fd 77 01 	. w .
 	ret			;c4f4	c9 	.
+
+;=======================================================================
 RSX_HELP:
+;=======================================================================
 	cp 002h		;c4f5	fe 02 	. .
 	jp nc,MSG_TOO_MANY_PARAMETERS		;c4f7	d2 9f fb 	. . .
 	and a			;c4fa	a7 	.
@@ -997,7 +1010,10 @@ sub_c66eh:
 	ld de,0013ah		;c671	11 3a 01 	. : .
 	add hl,de			;c674	19 	.
 	ret			;c675	c9 	.
+
+;=======================================================================
 RSX_ALIAS:
+;=======================================================================
 	and a			;c676	a7 	.
 	jr nz,lc6b5h		;c677	20 3c 	  <
 	call sub_c666h		;c679	cd 66 c6 	. f .
@@ -1216,9 +1232,12 @@ lc797h:
 	scf			;c7a7	37 	7
 	ccf			;c7a8	3f 	?
 	ret			;c7a9	c9 	.
+
+;=======================================================================
 RSX_HIDDEN_05:
+;=======================================================================
 	push de			;c7aa	d5 	.
-	ld (iy+004h),e		;c7ab	fd 73 04 	. s .
+	ld (iy+WS_DRIVE_NUMBER),e		;c7ab	fd 73 04 	. s .
 	call sub_c7b3h		;c7ae	cd b3 c7 	. . .
 	pop de			;c7b1	d1 	.
 	ret			;c7b2	c9 	.
@@ -1235,9 +1254,12 @@ sub_c7b3h:
 	ld b,001h		;c7c5	06 01 	. .
 	ld a,045h		;c7c7	3e 45 	> E
 	jr lc7eah		;c7c9	18 1f 	. .
+
+;=======================================================================
 RSX_HIDDEN_04:
+;=======================================================================
 	push de			;c7cb	d5 	.
-	ld (iy+004h),e		;c7cc	fd 73 04 	. s .
+	ld (iy+WS_DRIVE_NUMBER),e		;c7cc	fd 73 04 	. s .
 	call sub_c7d4h		;c7cf	cd d4 c7 	. . .
 	pop de			;c7d2	d1 	.
 	ret			;c7d3	c9 	.
@@ -1413,7 +1435,10 @@ lc903h:
 	xor a			;c903	af 	.
 	scf			;c904	37 	7
 	ret			;c905	c9 	.
+
+;=======================================================================
 RSX_HIDDEN_06:
+;=======================================================================
 	push de			;c906	d5 	.
 	call sub_c90ch		;c907	cd 0c c9 	. . .
 	pop de			;c90a	d1 	.
@@ -1665,7 +1690,7 @@ lcaa0h:
 	ei			;cab3	fb 	.
 	ret			;cab4	c9 	.
 sub_cab5h:
-	ld a,(iy+004h)		;cab5	fd 7e 04 	. ~ .
+	ld a,(iy+WS_DRIVE_NUMBER)		;cab5	fd 7e 04 	. ~ .
 	call sub_f143h		;cab8	cd 43 f1 	. C .
 	call sub_ca63h		;cabb	cd 63 ca 	. c .
 	ld a,004h		;cabe	3e 04 	> .
@@ -1800,7 +1825,11 @@ sub_cb6dh:
 	call sub_cad5h		;cb81	cd d5 ca 	. . .
 	ld a,003h		;cb84	3e 03 	> .
 	jp sub_cad5h		;cb86	c3 d5 ca 	. . .
+
+;=======================================================================
 RSX_RANDOM:
+;=======================================================================
+
 	and a			;cb89	a7 	.
 	jp nz,MSG_TOO_MANY_PARAMETERS		;cb8a	c2 9f fb 	. . .
 
@@ -1841,7 +1870,10 @@ lcbc6h:
 	ld a,(iy+020h)		;cbd1	fd 7e 20 	. ~
 	ld (hl),a			;cbd4	77 	w
 	ret			;cbd5	c9 	.
+
+;=======================================================================
 RSX_POINT:
+;=======================================================================
 	cp 002h		;cbd6	fe 02 	. .
 	jr z,lcbc6h		;cbd8	28 ec 	( .
 	jp nc,MSG_TOO_MANY_PARAMETERS		;cbda	d2 9f fb 	. . .
@@ -1959,7 +1991,10 @@ sub_cc93h:
 	ld (ix-00eh),a		;ccc7	dd 77 f2 	. w .
 	ld (ix-00dh),a		;ccca	dd 77 f3 	. w .
 	ret			;cccd	c9 	.
+
+;=======================================================================
 RSX_LS:
+;=======================================================================
 	and a			;ccce	a7 	.
 	jp nz,MSG_TOO_MANY_PARAMETERS		;cccf	c2 9f fb 	. . .
 	call PRINT_EXTRA_BLANK_LINE		;ccd2	cd 7d d9 	. } .
@@ -1978,7 +2013,10 @@ lccech:
 	djnz lccech		;ccef	10 fb 	. .
 	call sub_e26fh		;ccf1	cd 6f e2 	. o .
 	jp PRINT_EXTRA_BLANK_LINE		;ccf4	c3 7d d9 	. } .
+
+;=======================================================================
 RSX_EXEC:
+;=======================================================================
 	cp 002h		;ccf7	fe 02 	. .
 	jp nc,MSG_TOO_MANY_PARAMETERS		;ccf9	d2 9f fb 	. . .
 	and a			;ccfc	a7 	.
@@ -2012,7 +2050,11 @@ lcd20h:
 	jr c,lcd0dh		;cd31	38 da 	8 .
 lcd33h:
 	jp CAS_IN_CLOSE		;cd33	c3 7a bc 	. z .
+
+
+;=======================================================================
 RSX_ACCESS:
+;=======================================================================
 	cp 003h		;cd36	fe 03 	. .
 	jp nc,MSG_TOO_MANY_PARAMETERS		;cd38	d2 9f fb 	. . .
 	cp 002h		;cd3b	fe 02 	. .
@@ -2069,7 +2111,10 @@ sub_cdb5h:
 lcdbah:
 	res 7,a		;cdba	cb bf 	. .
 	ret			;cdbc	c9 	.
+
+;=======================================================================
 RSX_COPY:
+;=======================================================================
 	cp 003h		;cdbd	fe 03 	. .
 	jp nc,MSG_TOO_MANY_PARAMETERS		;cdbf	d2 9f fb 	. . .
 	cp 002h		;cdc2	fe 02 	. .
@@ -2112,10 +2157,10 @@ RSX_COPY:
 	push af			;ce13	f5 	.
 	ld a,(iy+006h)		;ce14	fd 7e 06 	. ~ .
 	push af			;ce17	f5 	.
-	ld c,(iy+003h)		;ce18	fd 4e 03 	. N .
+	ld c,(iy+WS_CURRENT_DRIVE_LETTER)		;ce18	fd 4e 03 	. N .
 	xor a			;ce1b	af 	.
 	push ix		;ce1c	dd e5 	. .
-	call sub_d7c9h		;ce1e	cd c9 d7 	. . .
+	call CHANGE_DRIVE		;ce1e	cd c9 d7 	. . .
 	pop ix		;ce21	dd e1 	. .
 	pop af			;ce23	f1 	.
 	ld (iy+006h),a		;ce24	fd 77 06 	. w .
@@ -2123,11 +2168,11 @@ RSX_COPY:
 	pop af			;ce2a	f1 	.
 	ld (iy+005h),a		;ce2b	fd 77 05 	. w .
 	call sub_d9f0h		;ce2e	cd f0 d9 	. . .
-	ld a,(iy+003h)		;ce31	fd 7e 03 	. ~ .
+	ld a,(iy+WS_CURRENT_DRIVE_LETTER)		;ce31	fd 7e 03 	. ~ .
 	push af			;ce34	f5 	.
 	call sub_f798h		;ce35	cd 98 f7 	. . .
 	pop af			;ce38	f1 	.
-	ld (iy+003h),a		;ce39	fd 77 03 	. w .
+	ld (iy+WS_CURRENT_DRIVE_LETTER),a		;ce39	fd 77 03 	. w .
 	pop af			;ce3c	f1 	.
 	call sub_d9f0h		;ce3d	cd f0 d9 	. . .
 	pop af			;ce40	f1 	.
@@ -2135,7 +2180,7 @@ RSX_COPY:
 	pop af			;ce44	f1 	.
 	ld c,a			;ce45	4f 	O
 	xor a			;ce46	af 	.
-	jp sub_d7c9h		;ce47	c3 c9 d7 	. . .
+	jp CHANGE_DRIVE		;ce47	c3 c9 d7 	. . .
 lce4ah:
 	ld hl,(0bf23h)		;ce4a	2a 23 bf 	* # .
 	ld a,(0bf25h)		;ce4d	3a 25 bf 	: % .
@@ -2278,7 +2323,10 @@ sub_cf41h:
 	dec c			;cf4c	0d 	.
 	dec ix		;cf4d	dd 2b 	. +
 	jr sub_cf41h		;cf4f	18 f0 	. .
+
+;=======================================================================
 RSX_BGET:
+;=======================================================================
 	cp 002h		;cf51	fe 02 	. .
 	jp nc,MSG_TOO_MANY_PARAMETERS		;cf53	d2 9f fb 	. . .
 	and a			;cf56	a7 	.
@@ -2300,14 +2348,20 @@ lcf78h:
 	ld (ix+000h),a		;cf78	dd 77 00 	. w .
 	ld (ix+001h),000h		;cf7b	dd 36 01 00 	. 6 . .
 	ret			;cf7f	c9 	.
+
+;=======================================================================
 RSX_BPUT:
+;=======================================================================
 	cp 002h		;cf80	fe 02 	. .
 	jp nc,MSG_TOO_MANY_PARAMETERS		;cf82	d2 9f fb 	. . .
 	and a			;cf85	a7 	.
 	jp z,MSG_WRONG_PARAMETER_AMT		;cf86	ca 97 fb 	. . .
 	ld a,(ix+000h)		;cf89	dd 7e 00 	. ~ .
 	jp CAS_OUT_CHAR		;cf8c	c3 95 bc 	. . .
+
+;=======================================================================
 RSX_CAT:
+;=======================================================================
 	ld (iy+03fh),0ffh		;cf8f	fd 36 3f ff 	. 6 ? .
 	ld (iy+040h),0ffh		;cf93	fd 36 40 ff 	. 6 @ .
 	and a			;cf97	a7 	.
@@ -2429,7 +2483,10 @@ ld070h:
 	ld hl,(0bf00h)		;d096	2a 00 bf 	* . .
 	pop af			;d099	f1 	.
 	ret			;d09a	c9 	.
+
+;=======================================================================
 RSX_FS:
+;=======================================================================
 	ld ix,ld116h		;d09b	dd 21 16 d1 	. ! . .
 	ld de,0008dh		;d09f	11 8d 00 	. . .
 	push iy		;d0a2	fd e5 	. .
@@ -2528,7 +2585,10 @@ STR_LOADING_end:
 STR_SAVING_start:
 	defb 'Saving ',0
 STR_SAVING_end:
+
+;=======================================================================
 RSX_INFO:
+;=======================================================================
 	cp 005h		;d15d	fe 05 	. .
 	jp z,ld1cfh		;d15f	ca cf d1 	. . .
 	cp 002h		;d162	fe 02 	. .
@@ -2632,7 +2692,10 @@ sub_d220h:
 	ld e,(iy+018h)		;d220	fd 5e 18 	. ^ .
 	ld d,(iy+019h)		;d223	fd 56 19 	. V .
 	ret			;d226	c9 	.
+
+;=======================================================================
 RSX_LIST:
+;=======================================================================
 	cp 002h		;d227	fe 02 	. .
 	jp nc,MSG_TOO_MANY_PARAMETERS		;d229	d2 9f fb 	. . .
 	ld b,a			;d22c	47 	G
@@ -2652,7 +2715,10 @@ ld23ah:
 ld247h:
 	call CAS_IN_CLOSE		;d247	cd 7a bc 	. z .
 	jp PRINT_EXTRA_BLANK_LINE		;d24a	c3 7d d9 	. } .
+
+;=======================================================================
 RSX_DUMP:
+;=======================================================================
 	cp 003h		;d24d	fe 03 	. .
 	jp nc,MSG_TOO_MANY_PARAMETERS		;d24f	d2 9f fb 	. . .
 	ld hl,RESET_ENTRY_RST_0		;d252	21 00 00 	! . .
@@ -2760,7 +2826,10 @@ ld2fdh:
 	ld a,050h		;d32e	3e 50 	> P
 	call TXT_OUTPUT		;d330	cd 5a bb 	. Z .
 	jp PRINT_EXTRA_BLANK_LINE		;d333	c3 7d d9 	. } .
+
+;=======================================================================
 RSX_TITLE:
+;=======================================================================
 	cp 002h		;d336	fe 02 	. .
 	jp nc,MSG_TOO_MANY_PARAMETERS		;d338	d2 9f fb 	. . .
 	and a			;d33b	a7 	.
@@ -2801,7 +2870,10 @@ ld368h:
 	ld (iy+040h),0ffh		;d36b	fd 36 40 ff 	. 6 @ .
 	ld (iy+03fh),0ffh		;d36f	fd 36 3f ff 	. 6 ? .
 	ret			;d373	c9 	.
+
+;=======================================================================
 RSX_OPT:
+;=======================================================================
 	cp 003h		;d374	fe 03 	. .
 	jp nc,MSG_TOO_MANY_PARAMETERS		;d376	d2 9f fb 	. . .
 	cp 002h		;d379	fe 02 	. .
@@ -2907,11 +2979,17 @@ ld438h:
 	jp nz,MSG_WRONG_PARAMETER_AMT		;d43a	c2 97 fb 	. . .
 	ld hl,0be49h		;d43d	21 49 be 	! I .
 	jr ld3fdh		;d440	18 bb 	. .
+
+;=======================================================================
 RSX_CLS:
+;=======================================================================
 	and a			;d442	a7 	.
 	jp nz,MSG_TOO_MANY_PARAMETERS		;d443	c2 9f fb 	. . .
-	jp ld88dh		;d446	c3 8d d8 	. . .
+	jp DO_CLS		;d446	c3 8d d8 	. . .
+
+;=======================================================================
 RSX_READSECT:
+;=======================================================================
 	cp 004h		;d449	fe 04 	. .
 	jp nz,MSG_WRONG_PARAMETER_AMT		;d44b	c2 97 fb 	. . .
 	ld hl,0be85h		;d44e	21 85 be 	! . .
@@ -2920,7 +2998,10 @@ RSX_READSECT:
 	call sub_d4abh		;d456	cd ab d4 	. . .
 	call sub_d48ch		;d459	cd 8c d4 	. . .
 	ret			;d45c	c9 	.
+
+;=======================================================================
 RSX_WRITESECT:
+;=======================================================================
 	cp 004h		;d45d	fe 04 	. .
 	jp nz,MSG_WRONG_PARAMETER_AMT		;d45f	c2 97 fb 	. . .
 	ld hl,0be85h		;d462	21 85 be 	! . .
@@ -2977,12 +3058,15 @@ sub_d4abh:
 	ld e,(ix+004h)		;d4b9	dd 5e 04 	. ^ .
 	ld l,(ix+006h)		;d4bc	dd 6e 06 	. n .
 	ld h,(ix+007h)		;d4bf	dd 66 07 	. f .
-	ld (iy+003h),008h		;d4c2	fd 36 03 08 	. 6 . .
+	ld (iy+WS_CURRENT_DRIVE_LETTER),008h		;d4c2	fd 36 03 08 	. 6 . .
 	ld a,e			;d4c6	7b 	{
 	ld (0be08h),a		;d4c7	32 08 be 	2 . .
-	ld (iy+004h),a		;d4ca	fd 77 04 	. w .
+	ld (iy+WS_DRIVE_NUMBER),a		;d4ca	fd 77 04 	. w .
 	ret			;d4cd	c9 	.
+
+;=======================================================================
 RSX_DIR:
+;=======================================================================
 	cp 002h		;d4ce	fe 02 	. .
 	jp nc,MSG_TOO_MANY_PARAMETERS		;d4d0	d2 9f fb 	. . .
 	push af			;d4d3	f5 	.
@@ -3047,7 +3131,10 @@ ld51ch:
 	dec b			;d54a	05 	.
 	dec b			;d54b	05 	.
 	ret			;d54c	c9 	.
+
+;=======================================================================
 RSX_USER:
+;=======================================================================
 	cp 002h		;d54d	fe 02 	. .
 	jp nc,MSG_TOO_MANY_PARAMETERS		;d54f	d2 9f fb 	. . .
 	and a			;d552	a7 	.
@@ -3071,7 +3158,10 @@ ld558h:
 	ld (ix+000h),a		;d585	dd 77 00 	. w .
 	ld (ix+001h),000h		;d588	dd 36 01 00 	. 6 . .
 	jp ld687h		;d58c	c3 87 d6 	. . .
+
+;=======================================================================
 RSX_REN:
+;=======================================================================
 	cp 002h		;d58f	fe 02 	. .
 	jp nz,MSG_WRONG_PARAMETER_AMT		;d591	c2 97 fb 	. . .
 	call sub_da1bh		;d594	cd 1b da 	. . .
@@ -3103,12 +3193,12 @@ ld5b8h:
 	inc ix		;d5c9	dd 23 	. #
 	call sub_da80h		;d5cb	cd 80 da 	. . .
 	ld ix,0bee0h		;d5ce	dd 21 e0 be 	. ! . .
-	ld e,(iy+004h)		;d5d2	fd 5e 04 	. ^ .
+	ld e,(iy+WS_DRIVE_NUMBER)		;d5d2	fd 5e 04 	. ^ .
 	push de			;d5d5	d5 	.
 	call sub_edb6h		;d5d6	cd b6 ed 	. . .
 	pop de			;d5d9	d1 	.
 	ret nz			;d5da	c0 	.
-	ld a,(iy+004h)		;d5db	fd 7e 04 	. ~ .
+	ld a,(iy+WS_DRIVE_NUMBER)		;d5db	fd 7e 04 	. ~ .
 	cp e			;d5de	bb 	.
 	jp nz,MSG_BAD_DRIVE		;d5df	c2 c2 fb 	. . .
 sub_d5e2h:
@@ -3177,7 +3267,10 @@ ld62ah:
 	jp nc,lda0ah		;d654	d2 0a da 	. . .
 	xor a			;d657	af 	.
 	ret			;d658	c9 	.
+
+;=======================================================================
 RSX_ERA:
+;=======================================================================
 	cp 002h		;d659	fe 02 	. .
 	jp nc,MSG_TOO_MANY_PARAMETERS		;d65b	d2 9f fb 	. . .
 	and a			;d65e	a7 	.
@@ -3377,24 +3470,36 @@ ld787h:
 	cp (hl)			;d7b4	be 	.
 	ret z			;d7b5	c8 	.
 	ld (hl),a			;d7b6	77 	w
-	ld a,(iy+003h)		;d7b7	fd 7e 03 	. ~ .
+	ld a,(iy+WS_CURRENT_DRIVE_LETTER)		;d7b7	fd 7e 03 	. ~ .
 	cp e			;d7ba	bb 	.
 	ret nz			;d7bb	c0 	.
 	ld c,e			;d7bc	4b 	K
-	jr sub_d7c9h		;d7bd	18 0a 	. .
+	jr CHANGE_DRIVE		;d7bd	18 0a 	. .
+
+;=======================================================================
 RSX_A:
+;=======================================================================
 	ld c,000h		;d7bf	0e 00 	. .
-	jr sub_d7c9h		;d7c1	18 06 	. .
+	jr CHANGE_DRIVE		;d7c1	18 06 	. .
+
+;=======================================================================
 RSX_B:
+;=======================================================================
 	ld c,001h		;d7c3	0e 01 	. .
-	jr sub_d7c9h		;d7c5	18 02 	. .
+	jr CHANGE_DRIVE		;d7c5	18 02 	. .
+
+;=======================================================================
 RSX_C:
+;=======================================================================
 	ld c,002h		;d7c7	0e 02 	. .
-sub_d7c9h:
+CHANGE_DRIVE:
 	ld a,c			;d7c9	79 	y
-	ld (iy+003h),a		;d7ca	fd 77 03 	. w .
+	ld (iy+WS_CURRENT_DRIVE_LETTER),a		;d7ca	fd 77 03 	. w .
 	jr ld7f8h		;d7cd	18 29 	. )
+
+;=======================================================================
 RSX_DRIVE:
+;=======================================================================
 ;Input:
 ; A=Number of Parameters
 ; IX=pointer to the parameters
@@ -3415,16 +3520,16 @@ RSX_DRIVE:
 	jp nc,MSG_BAD_DRIVE		;d7ed	d2 c2 fb 	. . .
 	sub 041h		;d7f0	d6 41 	. A
 	jp c,MSG_BAD_DRIVE		;d7f2	da c2 fb 	. . .
-	ld (iy+003h),a		;d7f5	fd 77 03 	. w .
+	ld (iy+WS_CURRENT_DRIVE_LETTER),a		;d7f5	fd 77 03 	. w .
 ld7f8h:
 	ld e,a			;d7f8	5f 	_
 	call sub_f11ah		;d7f9	cd 1a f1 	. . .
 	jp nz,MSG_BAD_DRIVE		;d7fc	c2 c2 fb 	. . .
-	ld (iy+004h),e		;d7ff	fd 73 04 	. s .
+	ld (iy+WS_DRIVE_NUMBER),e		;d7ff	fd 73 04 	. s .
 	call sub_d9a0h		;d802	cd a0 d9 	. . .
 	ret nc			;d805	d0 	.
 	jp nz,MSG_DISC_NOT_FORMATTED		;d806	c2 22 fc 	. " .
-	ld a,(iy+003h)		;d809	fd 7e 03 	. ~ .
+	ld a,(iy+WS_CURRENT_DRIVE_LETTER)		;d809	fd 7e 03 	. ~ .
 	ld (iy+013h),a		;d80c	fd 77 13 	. w .
 	ld (iy+043h),a		;d80f	fd 77 43 	. w C
 	call sub_da62h		;d812	cd 62 da 	. b .
@@ -3432,7 +3537,7 @@ ld7f8h:
 	ld (iy+044h),a		;d818	fd 77 44 	. w D
 	ld a,(iy+006h)		;d81b	fd 7e 06 	. ~ .
 	ld (iy+045h),a		;d81e	fd 77 45 	. w E
-	ld a,(iy+004h)		;d821	fd 7e 04 	. ~ .
+	ld a,(iy+WS_DRIVE_NUMBER)		;d821	fd 7e 04 	. ~ .
 	ld (iy+042h),a		;d824	fd 77 42 	. w B
 ld827h:
 	cp 008h		;d827	fe 08 	. .
@@ -3455,7 +3560,10 @@ ld827h:
 	call ld689h		;d844	cd 89 d6 	. . .
 	xor a			;d847	af 	.
 	ret			;d848	c9 	.
+
+;=======================================================================
 RSX_EB:
+;=======================================================================
 	and a			;d849	a7 	.
 	jp nz,MSG_TOO_MANY_PARAMETERS		;d84a	c2 9f fb 	. . .
 	ld ix,0bed0h		;d84d	dd 21 d0 be 	. ! . .
@@ -3491,28 +3599,18 @@ sub_d882h:
 	ex de,hl			;d88a	eb 	.
 	pop hl			;d88b	e1 	.
 	ret			;d88c	c9 	.
-ld88dh:
-	ld hl,ld89ah		;d88d	21 9a d8 	! . .
+DO_CLS:
+	ld hl,CLS_DATA		;d88d	21 9a d8 	! . .
 	ld b,011h		;d890	06 11 	. .
-ld892h:
+PRINT_STRING:
 	ld a,(hl)			;d892	7e 	~
 	call TXT_OUTPUT		;d893	cd 5a bb 	. Z .
 	inc hl			;d896	23 	#
-	djnz ld892h		;d897	10 f9 	. .
+	djnz PRINT_STRING		;d897	10 f9 	. .
 	ret			;d899	c9 	.
-ld89ah:
-	inc b			;d89a	04 	.
-	ld (bc),a			;d89b	02 	.
-	ld c,000h		;d89c	0e 00 	. .
-	rrca			;d89e	0f 	.
-	ld bc,0001ch		;d89f	01 1c 00 	. . .
-	nop			;d8a2	00 	.
-	nop			;d8a3	00 	.
-	inc e			;d8a4	1c 	.
-	ld bc,00d0dh		;d8a5	01 0d 0d 	. . .
-	dec e			;d8a8	1d 	.
-	nop			;d8a9	00 	.
-	nop			;d8aa	00 	.
+CLS_DATA:
+	;This data provides escape codes to do: Clear screen to Mode 2, with white text (ink 13) on black paper
+	defb 04,02,0xe,00,0xf,01,0x1c,00,00,00,0x1c,01,0xd,0xd,0x1d,00,00
 sub_d8abh:
 	push hl			;d8ab	e5 	.
 	call TXT_GET_WINDOW		;d8ac	cd 69 bb 	. i .
@@ -3674,7 +3772,7 @@ FUNC_SUBTRACT_32:
 	sub 020h		;A=A-32 (aka A=A-0x20);d99d	d6 20 	.
 	ret			;d99f	c9 	.
 sub_d9a0h:
-	ld a,(iy+004h)		;d9a0	fd 7e 04 	. ~ .
+	ld a,(iy+WS_DRIVE_NUMBER)		;d9a0	fd 7e 04 	. ~ .
 	ld (iy+012h),000h		;d9a3	fd 36 12 00 	. 6 . .
 	cp 008h		;d9a7	fe 08 	. .
 	jr z,ld9c1h		;d9a9	28 16 	( .
@@ -3714,7 +3812,7 @@ ld9deh:
 	pop hl			;d9e0	e1 	.
 	add hl,de			;d9e1	19 	.
 	ld d,000h		;d9e2	16 00 	. .
-	ld e,(iy+003h)		;d9e4	fd 5e 03 	. ^ .
+	ld e,(iy+WS_CURRENT_DRIVE_LETTER)		;d9e4	fd 5e 03 	. ^ .
 	add hl,de			;d9e7	19 	.
 	pop de			;d9e8	d1 	.
 	ret			;d9e9	c9 	.
@@ -3779,13 +3877,13 @@ sub_da21h:
 	jp nc,MSG_BAD_DRIVE		;da35	d2 c2 fb 	. . .
 	sub 041h		;da38	d6 41 	. A
 	jp c,MSG_BAD_DRIVE		;da3a	da c2 fb 	. . .
-	ld (iy+003h),a		;da3d	fd 77 03 	. w .
+	ld (iy+WS_CURRENT_DRIVE_LETTER),a		;da3d	fd 77 03 	. w .
 	inc de			;da40	13 	.
 	inc de			;da41	13 	.
 	dec b			;da42	05 	.
 	dec b			;da43	05 	.
 lda44h:
-	ld a,(iy+003h)		;da44	fd 7e 03 	. ~ .
+	ld a,(iy+WS_CURRENT_DRIVE_LETTER)		;da44	fd 7e 03 	. ~ .
 lda47h:
 	push de			;da47	d5 	.
 	ld e,a			;da48	5f 	_
@@ -3793,7 +3891,7 @@ lda47h:
 	pop de			;da4c	d1 	.
 	jp nz,MSG_BAD_DRIVE		;da4d	c2 c2 fb 	. . .
 	push af			;da50	f5 	.
-	ld (iy+004h),a		;da51	fd 77 04 	. w .
+	ld (iy+WS_DRIVE_NUMBER),a		;da51	fd 77 04 	. w .
 	call sub_d9fdh		;da54	cd fd d9 	. . .
 	ld (iy+005h),a		;da57	fd 77 05 	. w .
 	call sub_da04h		;da5a	cd 04 da 	. . .
@@ -3802,7 +3900,7 @@ lda47h:
 	ret			;da61	c9 	.
 sub_da62h:
 	ld a,(iy+013h)	;Probably Current Side of Disc	;da62	fd 7e 13 	. ~ .
-	ld (iy+003h),a	;Probably Current Disc	;da65	fd 77 03 	. w .
+	ld (iy+WS_CURRENT_DRIVE_LETTER),a	;Probably Current Disc	;da65	fd 77 03 	. w .
 	jr lda47h		;da68	18 dd 	. .
 sub_da6ah:
 	call sub_da1bh		;da6a	cd 1b da 	. . .
@@ -3954,7 +4052,10 @@ ldb50h:
 	djnz ldb50h		;db5c	10 f2 	. .
 	pop ix		;db5e	dd e1 	. .
 	ret			;db60	c9 	.
+
+;=======================================================================
 RSX_FORMAT:
+;=======================================================================
 	cp 005h		;db61	fe 05 	. .
 	jp z,ldd25h		;db63	ca 25 dd 	. % .
 	jp nc,MSG_TOO_MANY_PARAMETERS		;db66	d2 9f fb 	. . .
@@ -3982,7 +4083,7 @@ ldb87h:
 	inc ix		;db93	dd 23 	. #
 	inc ix		;db95	dd 23 	. #
 ldb97h:
-	ld (iy+004h),c		;db97	fd 71 04 	. q .
+	ld (iy+WS_DRIVE_NUMBER),c		;db97	fd 71 04 	. q .
 	ld c,002h		;db9a	0e 02 	. .
 	and a			;db9c	a7 	.
 	jr z,ldba2h		;db9d	28 03 	( .
@@ -3996,11 +4097,11 @@ ldba2h:
 	cp 0ffh		;dbad	fe ff 	. .
 	jr nz,ldbd7h		;dbaf	20 26 	  &
 	ld b,028h		;dbb1	06 28 	. (
-	ld a,(iy+004h)		;dbb3	fd 7e 04 	. ~ .
+	ld a,(iy+WS_DRIVE_NUMBER)		;dbb3	fd 7e 04 	. ~ .
 	ld e,(iy+013h)		;dbb6	fd 5e 13 	. ^ .
 	cp 0ffh		;dbb9	fe ff 	. .
 	call z,sub_f11ah		;dbbb	cc 1a f1 	. . .
-	ld (iy+004h),a		;dbbe	fd 77 04 	. w .
+	ld (iy+WS_DRIVE_NUMBER),a		;dbbe	fd 77 04 	. w .
 	cp 008h		;dbc1	fe 08 	. .
 	jr nz,ldbd7h		;dbc3	20 12 	  .
 	ld e,(iy+00bh)		;dbc5	fd 5e 0b 	. ^ .
@@ -4019,10 +4120,10 @@ ldbd7h:
 	xor a			;dbdd	af 	.
 	ld (iy+03fh),a		;dbde	fd 77 3f 	. w ?
 	ld (iy+040h),a		;dbe1	fd 77 40 	. w @
-	ld a,(iy+004h)		;dbe4	fd 7e 04 	. ~ .
+	ld a,(iy+WS_DRIVE_NUMBER)		;dbe4	fd 7e 04 	. ~ .
 	ld (0be08h),a		;dbe7	32 08 be 	2 . .
 	ld a,008h		;dbea	3e 08 	> .
-	ld (iy+003h),a		;dbec	fd 77 03 	. w .
+	ld (iy+WS_CURRENT_DRIVE_LETTER),a		;dbec	fd 77 03 	. w .
 	call sub_d9a0h		;dbef	cd a0 d9 	. . .
 	ret nc			;dbf2	d0 	.
 	call z,sub_fc30h		;dbf3	cc 30 fc 	. 0 .
@@ -4190,8 +4291,8 @@ ldd25h:
 	ld (iy+012h),a		;dd2e	fd 77 12 	. w .
 	ld d,(ix+004h)		;dd31	dd 56 04 	. V .
 	ld e,(ix+006h)		;dd34	dd 5e 06 	. ^ .
-	ld (iy+004h),e		;dd37	fd 73 04 	. s .
-	ld (iy+003h),008h		;dd3a	fd 36 03 08 	. 6 . .
+	ld (iy+WS_DRIVE_NUMBER),e		;dd37	fd 73 04 	. s .
+	ld (iy+WS_CURRENT_DRIVE_LETTER),008h		;dd3a	fd 36 03 08 	. 6 . .
 sub_dd3eh:
 
 	;Check for ESC pressed
@@ -4248,7 +4349,10 @@ ldd8dh:
 	ld bc,08141h		;dd8d	01 41 81 	. A .
 	pop bc			;dd90	c1 	.
 	adc a,e			;dd91	8b 	.
+
+;=======================================================================
 RSX_TDUMP:
+;=======================================================================
 	ld a,001h		;dd92	3e 01 	> .
 	ld (0bef0h),a		;dd94	32 f0 be 	2 . .
 	ld (0bef1h),a		;dd97	32 f1 be 	2 . .
@@ -4336,9 +4440,15 @@ lde23h:
 	dec d			;de23	15 	.
 	add hl,hl			;de24	29 	)
 	ld d,c			;de25	51 	Q
+
+;=======================================================================
 RSX_DISK:
+;=======================================================================
 	call RSX_DISK_OUT		;de26	cd 47 de 	. G .
+
+;=======================================================================
 RSX_DISK_IN:
+;=======================================================================
 	ld b,007h		;de29	06 07 	. .
 	ld ix,lde64h		;de2b	dd 21 64 de 	. ! d .
 	ld de,00290h		;de2f	11 90 02 	. . .
@@ -4353,7 +4463,10 @@ RSX_DISK_IN:
 	ld de,CAS_CATALOG		;de3e	11 9b bc 	. . .
 	call MAKE_JP_AT_DE_USING_HL		;de41	cd 74 de 	. t .
 	jp RSX_FS		;de44	c3 9b d0 	. . .
+
+;=======================================================================
 RSX_DISK_OUT:
+;=======================================================================
 	ld b,005h		;de47	06 05 	. .
 	ld ix,lde5ah		;de49	dd 21 5a de 	. ! Z .
 	ld de,002c8h		;de4d	11 c8 02 	. . .
@@ -4515,7 +4628,10 @@ ldf1ah:
 	res 1,(iy+011h)		;df1a	fd cb 11 8e 	. . . .
 	pop af			;df1e	f1 	.
 	ret			;df1f	c9 	.
+
+;=======================================================================
 RSX_SPOOL:
+;=======================================================================
 	and a			;df20	a7 	.
 	jr nz,ldf2ah		;df21	20 07 	  .
 sub_df23h:
@@ -4530,7 +4646,10 @@ ldf2ah:
 	ret nc			;df38	d0 	.
 	set 0,(iy+011h)		;df39	fd cb 11 c6 	. . . .
 	jp ldf4fh		;df3d	c3 4f df 	. O .
+
+;=======================================================================
 RSX_PRINT:
+;=======================================================================
 	and a			;df40	a7 	.
 	jr z,ldf4bh		;df41	28 08 	( .
 	cp 002h		;df43	fe 02 	. .
@@ -4612,7 +4731,10 @@ ldfcfh:
 	ld a,0ffh		;dfd9	3e ff 	> .
 	ld (iy+040h),a		;dfdb	fd 77 40 	. w @
 	ret			;dfde	c9 	.
+
+;=======================================================================
 RSX_CD:
+;=======================================================================
 	and a			;dfdf	a7 	.
 	jr z,le04ah		;dfe0	28 68 	( h
 	cp 001h		;dfe2	fe 01 	. .
@@ -4639,42 +4761,45 @@ le010h:
 	call sub_d9f0h		;e013	cd f0 d9 	. . .
 	ld a,(iy+006h)		;e016	fd 7e 06 	. ~ .
 	call sub_d9f7h		;e019	cd f7 d9 	. . .
-	ld a,(iy+003h)		;e01c	fd 7e 03 	. ~ .
+	ld a,(iy+WS_CURRENT_DRIVE_LETTER)		;e01c	fd 7e 03 	. ~ .
 	cp 008h		;e01f	fe 08 	. .
 	jr nz,le041h		;e021	20 1e 	  .
 	ld a,(iy+013h)		;e023	fd 7e 13 	. ~ .
-	cp (iy+003h)		;e026	fd be 03 	. . .
+	cp (iy+WS_CURRENT_DRIVE_LETTER)		;e026	fd be 03 	. . .
 	ret z			;e029	c8 	.
-	ld (iy+003h),a		;e02a	fd 77 03 	. w .
+	ld (iy+WS_CURRENT_DRIVE_LETTER),a		;e02a	fd 77 03 	. w .
 	ld hl,0be00h		;e02d	21 00 be 	! . .
 	ld e,a			;e030	5f 	_
 	ld d,000h		;e031	16 00 	. .
 	add hl,de			;e033	19 	.
-	ld a,(iy+004h)		;e034	fd 7e 04 	. ~ .
+	ld a,(iy+WS_DRIVE_NUMBER)		;e034	fd 7e 04 	. ~ .
 	ld (hl),a			;e037	77 	w
 	call le010h		;e038	cd 10 e0 	. . .
-	ld a,(iy+004h)		;e03b	fd 7e 04 	. ~ .
+	ld a,(iy+WS_DRIVE_NUMBER)		;e03b	fd 7e 04 	. ~ .
 	jp ld827h		;e03e	c3 27 d8 	. ' .
 le041h:
 	ld (iy+013h),a		;e041	fd 77 13 	. w .
-	ld a,(iy+004h)		;e044	fd 7e 04 	. ~ .
+	ld a,(iy+WS_DRIVE_NUMBER)		;e044	fd 7e 04 	. ~ .
 	jp ld827h		;e047	c3 27 d8 	. ' .
 le04ah:
 	ld a,(iy+043h)		;e04a	fd 7e 43 	. ~ C
-	ld (iy+003h),a		;e04d	fd 77 03 	. w .
+	ld (iy+WS_CURRENT_DRIVE_LETTER),a		;e04d	fd 77 03 	. w .
 	ld e,a			;e050	5f 	_
 	ld a,(iy+044h)		;e051	fd 7e 44 	. ~ D
 	ld (iy+005h),a		;e054	fd 77 05 	. w .
 	ld a,(iy+045h)		;e057	fd 7e 45 	. ~ E
 	ld (iy+006h),a		;e05a	fd 77 06 	. w .
 	ld a,(iy+042h)		;e05d	fd 7e 42 	. ~ B
-	ld (iy+004h),a		;e060	fd 77 04 	. w .
+	ld (iy+WS_DRIVE_NUMBER),a		;e060	fd 77 04 	. w .
 	ld hl,0be00h		;e063	21 00 be 	! . .
 	ld d,000h		;e066	16 00 	. .
 	add hl,de			;e068	19 	.
 	ld (hl),a			;e069	77 	w
 	jr le010h		;e06a	18 a4 	. .
+
+;=======================================================================
 RSX_LINK:
+;=======================================================================
 	cp 002h		;e06c	fe 02 	. .
 	jp nc,MSG_TOO_MANY_PARAMETERS		;e06e	d2 9f fb 	. . .
 	and a			;e071	a7 	.
@@ -4695,10 +4820,10 @@ RSX_LINK:
 	ld a,(0befdh)		;e098	3a fd be 	: . .
 	cp 0feh		;e09b	fe fe 	. .
 	jp nz,MSG_CANT_LINK_TO_LINKED_FILE		;e09d	c2 d6 fb 	. . .
-	ld l,(iy+003h)		;e0a0	fd 6e 03 	. n .
+	ld l,(iy+WS_CURRENT_DRIVE_LETTER)		;e0a0	fd 6e 03 	. n .
 	ld a,(iy+013h)		;e0a3	fd 7e 13 	. ~ .
 	cp l			;e0a6	bd 	.
-	ld l,(iy+004h)		;e0a7	fd 6e 04 	. n .
+	ld l,(iy+WS_DRIVE_NUMBER)		;e0a7	fd 6e 04 	. n .
 	call z,sub_e0cfh		;e0aa	cc cf e0 	. . .
 	ld a,l			;e0ad	7d 	}
 	ld (0befdh),a		;e0ae	32 fd be 	2 . .
@@ -4719,7 +4844,10 @@ RSX_LINK:
 sub_e0cfh:
 	ld l,0ffh		;e0cf	2e ff 	. .
 	ret			;e0d1	c9 	.
+
+;=======================================================================
 RSX_RMDIR:
+;=======================================================================
 	cp 002h		;e0d2	fe 02 	. .
 	jp nc,MSG_TOO_MANY_PARAMETERS		;e0d4	d2 9f fb 	. . .
 	and a			;e0d7	a7 	.
@@ -4762,7 +4890,7 @@ sub_e118h:
 le124h:
 	inc hl			;e124	23 	#
 	ld b,010h		;e125	06 10 	. .
-	call ld892h		;e127	cd 92 d8 	. . .
+	call PRINT_STRING		;e127	cd 92 d8 	. . .
 	call sub_e118h		;e12a	cd 18 e1 	. . .
 	ld a,020h		;e12d	3e 20 	>
 	call TXT_OUTPUT		;e12f	cd 5a bb 	. Z .
@@ -4881,7 +5009,7 @@ le1e9h:
 	ld (iy+010h),a		;e1fa	fd 77 10 	. w .
 	inc hl			;e1fd	23 	#
 	ld b,010h		;e1fe	06 10 	. .
-	call ld892h		;e200	cd 92 d8 	. . .
+	call PRINT_STRING		;e200	cd 92 d8 	. . .
 	call PRINT_EXTRA_BLANK_LINE		;e203	cd 7d d9 	. } .
 	call sub_e26fh		;e206	cd 6f e2 	. o .
 	jp nz,lda0ah		;e209	c2 0a da 	. . .
@@ -4964,7 +5092,7 @@ le29dh:
 	ld c,a			;e2ad	4f 	O
 	ld b,010h		;e2ae	06 10 	. .
 	inc hl			;e2b0	23 	#
-	call ld892h		;e2b1	cd 92 d8 	. . .
+	call PRINT_STRING		;e2b1	cd 92 d8 	. . .
 	pop af			;e2b4	f1 	.
 	cp 02ch		;e2b5	fe 2c 	. ,
 	jr nz,le2cah		;e2b7	20 11 	  .
@@ -5024,13 +5152,13 @@ sub_e311h:
 sub_e32ch:
 	ld hl,lff3bh		;e32c	21 3b ff 	! ; .
 	call DISPLAY_MSG		;e32f	cd 6a d9 	. j .
-	ld a,(iy+003h)		;e332	fd 7e 03 	. ~ .
+	ld a,(iy+WS_CURRENT_DRIVE_LETTER)		;e332	fd 7e 03 	. ~ .
 	cp 008h		;e335	fe 08 	. .
 	jr z,le35bh		;e337	28 22 	( "
 	add a,041h		;e339	c6 41 	. A
 	call TXT_OUTPUT		;e33b	cd 5a bb 	. Z .
-	ld a,(iy+003h)		;e33e	fd 7e 03 	. ~ .
-	ld l,(iy+004h)		;e341	fd 6e 04 	. n .
+	ld a,(iy+WS_CURRENT_DRIVE_LETTER)		;e33e	fd 7e 03 	. ~ .
+	ld l,(iy+WS_DRIVE_NUMBER)		;e341	fd 6e 04 	. n .
 	cp l			;e344	bd 	.
 	jp z,PRINT_EXTRA_BLANK_LINE		;e345	ca 7d d9 	. } .
 le348h:
@@ -5052,7 +5180,7 @@ le35bh:
 	call TXT_OUTPUT		;e367	cd 5a bb 	. Z .
 	ld a,020h		;e36a	3e 20 	>
 	call TXT_OUTPUT		;e36c	cd 5a bb 	. Z .
-	ld l,(iy+004h)		;e36f	fd 6e 04 	. n .
+	ld l,(iy+WS_DRIVE_NUMBER)		;e36f	fd 6e 04 	. n .
 	jr le348h		;e372	18 d4 	. .
 sub_e374h:
 	bit 0,(iy+011h)		;e374	fd cb 11 46 	. . . F
@@ -5124,7 +5252,7 @@ sub_e374h:
 	ldir		;e40a	ed b0 	. .
 	inc hl			;e40c	23 	#
 	inc hl			;e40d	23 	#
-	ld e,(iy+004h)		;e40e	fd 5e 04 	. ^ .
+	ld e,(iy+WS_DRIVE_NUMBER)		;e40e	fd 5e 04 	. ^ .
 	ld a,(hl)			;e411	7e 	~
 	cp 0feh		;e412	fe fe 	. .
 	jr nc,le417h		;e414	30 01 	0 .
@@ -5384,7 +5512,7 @@ sub_e604h:
 	ret			;e647	c9 	.
 sub_e648h:
 	ld e,(ix-00ch)		;e648	dd 5e f4 	. ^ .
-	ld (iy+004h),e		;e64b	fd 73 04 	. s .
+	ld (iy+WS_DRIVE_NUMBER),e		;e64b	fd 73 04 	. s .
 	ret			;e64e	c9 	.
 sub_e64fh:
 	call sub_e648h		;e64f	cd 48 e6 	. H .
@@ -5573,7 +5701,7 @@ le7a6h:
 	ld (ix-001h),a		;e7e4	dd 77 ff 	. w .
 	ld (ix-009h),a		;e7e7	dd 77 f7 	. w .
 	ld (ix-008h),a		;e7ea	dd 77 f8 	. w .
-	ld l,(iy+004h)		;e7ed	fd 6e 04 	. n .
+	ld l,(iy+WS_DRIVE_NUMBER)		;e7ed	fd 6e 04 	. n .
 	ld (ix-00ch),l		;e7f0	dd 75 f4 	. u .
 	ld (ix-004h),a		;e7f3	dd 77 fc 	. w .
 	ld (ix-003h),a		;e7f6	dd 77 fd 	. w .
@@ -5753,7 +5881,7 @@ le975h:
 	ret			;e979	c9 	.
 sub_e97ah:
 	ld a,(ix-00ch)		;e97a	dd 7e f4 	. ~ .
-	ld (iy+004h),a		;e97d	fd 77 04 	. w .
+	ld (iy+WS_DRIVE_NUMBER),a		;e97d	fd 77 04 	. w .
 	res 2,(iy+041h)		;e980	fd cb 41 96 	. . A .
 	call lf07ch		;e984	cd 7c f0 	. | .
 	ret nz			;e987	c0 	.
@@ -5883,7 +6011,7 @@ lea86h:
 	jp lda0ah		;ea97	c3 0a da 	. . .
 lea9ah:
 	ld a,(ix-00ch)		;ea9a	dd 7e f4 	. ~ .
-	ld (iy+004h),a		;ea9d	fd 77 04 	. w .
+	ld (iy+WS_DRIVE_NUMBER),a		;ea9d	fd 77 04 	. w .
 	ld a,(ix-00fh)		;eaa0	dd 7e f1 	. ~ .
 	cp 052h		;eaa3	fe 52 	. R
 	jr nz,leaceh		;eaa5	20 27 	  '
@@ -5956,7 +6084,7 @@ sub_eb34h:
 	pop ix		;eb48	dd e1 	. .
 	call le91ch		;eb4a	cd 1c e9 	. . .
 	ld a,(ix-00ch)		;eb4d	dd 7e f4 	. ~ .
-	ld (iy+004h),a		;eb50	fd 77 04 	. w .
+	ld (iy+WS_DRIVE_NUMBER),a		;eb50	fd 77 04 	. w .
 	ld a,(ix-00fh)		;eb53	dd 7e f1 	. ~ .
 	ld (ix-00fh),043h		;eb56	dd 36 f1 43 	. 6 . C
 	cp 052h		;eb5a	fe 52 	. R
@@ -6309,7 +6437,7 @@ sub_edb6h:
 	jp c,MSG_BAD_DRIVE		;edd0	da c2 fb 	. . .
 	cp 049h		;edd3	fe 49 	. I
 	jp nc,MSG_BAD_DRIVE		;edd5	d2 c2 fb 	. . .
-	ld (iy+003h),a		;edd8	fd 77 03 	. w .
+	ld (iy+WS_CURRENT_DRIVE_LETTER),a		;edd8	fd 77 03 	. w .
 	call lda47h		;eddb	cd 47 da 	. G .
 	dec b			;edde	05 	.
 	dec b			;eddf	05 	.
@@ -6487,10 +6615,10 @@ sub_eecfh:
 	ret			;eee6	c9 	.
 sub_eee7h:
 	ld (0be08h),a		;eee7	32 08 be 	2 . .
-	ld (iy+004h),a		;eeea	fd 77 04 	. w .
+	ld (iy+WS_DRIVE_NUMBER),a		;eeea	fd 77 04 	. w .
 sub_eeedh:
 	ld a,008h		;eeed	3e 08 	> .
-	ld (iy+003h),a		;eeef	fd 77 03 	. w .
+	ld (iy+WS_CURRENT_DRIVE_LETTER),a		;eeef	fd 77 03 	. w .
 	ret			;eef2	c9 	.
 leef3h:
 	call sub_ef01h		;eef3	cd 01 ef 	. . .
@@ -6544,10 +6672,10 @@ sub_ef39h:
 	call sub_ef31h		;ef39	cd 31 ef 	. 1 .
 	ld (iy+03dh),b		;ef3c	fd 70 3d 	. p =
 	ld (iy+03eh),c		;ef3f	fd 71 3e 	. q >
-	ld a,(iy+004h)		;ef42	fd 7e 04 	. ~ .
+	ld a,(iy+WS_DRIVE_NUMBER)		;ef42	fd 7e 04 	. ~ .
 	ld (iy+03fh),a		;ef45	fd 77 3f 	. w ?
 sub_ef48h:
-	ld e,(iy+004h)		;ef48	fd 5e 04 	. ^ .
+	ld e,(iy+WS_DRIVE_NUMBER)		;ef48	fd 5e 04 	. ^ .
 	call sub_f131h		;ef4b	cd 31 f1 	. 1 .
 lef4eh:
 	push hl			;ef4e	e5 	.
@@ -6579,7 +6707,7 @@ sub_ef6ch:
 	ld a,c			;ef72	79 	y
 	cp (iy+03eh)		;ef73	fd be 3e 	. . >
 	jr nz,sub_ef39h		;ef76	20 c1 	  .
-	ld a,(iy+004h)		;ef78	fd 7e 04 	. ~ .
+	ld a,(iy+WS_DRIVE_NUMBER)		;ef78	fd 7e 04 	. ~ .
 	cp (iy+03fh)		;ef7b	fd be 3f 	. . ?
 	jr nz,sub_ef39h		;ef7e	20 b9 	  .
 	call sub_ef31h		;ef80	cd 31 ef 	. 1 .
@@ -6594,7 +6722,7 @@ sub_ef8bh:
 	call sub_ef31h		;ef8e	cd 31 ef 	. 1 .
 	ld de,00200h		;ef91	11 00 02 	. . .
 	add hl,de			;ef94	19 	.
-	ld a,(iy+004h)		;ef95	fd 7e 04 	. ~ .
+	ld a,(iy+WS_DRIVE_NUMBER)		;ef95	fd 7e 04 	. ~ .
 	cp (iy+040h)		;ef98	fd be 40 	. . @
 	call nz,sub_efach		;ef9b	c4 ac ef 	. . .
 	ret nz			;ef9e	c0 	.
@@ -6612,14 +6740,14 @@ sub_efach:
 	ld (iy+040h),a		;efae	fd 77 40 	. w @
 	call sub_ef48h		;efb1	cd 48 ef 	. H .
 	ret nz			;efb4	c0 	.
-	ld e,(iy+004h)		;efb5	fd 5e 04 	. ^ .
+	ld e,(iy+WS_DRIVE_NUMBER)		;efb5	fd 5e 04 	. ^ .
 	ld (iy+040h),e		;efb8	fd 73 40 	. s @
 	ret			;efbb	c9 	.
 sub_efbch:
 	call sub_ef31h		;efbc	cd 31 ef 	. 1 .
 	ld (iy+03dh),b		;efbf	fd 70 3d 	. p =
 	ld (iy+03eh),c		;efc2	fd 71 3e 	. q >
-	ld e,(iy+004h)		;efc5	fd 5e 04 	. ^ .
+	ld e,(iy+WS_DRIVE_NUMBER)		;efc5	fd 5e 04 	. ^ .
 	ld (iy+03fh),e		;efc8	fd 73 3f 	. s ?
 	call sub_efd5h		;efcb	cd d5 ef 	. . .
 	ret z			;efce	c8 	.
@@ -6627,7 +6755,7 @@ sub_efbch:
 	ld (iy+03fh),a		;efd1	fd 77 3f 	. w ?
 	ret			;efd4	c9 	.
 sub_efd5h:
-	ld e,(iy+004h)		;efd5	fd 5e 04 	. ^ .
+	ld e,(iy+WS_DRIVE_NUMBER)		;efd5	fd 5e 04 	. ^ .
 	call sub_f131h		;efd8	cd 31 f1 	. 1 .
 lefdbh:
 	push hl			;efdb	e5 	.
@@ -7019,7 +7147,10 @@ lf1f5h:
 	ld a,007h		;f1f5	3e 07 	> .
 	call TXT_OUTPUT		;f1f7	cd 5a bb 	. Z .
 	jr lf1b3h		;f1fa	18 b7 	. .
+
+;=======================================================================
 RSX_CLI:
+;=======================================================================
 	cp 002h		;f1fc	fe 02 	. .
 	jp nc,MSG_TOO_MANY_PARAMETERS		;f1fe	d2 9f fb 	. . .
 	and a			;f201	a7 	.
@@ -7302,7 +7433,10 @@ lf3afh:
 	cp 020h		;f3ce	fe 20 	.
 	jr z,lf364h		;f3d0	28 92 	( .
 	jr lf3afh		;f3d2	18 db 	. .
+
+;=======================================================================
 RSX_ROMS:
+;=======================================================================
 	cp 010h		;f3d4	fe 10 	. .
 	jp nc,MSG_TOO_MANY_PARAMETERS		;f3d6	d2 9f fb 	. . .
 	ld b,a			;f3d9	47 	G
@@ -7333,7 +7467,10 @@ sub_f3fdh:
 	ld a,001h		;f40d	3e 01 	> .
 	ld b,a			;f40f	47 	G
 	ret			;f410	c9 	.
+
+;=======================================================================
 RSX_ZAP:
+;=======================================================================
 	cp 010h		;f411	fe 10 	. .
 	jp nc,MSG_TOO_MANY_PARAMETERS		;f413	d2 9f fb 	. . .
 	ld b,010h		;f416	06 10 	. .
@@ -7624,7 +7761,10 @@ lf5b9h:
 lf5c9h:
 	res 3,(iy+00dh)		;f5c9	fd cb 0d 9e 	. . . .
 	ret			;f5cd	c9 	.
+
+;=======================================================================
 RSX_PRBUFF:
+;=======================================================================
 	ld de,RESET_ENTRY_RST_0		;f5ce	11 00 00 	. . .
 	ld hl,03fffh		;f5d1	21 ff 3f 	! . ?
 	cp 003h		;f5d4	fe 03 	. .
@@ -7915,11 +8055,11 @@ l0f7efh: ;Called from an RST 18 (maybe?)
 	ldir		;f7f8	ed b0 	. .
 	ld hl,0becfh		;f7fa	21 cf be 	! . .
 	ld b,011h		;f7fd	06 11 	. .
-	ld a,(iy+004h)		;f7ff	fd 7e 04 	. ~ .
+	ld a,(iy+WS_DRIVE_NUMBER)		;f7ff	fd 7e 04 	. ~ .
 	push af			;f802	f5 	.
 	call sub_cee4h		;f803	cd e4 ce 	. . .
 	pop af			;f806	f1 	.
-	ld (iy+004h),a		;f807	fd 77 04 	. w .
+	ld (iy+WS_DRIVE_NUMBER),a		;f807	fd 77 04 	. w .
 	ret			;f80a	c9 	.
 sub_f80bh:
 	call sub_cd6eh		;f80b	cd 6e cd 	. n .
@@ -8013,7 +8153,7 @@ lf893h:
 	push ix		;f8b1	dd e5 	. .
 	push hl			;f8b3	e5 	.
 	push bc			;f8b4	c5 	.
-	ld e,(iy+004h)		;f8b5	fd 5e 04 	. ^ .
+	ld e,(iy+WS_DRIVE_NUMBER)		;f8b5	fd 5e 04 	. ^ .
 	push de			;f8b8	d5 	.
 	cp 002h		;f8b9	fe 02 	. .
 	call z,sub_f8e3h		;f8bb	cc e3 f8 	. . .
@@ -8022,7 +8162,7 @@ lf893h:
 	cp 003h		;f8c3	fe 03 	. .
 	call z,sub_f8f9h		;f8c5	cc f9 f8 	. . .
 	pop de			;f8c8	d1 	.
-	ld (iy+004h),e		;f8c9	fd 73 04 	. s .
+	ld (iy+WS_DRIVE_NUMBER),e		;f8c9	fd 73 04 	. s .
 	pop bc			;f8cc	c1 	.
 	push bc			;f8cd	c5 	.
 	call sub_f858h		;f8ce	cd 58 f8 	. X .
@@ -8073,13 +8213,16 @@ sub_f918h:
 	dec hl			;f918	2b 	+
 	ld (hl),03ah		;f919	36 3a 	6 :
 	dec hl			;f91b	2b 	+
-	ld a,(iy+003h)		;f91c	fd 7e 03 	. ~ .
+	ld a,(iy+WS_CURRENT_DRIVE_LETTER)		;f91c	fd 7e 03 	. ~ .
 	add a,041h		;f91f	c6 41 	. A
 	ld (hl),a			;f921	77 	w
 	inc b			;f922	04 	.
 	inc b			;f923	04 	.
 	ret			;f924	c9 	.
+
+;=======================================================================
 RSX_ASKRAM:
+;=======================================================================
 	cp 003h		;f925	fe 03 	. .
 	jp nc,MSG_TOO_MANY_PARAMETERS		;f927	d2 9f fb 	. . .
 	ld l,(iy+00bh)		;f92a	fd 6e 0b 	. n .
@@ -8107,7 +8250,9 @@ lf942h:
 	ret			;f94c	c9 	.
 	ld a,001h		;f94d	3e 01 	> .
 	jr lf93ah		;f94f	18 e9 	. .
+;=======================================================================
 RSX_LOAD:
+;=======================================================================
 	cp 004h		;f951	fe 04 	. .
 	jp nc,MSG_TOO_MANY_PARAMETERS		;f953	d2 9f fb 	. . .
 	and a			;f956	a7 	.
@@ -8141,7 +8286,10 @@ lf981h:
 	call CAS_IN_DIRECT		;f98f	cd 83 bc 	. . .
 	call CAS_IN_ABANDON		;f992	cd 7d bc 	. } .
 	jp lf9bdh		;f995	c3 bd f9 	. . .
+
+;=======================================================================
 RSX_SAVE:
+;=======================================================================
 	cp 004h		;f998	fe 04 	. .
 	jp nc,MSG_TOO_MANY_PARAMETERS		;f99a	d2 9f fb 	. . .
 	cp 002h		;f99d	fe 02 	. .
@@ -8187,13 +8335,20 @@ lf9c7h:
 	ret nc			;f9f4	d0 	.
 	call CAS_OUT_CLOSE		;f9f5	cd 8f bc 	. . .
 	ret			;f9f8	c9 	.
+
+
+;=======================================================================
 RSX_POKE:
+;=======================================================================
 	call sub_fa18h		;f9f9	cd 18 fa 	. . .
 	ret nz			;f9fc	c0 	.
 	call sub_fa3eh		;f9fd	cd 3e fa 	. > .
 	ld (hl),c			;fa00	71 	q
 	jp lf9bdh		;fa01	c3 bd f9 	. . .
+
+;=======================================================================
 RSX_PEEK:
+;=======================================================================
 	call sub_fa18h		;fa04	cd 18 fa 	. . .
 	ret nz			;fa07	c0 	.
 	push bc			;fa08	c5 	.
@@ -8616,7 +8771,7 @@ ERROR_H_RELAY_PROCESS:
 lfc87h:
 	call KM_WAIT_CHAR		;fc87	cd 06 bb 	. . .
 	push af			;fc8a	f5 	.
-	ld a,(iy+004h)		;fc8b	fd 7e 04 	. ~ .
+	ld a,(iy+WS_DRIVE_NUMBER)		;fc8b	fd 7e 04 	. ~ .
 	call sub_f143h		;fc8e	cd 43 f1 	. C .
 	pop af			;fc91	f1 	.
 	cp 05bh		;fc92	fe 5b 	. [
