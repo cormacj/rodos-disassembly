@@ -2728,7 +2728,7 @@ RSX_DUMP:
 	ld b,a			;d25d	47 	G
 	and a			;d25e	a7 	.
 	jr z,ld265h		;d25f	28 04 	( .
-	call sub_da85h		;d261	cd 85 da 	. . .
+	call sub_PREP_STRING_PARAM		;d261	cd 85 da 	. . .
 	ex de,hl			;d264	eb 	.
 ld265h:
 	call sub_d882h		;d265	cd 82 d8 	. . .
@@ -2982,9 +2982,12 @@ ld438h:
 
 ;=======================================================================
 RSX_CLS:
+;Clear screen to Mode 2, with white text (ink 13) on black paper
 ;=======================================================================
+;Takes no arguments, so error if a>0
 	and a			;d442	a7 	.
 	jp nz,MSG_TOO_MANY_PARAMETERS		;d443	c2 9f fb 	. . .
+;otherwise print the CLS string
 	jp DO_CLS		;d446	c3 8d d8 	. . .
 
 ;=======================================================================
@@ -3439,12 +3442,15 @@ ld782h:
 	pop bc			;d782	c1 	.
 	pop hl			;d783	e1 	.
 	jp MSG_BAD_FILE		;d784	c3 26 fc 	. & .
-ld787h:
+DO_LOGICAL_DRIVE:
 	inc ix		;d787	dd 23 	. #
 	inc ix		;d789	dd 23 	. #
-	call sub_da85h		;d78b	cd 85 da 	. . .
+	call sub_PREP_STRING_PARAM		;d78b	cd 85 da 	. . .
+	;Returns B=Length of string and DE=location of string
 	dec ix		;d78e	dd 2b 	. +
 	dec ix		;d790	dd 2b 	. +
+
+	;If lenght of paramter>1 then print "Bad Drive"
 	ld a,b			;d792	78 	x
 	cp 001h		;d793	fe 01 	. .
 	jp nz,MSG_BAD_DRIVE		;d795	c2 c2 fb 	. . .
@@ -3478,24 +3484,27 @@ ld787h:
 
 ;=======================================================================
 RSX_A:
+;Just an alias for |DRIVE,"A"
 ;=======================================================================
 	ld c,000h		;d7bf	0e 00 	. .
 	jr CHANGE_DRIVE		;d7c1	18 06 	. .
 
 ;=======================================================================
 RSX_B:
+;Just an alias for |DRIVE,"B"
 ;=======================================================================
 	ld c,001h		;d7c3	0e 01 	. .
 	jr CHANGE_DRIVE		;d7c5	18 02 	. .
 
 ;=======================================================================
 RSX_C:
+;Just an alias for |DRIVE,"C"
 ;=======================================================================
 	ld c,002h		;d7c7	0e 02 	. .
 CHANGE_DRIVE:
 	ld a,c			;d7c9	79 	y
 	ld (iy+WS_CURRENT_DRIVE_LETTER),a		;d7ca	fd 77 03 	. w .
-	jr ld7f8h		;d7cd	18 29 	. )
+	jr PROCESS_DRIVE_CHANGE		;d7cd	18 29 	. )
 
 ;=======================================================================
 RSX_DRIVE:
@@ -3503,13 +3512,18 @@ RSX_DRIVE:
 ;Input:
 ; A=Number of Parameters
 ; IX=pointer to the parameters
+
+;First no more than 2 parameters eg, |DRIVE,"A",8
 	cp 003h		;d7cf	fe 03 	. .
 	jp nc,MSG_TOO_MANY_PARAMETERS		;d7d1	d2 9f fb 	. . .
+
+;If 2 parameters, then we're going to alias a logical letter to a physical drive
+;eg |DRIVE,"F",0 creates a F drive thats actually the physical A drive
 	cp 002h		;d7d4	fe 02 	. .
-	jr z,ld787h		;d7d6	28 af 	( .
+	jr z,DO_LOGICAL_DRIVE		;d7d6	28 af 	( .
 	and a			;d7d8	a7 	.
 	jp z,MSG_WRONG_PARAMETER_AMT		;d7d9	ca 97 fb 	. . .
-	call sub_da85h		;d7dc	cd 85 da 	. . .
+	call sub_PREP_STRING_PARAM		;d7dc	cd 85 da 	. . .
 	ld a,b			;d7df	78 	x
 	cp 001h		;d7e0	fe 01 	. .
 	jp nz,MSG_BAD_DRIVE		;d7e2	c2 c2 fb 	. . .
@@ -3521,7 +3535,7 @@ RSX_DRIVE:
 	sub 041h		;d7f0	d6 41 	. A
 	jp c,MSG_BAD_DRIVE		;d7f2	da c2 fb 	. . .
 	ld (iy+WS_CURRENT_DRIVE_LETTER),a		;d7f5	fd 77 03 	. w .
-ld7f8h:
+PROCESS_DRIVE_CHANGE:
 	ld e,a			;d7f8	5f 	_
 	call sub_f11ah		;d7f9	cd 1a f1 	. . .
 	jp nz,MSG_BAD_DRIVE		;d7fc	c2 c2 fb 	. . .
@@ -3581,7 +3595,8 @@ ld86dh:
 	defb 5		;d86d	05 	.
 	defb 0d5h			;d86e	d5 	.
 	defb 0beh			;d86f	be 	.
-	defb '*.BAKER',0c1h
+	defb '*.BAKER',0c1h ;AKA "*.BAKERA"
+
 sub_d878h:
 	push de			;d878	d5 	.
 	push iy		;d879	fd e5 	. .
@@ -3610,7 +3625,20 @@ PRINT_STRING:
 	ret			;d899	c9 	.
 CLS_DATA:
 	;This data provides escape codes to do: Clear screen to Mode 2, with white text (ink 13) on black paper
-	defb 04,02,0xe,00,0xf,01,0x1c,00,00,00,0x1c,01,0xd,0xd,0x1d,00,00
+	;defb 04,02,0xe,00,0xf,01,0x1c,00,00,00,0x1c,01,0xd,0xd,0x1d,00,00
+	inc b			;d89a	04 	.
+	ld (bc),a			;d89b	02 	.
+	ld c,000h		;d89c	0e 00 	. .
+	rrca			;d89e	0f 	.
+	ld bc,0001ch		;d89f	01 1c 00 	. . .
+	nop			;d8a2	00 	.
+	nop			;d8a3	00 	.
+	inc e			;d8a4	1c 	.
+	ld bc,00d0dh		;d8a5	01 0d 0d 	. . .
+	dec e			;d8a8	1d 	.
+	nop			;d8a9	00 	.
+	nop			;d8aa	00 	.
+
 sub_d8abh:
 	push hl			;d8ab	e5 	.
 	call TXT_GET_WINDOW		;d8ac	cd 69 bb 	. i .
@@ -3860,7 +3888,7 @@ lda18h:
 	ret			;da1a	c9 	.
 sub_da1bh:
 	call sub_da62h		;da1b	cd 62 da 	. b .
-	call sub_da85h		;da1e	cd 85 da 	. . .
+	call sub_PREP_STRING_PARAM		;da1e	cd 85 da 	. . .
 sub_da21h:
 	ld a,b			;da21	78 	x
 	cp 002h		;da22	fe 02 	. .
@@ -3919,23 +3947,32 @@ sub_da6ah:
 	scf			;da7e	37 	7
 	ret			;da7f	c9 	.
 sub_da80h:
-	call sub_da85h		;da80	cd 85 da 	. . .
+	call sub_PREP_STRING_PARAM		;da80	cd 85 da 	. . .
 	ex de,hl			;da83	eb 	.
 	ret			;da84	c9 	.
-sub_da85h:
+sub_PREP_STRING_PARAM:
 	;Entry:
 	;IX = pointer to address
 	;Exit:
 	;B=IX[0]
 	;E=IX[1]
 	;D=IX[2]
-	;So, load HL with a vector from ix?
+	;SO...
+	; On exit
+	; 	B=Length of string parameter
+	;		DE=Location of string
+	;   So ld a,(de) would read the first character of the string
+
+	;So HL=parameter address
 	ld l,(ix+000h)		;da85	dd 6e 00 	. n .
 	ld h,(ix+001h)		;da88	dd 66 01 	. f .
+	;B=parameter value(1)
 	ld b,(hl)			;da8b	46 	F
 	inc hl			;da8c	23 	#
+	;E=parameter value(2)
 	ld e,(hl)			;da8d	5e 	^
 	inc hl			;da8e	23 	#
+	;D=parameter value(3)
 	ld d,(hl)			;da8f	56 	V
 	ret			;da90	c9 	.
 sub_da91h:
