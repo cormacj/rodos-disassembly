@@ -173,64 +173,64 @@ RSX_COMMANDS_start:
 lc0c8h: ;I'm not sure why this label is pointed at the last byte of RODOS ROM, unless its the start of the command table-1
 	defb 0cdh ;RODOS ROM
 	;RSX Command table definitions (Command name, with last letter+128)
-	defb "CL",0d3h ;CLS
-	defb "DIS",0xc3 ; DISC
-	defb "DISC.I",0xce ; DISC.IN
-	defb 'DISC.OU',0xd4 ; DISC.OUT
-	defb 'DIS',0xcb ; DISK
-	defb 'DISK.I',0xce ; DISK.IN
-	defb 'DISK.OU',0xd4 ; DISK.OUT
-	defb 0xc1 ; A
-	defb 0xc2 ; B
-	defb 'DRIV',0xc5 ; DRIVE
-	defb 'USE',0xd2 ; USER
-	defb 'DI',0xd2 ; DIR
-	defb 'ER',0xc1 ; ERA
-	defb 'RE',0xce ; REN
-	defb 'FORMA',0xd4 ; FORMAT
-	defb 'MKDI',0xd2 ; MKDIR
-	defb 'C',0xc4 ; CD
-	defb 'CA',0xd4 ; CAT
-	defb 'TITL',0xc5 ; TITLE
-	defb 'RANDO',0xcd ; RANDOM
-	defb 'POIN',0xd4 ; POINT
-	defb 'MOTOR.O',0xce ; MOTOR.ON
-	defb 'MOTOR.OF',0xc6 ; MOTOR.OFF
-	defb 'OP',0xd4 ; OPT
-	defb 'BPU',0xd4 ; BPUT
-	defb 'BGE',0xd4 ; BGET
-	defb 'F',0xd3 ; FS
-	defb 'SAV',0xc5 ; SAVE
-	defb 'LOA',0xc4 ; LOAD
-	defb 'EXE',0xc3 ; EXEC
-	defb 'READSEC',0xd4 ; READSECT
-	defb 'WRITESEC',0xd4 ; WRITESECT
-	defb 'LIN',0xcb ; LINK
-	defb 'RMDI',0xd2 ; RMDIR
-	defb 'ERADI',0xd2 ; ERADIR
-	defb 'R',0xcd ; RM
-	defb 'E',0xc2 ; EB
-	defb 'L',0xd3 ; LS
-	defb 'M',0xc4 ; MD
+	defb "CL", 'S' + 0x80 ;0d3h ;CLS
+	defb "DIS", 'C' + 0x80 ; DISC
+	defb "DISC.I", 'N' + 0x80 ;0xce ; DISC.IN
+	defb 'DISC.OU', 'T' + 0x80 ;0xd4 ; DISC.OUT
+	defb 'DIS', 'K' + 0x80 ;0xcb ; DISK
+	defb 'DISK.I', 'N' + 0x80 ;0xce ; DISK.IN
+	defb 'DISK.OU', 'T' + 0x80 ;0xd4 ; DISK.OUT
+	defb  0xc1 ; A - Z80asm has a bug where 'A' + 0x80 won't work
+	defb  0xc2 ; B
+	defb 'DRIV', 'E' + 0x80 ;0xc5 ; DRIVE
+	defb 'USE', 'R' + 0x80 ; 0xd2 ; USER
+	defb 'DI', 'R' + 0x80 ;0xd2 ; DIR
+	defb 'ER', 'A' + 0x80; 0xc1 ; ERA
+	defb 'RE', 'N' + 0x80 ;0xce ; REN
+	defb 'FORMA', 'T' + 0x80 ;0xd4 ; FORMAT
+	defb 'MKDI', 'R' + 0x80 ;0xd2 ; MKDIR
+	defb 'C', 'D' + 0x80 ;0xc4 ; CD
+	defb 'CA', 'T' + 0x80 ;0xd4 ; CAT
+	defb 'TITL', 'E' + 0x80 ;0xc5 ; TITLE
+	defb 'RANDO', 'M' + 0x80 ;0xcd ; RANDOM
+	defb 'POIN', 'T' + 0x80 ;0xd4 ; POINT
+	defb 'MOTOR.O', 'N' + 0x80 ;0xce ; MOTOR.ON
+	defb 'MOTOR.OF', 'F'  + 0x80 ;0xc6 ; MOTOR.OFF
+	defb 'OP', 'T' + 0x80 ;0xd4 ; OPT
+	defb 'BPU', 'T' + 0x80 ;0xd4 ; BPUT
+	defb 'BGE', 'T' + 0x80 ;0xd4 ; BGET
+	defb 'F', 'S' + 0x80 ;0xd3 ; FS
+	defb 'SAV', 'E' + 0x80 ;0xc5 ; SAVE
+	defb 'LOA', 'D' + 0x80 ;0xc4 ; LOAD
+	defb 'EXE', 'C' + 0x80 ;0xc3 ; EXEC
+	defb 'READSEC', 'T' + 0x80 ;0xd4 ; READSECT
+	defb 'WRITESEC', 'T' + 0x80 ;0xd4 ; WRITESECT
+	defb 'LIN', 'K' + 0x80 ;0xcb ; LINK
+	defb 'RMDI', 'R' + 0x80 ;0xd2 ; RMDIR
+	defb 'ERADI', 'R' + 0x80 ;0xd2 ; ERADIR
+	defb 'R', 'M' + 0x80 ;0xcd ; RM
+	defb 'E', 'B' + 0x80 ;,0xc2 ; EB
+	defb 'L', 'S' + 0x80 ;,0xd3 ; LS
+	defb 'M', 'D' + 0x80 ;0xc4 ; MD
 	defb 0xc3 ; C
-	defb 'INF',0xcf ; INFO
-	defb 'LIS',0xd4 ; LIST
-	defb 'DUM',0xd0 ; DUMP
-	defb 'ZA',0xd0 ; ZAP
-	defb 'ROM',0xd3 ; ROMS
-	defb 'CL',0xc9 ; CLI
-	defb 'TDUM',0xd0 ; TDUMP
-	defb 'SPOO',0xcc ; SPOOL
-	defb 'PRIN',0xd4 ; PRINT
-	defb 'PRBUF',0xc6 ; PRBUFF
-	defb 'ALIA',0xd3 ; ALIAS
-	defb 'ASKRA',0xcd ; ASKRAM
-	defb 'POK',0xc5 ; POKE
-	defb 'PEE',0xcb ; PEEK
-	defb 'HEL',0xd0 ; HELP
-	defb 'D',0xcf ; DO
-	defb 'ACCES',0xd3 ; ACCESS
-	defb 'COP',0xd9 ; COPY
+	defb 'INF', 'O' + 0x80 ;0xcf ; INFO
+	defb 'LIS', 'T' + 0x80 ;0xd4 ; LIST
+	defb 'DUM', 'P' + 0x80 ;0xd0 ; DUMP
+	defb 'ZA', 'P' + 0x80 ;0xd0 ; ZAP
+	defb 'ROM', 'S' + 0x80 ;0xd3 ; ROMS
+	defb 'CL', 'I' + 0x80 ;0xc9 ; CLI
+	defb 'TDUM', 'P' + 0x80 ;0xd0 ; TDUMP
+	defb 'SPOO', 'L' + 0x80 ;0xcc ; SPOOL
+	defb 'PRIN', 'T' + 0x80 ;0xd4 ; PRINT
+	defb 'PRBUF', 'F' + 0x80 ;0xc6 ; PRBUFF
+	defb 'ALIA', 'S' + 0x80 ;0xd3 ; ALIAS
+	defb 'ASKRA', 'M' + 0x80 ;0xcd ; ASKRAM
+	defb 'POK', 'E' + 0x80 ;0xc5 ; POKE
+	defb 'PEE', 'K' + 0x80 ;0xcb ; PEEK
+	defb 'HEL', 'P' + 0x80 ;0xd0 ; HELP
+	defb 'D', 'O' + 0x80 ;0xcf ; DO
+	defb 'ACCES', 'S' + 0x80 ;0xd3 ; ACCESS
+	defb 'COP', 'Y' + 0x80 ;0xd9 ; COPY
 	;See page 27 of the RODOS Manul for more details about how to use these next commands
 	defb 084h		;Hidden command 4 aka ^D
 	defb 085h		;Hidden command 5 aka ^E
@@ -379,7 +379,7 @@ CHECK_FOR_KEY_PRESSED:
 	and 038h		;c277	e6 38 	. 8
 	add a,046h		;c279	c6 46 	. F
 ;OK.... this next bit is stowing code
-;but its wierd. it builts bf05 as:
+;but its wierd. it builds bf05 as:
 ;bf05: &CB,A calculated above,&C9
 ;CB is a bit operation.
 ;C9 - ret
@@ -770,9 +770,9 @@ STR_CLI_RUN_DISK_start:
 STR_CLI_RUN_DISK_end:
 CHECK_FOR_CPM_ROM:
 	ld ix,0bee0h		;c4cc	dd 21 e0 be 	. ! . .
-	ld (ix+000h),044h		;c4d0	dd 36 00 44 	. 6 . D
-	ld (ix+001h),049h		;c4d4	dd 36 01 49 	. 6 . I
-	ld (ix+002h),0d2h		;c4d8	dd 36 02 d2 	. 6 . .
+	ld (ix+000h),'D'		;c4d0	dd 36 00 44 	. 6 . D
+	ld (ix+001h),'I'		;c4d4	dd 36 01 49 	. 6 . I
+	ld (ix+002h),'R' + 0x80 ;0d2h		;c4d8	dd 36 02 d2 	. 6 . .
 	ld hl,0bee0h		;c4dc	21 e0 be 	! . .
 	xor a			;c4df	af 	.
 	call lc47dh		;c4e0	cd 7d c4 	. } .
@@ -794,7 +794,7 @@ RSX_HELP:
 	jp nc,MSG_TOO_MANY_PARAMETERS		;c4f7	d2 9f fb 	. . .
 	and a			;c4fa	a7 	.
 	jr z,lc550h		;c4fb	28 53 	( S
-	call PRINT_EXTRA_BLANK_LINE		;c4fd	cd 7d d9 	. } .
+	call PRINT_CR_LF		;c4fd	cd 7d d9 	. } .
 	call sub_RELOCATE_ROM_SELECT_DESELECT		;c500	cd 5e d9 	. ^ .
 	ld c,(ix+000h)		;c503	dd 4e 00 	. N .
 	ld hl,ROM_TYPE		;c506	21 00 c0 	! . .
@@ -815,14 +815,14 @@ lc521h:
 lc523h:
 	call ROM_SELECT_DESELECT_RELOCATED		;c523	cd c0 be 	. . .
 	and a			;c526	a7 	.
-	jp z,PRINT_EXTRA_BLANK_LINE		;c527	ca 7d d9 	. } .
+	jp z,PRINT_CR_LF		;c527	ca 7d d9 	. } .
 	ld e,a			;c52a	5f 	_
 	and 07fh		;c52b	e6 7f 	. 
 	cp 020h		;c52d	fe 20 	.
 	jr c,lc53bh		;c52f	38 0a 	8 .
 	call TXT_OUTPUT		;c531	cd 5a bb 	. Z .
 	call sub_c5ffh		;c534	cd ff c5 	. . .
-	jp nz,PRINT_EXTRA_BLANK_LINE		;c537	c2 7d d9 	. } .
+	jp nz,PRINT_CR_LF		;c537	c2 7d d9 	. } .
 	inc d			;c53a	14 	.
 lc53bh:
 	inc hl			;c53b	23 	#
@@ -836,11 +836,11 @@ lc540h:
 	inc d			;c548	14 	.
 	jr lc540h		;c549	18 f5 	. .
 lc54bh:
-	call sub_d8abh		;c54b	cd ab d8 	. . .
+	call NEWLINE_IF_NO_DISPLAY_SPACE		;c54b	cd ab d8 	. . .
 	jr lc521h		;c54e	18 d1 	. .
 lc550h:
 	ld (0bf0fh),a		;c550	32 0f bf 	2 . .
-	call PRINT_EXTRA_BLANK_LINE		;c553	cd 7d d9 	. } .
+	call PRINT_CR_LF		;c553	cd 7d d9 	. } .
 	call sub_RELOCATE_ROM_SELECT_DESELECT		;c556	cd 5e d9 	. ^ .
 	ld b,010h		;c559	06 10 	. .
 lc55bh:
@@ -916,7 +916,7 @@ lc5bbh:
 	call ROM_SELECT_DESELECT_RELOCATED		;c5de	cd c0 be 	. . .
 	add a,030h		;c5e1	c6 30 	. 0
 	call TXT_OUTPUT		;c5e3	cd 5a bb 	. Z .
-	call PRINT_EXTRA_BLANK_LINE		;c5e6	cd 7d d9 	. } .
+	call PRINT_CR_LF		;c5e6	cd 7d d9 	. } .
 	xor a			;c5e9	af 	.
 	ret			;c5ea	c9 	.
 sub_c5ebh:
@@ -1059,7 +1059,7 @@ lc6a3h:
 lc6aeh:
 	pop de			;c6ae	d1 	.
 	pop hl			;c6af	e1 	.
-	call PRINT_EXTRA_BLANK_LINE		;c6b0	cd 7d d9 	. } .
+	call PRINT_CR_LF		;c6b0	cd 7d d9 	. } .
 	jr lc683h		;c6b3	18 ce 	. .
 lc6b5h:
 	cp 002h		;c6b5	fe 02 	. .
@@ -1997,7 +1997,7 @@ RSX_LS:
 ;=======================================================================
 	and a			;ccce	a7 	.
 	jp nz,MSG_TOO_MANY_PARAMETERS		;cccf	c2 9f fb 	. . .
-	call PRINT_EXTRA_BLANK_LINE		;ccd2	cd 7d d9 	. } .
+	call PRINT_CR_LF		;ccd2	cd 7d d9 	. } .
 	call sub_da62h		;ccd5	cd 62 da 	. b .
 	call sub_d9a0h		;ccd8	cd a0 d9 	. . .
 	ret nc			;ccdb	d0 	.
@@ -2012,7 +2012,7 @@ lccech:
 	inc hl			;ccee	23 	#
 	djnz lccech		;ccef	10 fb 	. .
 	call sub_e26fh		;ccf1	cd 6f e2 	. o .
-	jp PRINT_EXTRA_BLANK_LINE		;ccf4	c3 7d d9 	. } .
+	jp PRINT_CR_LF		;ccf4	c3 7d d9 	. } .
 
 ;=======================================================================
 RSX_EXEC:
@@ -2559,7 +2559,7 @@ ld122h:
 	call sub_d13ch		;d131	cd 3c d1 	. < .
 	ld a,022h		;d134	3e 22 	> "
 	call TXT_OUTPUT		;d136	cd 5a bb 	. Z .
-	jp PRINT_EXTRA_BLANK_LINE		;d139	c3 7d d9 	. } .
+	jp PRINT_CR_LF		;d139	c3 7d d9 	. } .
 sub_d13ch:
 	push hl			;d13c	e5 	.
 	push bc			;d13d	c5 	.
@@ -2714,7 +2714,7 @@ ld23ah:
 	jr z,ld23ah		;d245	28 f3 	( .
 ld247h:
 	call CAS_IN_CLOSE		;d247	cd 7a bc 	. z .
-	jp PRINT_EXTRA_BLANK_LINE		;d24a	c3 7d d9 	. } .
+	jp PRINT_CR_LF		;d24a	c3 7d d9 	. } .
 
 ;=======================================================================
 RSX_DUMP:
@@ -2768,14 +2768,14 @@ ld29bh:
 	call z,sub_d2c0h		;d2a6	cc c0 d2 	. . .
 	call TXT_OUTPUT		;d2a9	cd 5a bb 	. Z .
 	djnz ld29bh		;d2ac	10 ed 	. .
-	call PRINT_EXTRA_BLANK_LINE		;d2ae	cd 7d d9 	. } .
+	call PRINT_CR_LF		;d2ae	cd 7d d9 	. } .
 	call sub_c5ffh		;d2b1	cd ff c5 	. . .
 	jr z,ld26fh		;d2b4	28 b9 	( .
 ld2b6h:
 	cp 01ah		;d2b6	fe 1a 	. .
 	jr z,ld286h		;d2b8	28 cc 	( .
 	call CAS_IN_CLOSE		;d2ba	cd 7a bc 	. z .
-	jp PRINT_EXTRA_BLANK_LINE		;d2bd	c3 7d d9 	. } .
+	jp PRINT_CR_LF		;d2bd	c3 7d d9 	. } .
 sub_d2c0h:
 	ld a,02eh		;d2c0	3e 2e 	> .
 	ret			;d2c2	c9 	.
@@ -2819,13 +2819,13 @@ ld2fdh:
 	call sub_d93ah		;d31b	cd 3a d9 	. : .
 	ld a,(ix+012h)		;d31e	dd 7e 12 	. ~ .
 	and 001h		;d321	e6 01 	. .
-	jp z,PRINT_EXTRA_BLANK_LINE		;d323	ca 7d d9 	. } .
+	jp z,PRINT_CR_LF		;d323	ca 7d d9 	. } .
 	ld a,020h		;d326	3e 20 	>
 	call TXT_OUTPUT		;d328	cd 5a bb 	. Z .
 	call TXT_OUTPUT		;d32b	cd 5a bb 	. Z .
 	ld a,050h		;d32e	3e 50 	> P
 	call TXT_OUTPUT		;d330	cd 5a bb 	. Z .
-	jp PRINT_EXTRA_BLANK_LINE		;d333	c3 7d d9 	. } .
+	jp PRINT_CR_LF		;d333	c3 7d d9 	. } .
 
 ;=======================================================================
 RSX_TITLE:
@@ -2879,14 +2879,17 @@ RSX_OPT:
 	cp 002h		;d379	fe 02 	. .
 	jp nz,MSG_WRONG_PARAMETER_AMT		;d37b	c2 97 fb 	. . .
 	ld a,(ix+002h)		;d37e	dd 7e 02 	. ~ .
+OPT_1:
+;Loading messages off/on
 	cp 001h		;d381	fe 01 	. .
-	jr nz,ld38ch		;d383	20 07 	  .
+	jr nz,OPT_2		;d383	20 07 	  .
 	ld a,(ix+000h)		;d385	dd 7e 00 	. ~ .
 	ld (iy+008h),a		;d388	fd 77 08 	. w .
 	ret			;d38b	c9 	.
-ld38ch:
+OPT_2:
+;Case sensitivity of filesnames off/on
 	cp 002h		;d38c	fe 02 	. .
-	jr nz,ld3a2h		;d38e	20 12 	  .
+	jr nz,OPT_3		;d38e	20 12 	  .
 	ld a,(ix+000h)		;d390	dd 7e 00 	. ~ .
 	xor 001h		;d393	ee 01 	. .
 	and 001h		;d395	e6 01 	. .
@@ -2896,75 +2899,88 @@ ld38ch:
 	or c			;d39d	b1 	.
 	ld (iy+041h),a		;d39e	fd 77 41 	. w A
 	ret			;d3a1	c9 	.
-ld3a2h:
+OPT_3:
+;Cassette loading messages off/on
 	cp 003h		;d3a2	fe 03 	. .
-	jr nz,ld3b0h		;d3a4	20 0a 	  .
+	jr nz,OPT_4		;d3a4	20 0a 	  .
 	ld a,(ix+000h)		;d3a6	dd 7e 00 	. ~ .
 	and 001h		;d3a9	e6 01 	. .
 	xor 001h		;d3ab	ee 01 	. .
 	jp CAS_NOISY		;d3ad	c3 6b bc 	. k .
-ld3b0h:
+OPT_4:
+;overwrite file: 0=ask 1=overwrite 2=create backup
 	cp 004h		;d3b0	fe 04 	. .
-	jr nz,ld3bbh		;d3b2	20 07 	  .
+	jr nz,OPT_5		;d3b2	20 07 	  .
 	ld a,(ix+000h)		;d3b4	dd 7e 00 	. ~ .
 	ld (iy+016h),a		;d3b7	fd 77 16 	. w .
 	ret			;d3ba	c9 	.
-ld3bbh:
+OPT_5:
+;disk read error retry count (default=16)
 	cp 005h		;d3bb	fe 05 	. .
-	jr nz,ld3c9h		;d3bd	20 0a 	  .
+	jr nz,OPT_6		;d3bd	20 0a 	  .
 	ld a,(ix+000h)		;d3bf	dd 7e 00 	. ~ .
 	ld (iy+009h),a		;d3c2	fd 77 09 	. w .
 	ld (0be66h),a		;d3c5	32 66 be 	2 f .
 	ret			;d3c8	c9 	.
-ld3c9h:
+OPT_6:
+;disk error message (off/on)
 	cp 006h		;d3c9	fe 06 	. .
-	jr nz,ld3d4h		;d3cb	20 07 	  .
+	jr nz,OPT_7		;d3cb	20 07 	  .
 	ld a,(ix+000h)		;d3cd	dd 7e 00 	. ~ .
 	ld (DISK_ERROR_MESSAGE_FLAG),a		;d3d0	32 78 be 	2 x .
 	ret			;d3d3	c9 	.
-ld3d4h:
+OPT_7:
+;motor on time in 1/50sec (default=1 second)
 	cp 007h		;d3d4	fe 07 	. .
-	jr nz,ld3e5h		;d3d6	20 0d 	  .
+	jr nz,OPT_8		;d3d6	20 0d 	  .
 	ld a,(ix+000h)		;d3d8	dd 7e 00 	. ~ .
 	ld (0be44h),a		;d3db	32 44 be 	2 D .
 	ld a,(ix+001h)		;d3de	dd 7e 01 	. ~ .
 	ld (0be45h),a		;d3e1	32 45 be 	2 E .
 	ret			;d3e4	c9 	.
-ld3e5h:
+OPT_8:
+;motor off time in 1/50sec (default=7 second)
 	cp 008h		;d3e5	fe 08 	. .
-	jr nz,ld3f6h		;d3e7	20 0d 	  .
+	jr nz,OPT_9		;d3e7	20 0d 	  .
 	ld a,(ix+000h)		;d3e9	dd 7e 00 	. ~ .
 	ld (0be46h),a		;d3ec	32 46 be 	2 F .
 	ld a,(ix+001h)		;d3ef	dd 7e 01 	. ~ .
 	ld (0be47h),a		;d3f2	32 47 be 	2 G .
 	ret			;d3f5	c9 	.
-ld3f6h:
+OPT_9:
+;drive tracking speed in ms (default=12)
 	cp 009h		;d3f6	fe 09 	. .
-	jr nz,ld404h		;d3f8	20 0a 	  .
+	jr nz,OPT_10		;d3f8	20 0a 	  .
 	ld hl,0be4ah		;d3fa	21 4a be 	! J .
-ld3fdh:
+UPDATE_DRIVE_PARAM:
+;See https://www.cpcwiki.eu/index.php/AMSDOS_Memory_Map for details
+;Called from several areas with HL=parameter to be changed
 	ld a,(ix+000h)		;d3fd	dd 7e 00 	. ~ .
 	ld (hl),a			;d400	77 	w
 	jp sub_cb6dh		;d401	c3 6d cb 	. m .
-ld404h:
+OPT_10:
+;Head load delay in ms (default=1)
 	cp 00ah		;d404	fe 0a 	. .
-	jr nz,ld408h		;d406	20 00 	  .
-ld408h:
+	jr nz,OPT_11		;d406	20 00 	  .
+OPT_11:
+;Head unload delay in ms (default=1)
 	cp 00bh		;d408	fe 0b 	. .
-	jr nz,ld411h		;d40a	20 05 	  .
+	jr nz,OPT_12		;d40a	20 05 	  .
 	ld hl,0be48h		;d40c	21 48 be 	! H .
-	jr ld3fdh		;d40f	18 ec 	. .
-ld411h:
+	jr UPDATE_DRIVE_PARAM		;d40f	18 ec 	. .
+OPT_12:
+;Extra external disk drives port number
 	cp 00ch		;d411	fe 0c 	. .
-	jr nz,ld422h		;d413	20 0d 	  .
+	jr nz,OPT_13		;d413	20 0d 	  .
 	ld a,(ix+000h)		;d415	dd 7e 00 	. ~ .
 	ld (iy+058h),a		;d418	fd 77 58 	. w X
 	ld a,(ix+001h)		;d41b	dd 7e 01 	. ~ .
 	ld (iy+059h),a		;d41e	fd 77 59 	. w Y
 	ret			;d421	c9 	.
-ld422h:
+OPT_13:
+;Enable 40 track disk to be read in 80 track drive in double step (off/on)
 	cp 00dh		;d422	fe 0d 	. .
-	jr nz,ld438h		;d424	20 12 	  .
+	jr nz,OPT_14		;d424	20 12 	  .
 	ld a,(ix+000h)		;d426	dd 7e 00 	. ~ .
 	sla a		;d429	cb 27 	. '
 	and 002h		;d42b	e6 02 	. .
@@ -2974,11 +2990,12 @@ ld422h:
 	or c			;d433	b1 	.
 	ld (iy+041h),a		;d434	fd 77 41 	. w A
 	ret			;d437	c9 	.
-ld438h:
+OPT_14:
+;Head settle time in ms (default 15)
 	cp 00eh		;d438	fe 0e 	. .
 	jp nz,MSG_WRONG_PARAMETER_AMT		;d43a	c2 97 fb 	. . .
 	ld hl,0be49h		;d43d	21 49 be 	! I .
-	jr ld3fdh		;d440	18 bb 	. .
+	jr UPDATE_DRIVE_PARAM		;d440	18 bb 	. .
 
 ;=======================================================================
 RSX_CLS:
@@ -3615,8 +3632,8 @@ sub_d882h:
 	pop hl			;d88b	e1 	.
 	ret			;d88c	c9 	.
 DO_CLS:
-	ld hl,CLS_DATA		;d88d	21 9a d8 	! . .
-	ld b,011h		;d890	06 11 	. .
+	ld hl,CLS_DATA	;We're printing characters from here	;d88d	21 9a d8 	! . .
+	ld b,011h		;The string is 0x11h long ;d890	06 11 	. .
 PRINT_STRING:
 	ld a,(hl)			;d892	7e 	~
 	call TXT_OUTPUT		;d893	cd 5a bb 	. Z .
@@ -3625,33 +3642,35 @@ PRINT_STRING:
 	ret			;d899	c9 	.
 CLS_DATA:
 	;This data provides escape codes to do: Clear screen to Mode 2, with white text (ink 13) on black paper
-	;defb 04,02,0xe,00,0xf,01,0x1c,00,00,00,0x1c,01,0xd,0xd,0x1d,00,00
-	inc b			;d89a	04 	.
-	ld (bc),a			;d89b	02 	.
-	ld c,000h		;d89c	0e 00 	. .
-	rrca			;d89e	0f 	.
-	ld bc,0001ch		;d89f	01 1c 00 	. . .
-	nop			;d8a2	00 	.
-	nop			;d8a3	00 	.
-	inc e			;d8a4	1c 	.
-	ld bc,00d0dh		;d8a5	01 0d 0d 	. . .
-	dec e			;d8a8	1d 	.
-	nop			;d8a9	00 	.
-	nop			;d8aa	00 	.
+	defb 04h,002h ;Set mode 2
+	defb 0eh,000h ;Set paper ink 0 (Black)
+	defb 0fh,001h ;Set pen ink 1 (White)
+	defb 01ch,00h,00h,00h ;Set ink 0 to 0,0 (Black/Black)
+	defb 01ch,01h,0dh,0dh ;Set ink 1 to 13,13 (White/White)
+	defb 01dh,00h,00h ;Border 0,0 (Black, Black)
 
-sub_d8abh:
+NEWLINE_IF_NO_DISPLAY_SPACE:
+;This is related to directory listing.
+;If there isn't enough width to display another file (18 characters), print a new line
 	push hl			;d8ab	e5 	.
-	call TXT_GET_WINDOW		;d8ac	cd 69 bb 	. i .
-	ld a,d			;d8af	7a 	z
-	sub h			;d8b0	94 	.
-	ld e,a			;d8b1	5f 	_
+	call TXT_GET_WINDOW		;Returns the size of the current window - returns physical coordinates ;d8ac	cd 69 bb 	. i .
+	;Exit: H holds the column number of the left edge, D holds the column number of the right edge, L holds the
+	;line number of the top edge, E holds the line number of the bottom edge, A is corrupt, Carry is false if
+	;the window covers the entire screen, and the other registers are always preserved
+	ld a,d		;D=Column number of right edge	;d8af	7a 	z
+	sub h			;So right_edge-left_edge aka get the window width ;d8b0	94 	.
+	ld e,a		;Save this to E	;d8b1	5f 	_
 	call TXT_GET_CURSOR		;d8b2	cd 78 bb 	. x .
-	ld a,e			;d8b5	7b 	{
-	sub h			;d8b6	94 	.
+	;Exit: H holds the logical column number, L holds the logical line number, and A contains the roll count, the
+	;flags are corrupt, and all the other registers are preserved
+	;Notes: The roll count is increased when the screen is scrolled down, and is decreased when it is scrolled up
+	ld a,e		;Get the window width back from E	;d8b5	7b 	{
+	sub h			;calculate window_width-cursor_column ;d8b6	94 	.
 	pop hl			;d8b7	e1 	.
-	cp 012h		;d8b8	fe 12 	. .
-	jp c,PRINT_EXTRA_BLANK_LINE		;d8ba	da 7d d9 	. } .
+	cp 012h		;If thats>012h (18) print a new line ;d8b8	fe 12 	. .
+	jp c,PRINT_CR_LF		;d8ba	da 7d d9 	. } .
 	ret			;d8bd	c9 	.
+
 PRINT_ENTER_NAME:
 	ld hl,MSG_ENTER_NAME		;d8be	21 cf d8 	! . .
 	call DISPLAY_MSG		;d8c1	cd 6a d9 	. j .
@@ -3662,6 +3681,7 @@ PRINT_ENTER_NAME:
 	jp ld8f7h		;d8cc	c3 f7 d8 	. . .
 MSG_ENTER_NAME:
   defb '{Enter name:',0
+
 PROMPT_ENTER_NAME:
 	call PRINT_ENTER_NAME ;d8dc
 	ld ix,0bee0h		;d8df	dd 21 e0 be 	. ! . .
@@ -3772,20 +3792,25 @@ DISPLAY_MSG:
 	cp 05ch		;d96d	fe 5c 	. \
 	jr z,ld97ch		;d96f	28 0b 	( .
 	cp 07bh		;d971	fe 7b 	. {
-	call z,PRINT_NEWLINE		;d973	cc 83 d9 	. . .
+	call z,PRINT_CR_ONLY		;d973	cc 83 d9 	. . .
 	call TXT_OUTPUT		;d976	cd 5a bb 	. Z .
 	inc hl			;d979	23 	#
 	jr DISPLAY_MSG		;d97a	18 ee 	. .
 ld97ch:
 	inc hl			;d97c	23 	#
-PRINT_EXTRA_BLANK_LINE:
-	call PRINT_NEWLINE		;d97d	cd 83 d9 	. . .
+
+PRINT_CR_LF:
+	call PRINT_CR_ONLY		;d97d	cd 83 d9 	. . .
+	;Now print the optional LF from the previous call
 	jp TXT_OUTPUT		;d980	c3 5a bb 	. Z .
-PRINT_NEWLINE:
+PRINT_CR_ONLY:
+;print CR, but LF is optional
+;This exits with a=0xa (ascii 10)
 	ld a,00dh		;d983	3e 0d 	> .
 	call TXT_OUTPUT		;d985	cd 5a bb 	. Z .
 	ld a,00ah		;d988	3e 0a 	> .
 	ret			;d98a	c9 	.
+
 DELETE_CHAR:
 	push af			;d98b	f5 	.
 	ld a,008h		;Backspace ;d98c	3e 08 	> .
@@ -3950,15 +3975,12 @@ sub_da80h:
 	call sub_PREP_STRING_PARAM		;da80	cd 85 da 	. . .
 	ex de,hl			;da83	eb 	.
 	ret			;da84	c9 	.
+
 sub_PREP_STRING_PARAM:
 	;Entry:
-	;IX = pointer to address
+	;IX = pointer to parameter address
+	;
 	;Exit:
-	;B=IX[0]
-	;E=IX[1]
-	;D=IX[2]
-	;SO...
-	; On exit
 	; 	B=Length of string parameter
 	;		DE=Location of string
 	;   So ld a,(de) would read the first character of the string
@@ -3975,6 +3997,7 @@ sub_PREP_STRING_PARAM:
 	;D=parameter value(3)
 	ld d,(hl)			;da8f	56 	V
 	ret			;da90	c9 	.
+
 sub_da91h:
 	push hl			;da91	e5 	.
 	push de			;da92	d5 	.
@@ -3995,6 +4018,7 @@ sub_da91h:
 	ret			;dab2	c9 	.
 MSG_TRACK:
 	db "Track ",0
+
 sub_dabah:
 	ld a,b			;daba	78 	x
 	cp 002h		;dabb	fe 02 	. .
@@ -4652,8 +4676,10 @@ SEND_CHARACTER_TO_PRINTER:
 	pop af			;df0b	f1 	.
 	ret			;df0c	c9 	.
 SET_A_TO_020H:
+;Probably a Space character
 	ld a,020h		;df0d	3e 20 	>
 	ret			;df0f	c9 	.
+
 CHECK_FOR_ESC:
 	;ESC check
 	ld a,042h		;df10	3e 42 	> B
@@ -5047,7 +5073,7 @@ le1e9h:
 	inc hl			;e1fd	23 	#
 	ld b,010h		;e1fe	06 10 	. .
 	call PRINT_STRING		;e200	cd 92 d8 	. . .
-	call PRINT_EXTRA_BLANK_LINE		;e203	cd 7d d9 	. } .
+	call PRINT_CR_LF		;e203	cd 7d d9 	. } .
 	call sub_e26fh		;e206	cd 6f e2 	. o .
 	jp nz,lda0ah		;e209	c2 0a da 	. . .
 	ld hl,lff43h		;e20c	21 43 ff 	! C .
@@ -5072,7 +5098,7 @@ le232h:
 	call TXT_OUTPUT		;e234	cd 5a bb 	. Z .
 	ld a,04bh		;e237	3e 4b 	> K
 	call TXT_OUTPUT		;e239	cd 5a bb 	. Z .
-	call PRINT_EXTRA_BLANK_LINE		;e23c	cd 7d d9 	. } .
+	call PRINT_CR_LF		;e23c	cd 7d d9 	. } .
 	jp lda0ah		;e23f	c3 0a da 	. . .
 le242h:
 	ld (0beeeh),de		;e242	ed 53 ee be 	. S . .
@@ -5163,7 +5189,7 @@ le2e8h:
 	ld a,021h		;e2f2	3e 21 	> !
 	call z,SET_A_TO_020H		;e2f4	cc 0d df 	. . .
 	call TXT_OUTPUT		;e2f7	cd 5a bb 	. Z .
-	call sub_d8abh		;e2fa	cd ab d8 	. . .
+	call NEWLINE_IF_NO_DISPLAY_SPACE		;e2fa	cd ab d8 	. . .
 	pop ix		;e2fd	dd e1 	. .
 	ld de,0000fh		;e2ff	11 0f 00 	. . .
 	add hl,de			;e302	19 	.
@@ -5197,7 +5223,7 @@ sub_e32ch:
 	ld a,(iy+WS_CURRENT_DRIVE_LETTER)		;e33e	fd 7e 03 	. ~ .
 	ld l,(iy+WS_DRIVE_NUMBER)		;e341	fd 6e 04 	. n .
 	cp l			;e344	bd 	.
-	jp z,PRINT_EXTRA_BLANK_LINE		;e345	ca 7d d9 	. } .
+	jp z,PRINT_CR_LF		;e345	ca 7d d9 	. } .
 le348h:
 	ld a,028h		;e348	3e 28 	> (
 	call TXT_OUTPUT		;e34a	cd 5a bb 	. Z .
@@ -5207,7 +5233,7 @@ le348h:
 	pop de			;e352	d1 	.
 	ld a,029h		;e353	3e 29 	> )
 	call TXT_OUTPUT		;e355	cd 5a bb 	. Z .
-	jp PRINT_EXTRA_BLANK_LINE		;e358	c3 7d d9 	. } .
+	jp PRINT_CR_LF		;e358	c3 7d d9 	. } .
 le35bh:
 	ld a,073h		;e35b	3e 73 	> s
 	call TXT_OUTPUT		;e35d	cd 5a bb 	. Z .
@@ -5821,7 +5847,7 @@ le888h:
 	call nc,FUNC_SUBTRACT_32		;e8a3	d4 9d d9 	. . .
 	call TXT_OUTPUT		;e8a6	cd 5a bb 	. Z .
 	push af			;e8a9	f5 	.
-	call PRINT_EXTRA_BLANK_LINE		;e8aa	cd 7d d9 	. } .
+	call PRINT_CR_LF		;e8aa	cd 7d d9 	. } .
 	pop af			;e8ad	f1 	.
 	;E key, maybe?
 	cp 045h		;e8ae	fe 45 	. E
@@ -7179,7 +7205,7 @@ lf1ebh:
 	jr nz,lf1f5h		;f1ed	20 06 	  .
 	ld a,00dh		;f1ef	3e 0d 	> .
 	ld (de),a			;f1f1	12 	.
-	jp PRINT_EXTRA_BLANK_LINE		;f1f2	c3 7d d9 	. } .
+	jp PRINT_CR_LF		;f1f2	c3 7d d9 	. } .
 lf1f5h:
 	ld a,007h		;f1f5	3e 07 	> .
 	call TXT_OUTPUT		;f1f7	cd 5a bb 	. Z .
@@ -8753,7 +8779,7 @@ MSG_BAD_FILE:
 	ld a,017h		;fc26	3e 17 	> .
 	jr ERROR_H_RELAY_1		;fc28	18 df 	. .
 sub_fc2ah:
-	call PRINT_EXTRA_BLANK_LINE		;fc2a	cd 7d d9 	. } .
+	call PRINT_CR_LF		;fc2a	cd 7d d9 	. } .
 	jp sub_db4ch		;fc2d	c3 4c db 	. L .
 sub_fc30h:
 	call sub_e32ch		;fc30	cd 2c e3 	. , .
@@ -8761,7 +8787,7 @@ sub_fc30h:
 	call DISPLAY_MSG		;fc36	cd 6a d9 	. j .
 	call sub_fc4bh		;fc39	cd 4b fc 	. K .
 	push af			;fc3c	f5 	.
-	call PRINT_EXTRA_BLANK_LINE		;fc3d	cd 7d d9 	. } .
+	call PRINT_CR_LF		;fc3d	cd 7d d9 	. } .
 	pop af			;fc40	f1 	.
 	cp 061h		;fc41	fe 61 	. a
 	call nc,FUNC_SUBTRACT_32		;fc43	d4 9d d9 	. . .
@@ -8798,7 +8824,7 @@ ERROR_H_RELAY_PROCESS:
 	bit 0,(iy+00dh)		;fc6f	fd cb 0d 46 	. . . F
 	jr nz,lfcb7h		;fc73	20 42 	  B
 	push hl			;fc75	e5 	.
-	call PRINT_EXTRA_BLANK_LINE		;fc76	cd 7d d9 	. } .
+	call PRINT_CR_LF		;fc76	cd 7d d9 	. } .
 	call sub_e32ch		;fc79	cd 2c e3 	. , .
 	pop hl			;fc7c	e1 	.
 	ld a,l			;fc7d	7d 	}
@@ -8822,15 +8848,15 @@ lfc87h:
 	jr lfc87h		;fca3	18 e2 	. .
 lfca5h:
 	call TXT_OUTPUT		;fca5	cd 5a bb 	. Z .
-	call PRINT_EXTRA_BLANK_LINE		;fca8	cd 7d d9 	. } .
+	call PRINT_CR_LF		;fca8	cd 7d d9 	. } .
 	jp lda14h		;fcab	c3 14 da 	. . .
 lfcaeh:
 	call TXT_OUTPUT		;fcae	cd 5a bb 	. Z .
-	call PRINT_EXTRA_BLANK_LINE		;fcb1	cd 7d d9 	. } .
+	call PRINT_CR_LF		;fcb1	cd 7d d9 	. } .
 	jp lda18h		;fcb4	c3 18 da 	. . .
 lfcb7h:
 	call TXT_OUTPUT		;fcb7	cd 5a bb 	. Z .
-	call PRINT_EXTRA_BLANK_LINE		;fcba	cd 7d d9 	. } .
+	call PRINT_CR_LF		;fcba	cd 7d d9 	. } .
 	jp lda0fh		;fcbd	c3 0f da 	. . .
 
 ; BLOCK 'RODOS_MSGS' (start 0xfcc0 end 0xffc7)
