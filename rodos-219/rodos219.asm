@@ -212,7 +212,7 @@ lc0c8h: ;I'm not sure why this label is pointed at the last byte of RODOS ROM, u
 	defb 'E', 'B' + 0x80 ;,0xc2 ; EB
 	defb 'L', 'S' + 0x80 ;,0xd3 ; LS
 	defb 'M', 'D' + 0x80 ;0xc4 ; MD
-	defb 0xc3 ; C
+	defb 0xc3 ; C ;Z80asm bug - can't do a + 0x80 on a single character
 	defb 'INF', 'O' + 0x80 ;0xcf ; INFO
 	defb 'LIS', 'T' + 0x80 ;0xd4 ; LIST
 	defb 'DUM', 'P' + 0x80 ;0xd0 ; DUMP
@@ -265,7 +265,10 @@ lc1dbh:
 	push de			;c1dc	d5 	.
 	push bc			;c1dd	c5 	.
 	push ix		;c1de	dd e5 	. .
-	ld de,00aech		;c1e0	11 ec 0a 	. . .
+;Next part reservces &AEC for workspace.
+;It's a lot and one of the draw backs of RODOS
+;It eats too much RAM from basic.
+	ld de,00aech	;c1e0	11 ec 0a 	. . .
 	and a			;c1e3	a7 	.
 	sbc hl,de		;c1e4	ed 52 	. R
 	push hl			;c1e6	e5 	.
@@ -339,7 +342,7 @@ PRINT_RODOS_OFF:
 	pop af			;c247	f1 	.
 	jp lda0fh		;c248	c3 0f da 	. . .
 RODOS_OFF_MSG:
-	defb '* RODOS OFF *',05ch
+	defb '* RODOS OFF *',05ch ;Terminated with \ (but using the ascii code because not all assemblers are equal)
 
 CHECK_FOR_KEY_PRESSED:
 ;Entry: A=Amstrad hardware key number
@@ -541,11 +544,12 @@ lc382h:
 	ld b,004h		;c391	06 04 	. .
 lc393h:
 	ld (hl),0ffh		;c393	36 ff 	6 .
-	inc hl			;c395	23 	#
+	inc hl				;c395	23 	#
 	djnz lc393h		;c396	10 fb 	. .
 	;(iy+080h to 084h gets set to 0ffh)
 
 	ret			;c398	c9 	.
+
 RESET_INTERNAL_VARIABLES_TO_DEFAULT:
 ; reset all internal settings which are normally preserved through a reset.
 ;
@@ -590,7 +594,7 @@ RESET_INTERNAL_VARIABLES_TO_DEFAULT:
 	;Repeats LDI (LD (DE),(HL), then increments DE, HL, and decrements BC) until BC=0.
 	;Note that if BC=0 before this instruction is called, it will loop around until BC=0 again.
 	ld de,0be44h		;c3a4	11 44 be 	. D .
-	ld hl,lc3bch		;c3a7	21 bc c3 	! . .
+	ld hl,DISK_SETUP_TIMING_BLOCK_DATA		;c3a7	21 bc c3 	! . .
 	ld bc,00007h		;c3aa	01 07 00 	. . .
 	ldir		;c3ad	ed b0 	. .
 	jp MAKE_A_BEEP		;c3af	c3 88 fb 	. . .
@@ -608,16 +612,21 @@ lc3b2h:
   db         0FFh
   db         063h
 
-lc3bch:
+DISK_SETUP_TIMING_BLOCK_DATA:
 ;Initial values for be44 to be4a
-;TODO what do these relate to?
-  db         032h
-  db         00h
-  db         064h
-  db         01h
-  db         0AFh
-  db         0Fh
-  db         0Ch
+;be44 - Disk Setup timing block
+; Addr Size Usage
+; &BE44 9 Disc Set Up timing block:
+; &BE44 2 motor on period (default &0032; fastest &0023 @ 20mS)
+; &BE46 2 motor off period (default &00FA; fastest &00C8 @ 20mS)
+; &BE48 1 write current off period (default &AF @ 10æS)
+; &BE49 1 head settle time (default &0F @ 1mS)
+; &BE4A 1 step rate period (default &0C; fastest &0A @ 1mS)
+  dw         0032h ;BE44 Motor on period - default=32h
+  dw         0164h ;BE46 Motor off period - default=FA
+  db         0AFh  ;BE48 Write current off period - default=&AF
+  db         0Fh   ;BE49 Head settle time - default=&F
+  db         0Ch   ;BE4A Step rate period - default=&C
 
 sub_c3c3h:
 	push iy		;c3c3	fd e5 	. .
@@ -734,16 +743,24 @@ lc468h:
 	xor a			;c47b	af 	.
 	ret			;c47c	c9 	.
 lc47dh:
+;This is something hacky
+;&BF00 onwards is the machine stack
+;This probably equates to jp (iy+0x33)
+;It seems to be the equivalent of find command
 	push hl			;c47d	e5 	.
 	push iy		;c47e	fd e5 	. .
 	pop hl			;c480	e1 	.
+;Functionally that set hl=iy
+
 	ld de,00033h		;c481	11 33 00 	. 3 .
 	add hl,de			;c484	19 	.
+;So... iy+0x33
 	ld (0bf01h),hl		;c485	22 01 bf 	" . .
-	ld a,0c3h		;c488	3e c3 	> .
-	ld (0bf00h),a		;c48a	32 00 bf 	2 . .
+	ld a,0c3h	;JP opocde here	;c488	3e c3 	> .
+	ld (0bf00h),a	;So bf00 is the size of the stack, with &BF01... being what is stored.	;c48a	32 00 bf 	2 . .
 	pop hl			;c48d	e1 	.
 	jp 0bf00h		;c48e	c3 00 bf 	. . .
+
 SETUP_ENTER_KEY_STRINGS:
 	ld de,0bf00h		;c491	11 00 bf 	. . .
 	ld hl,STR_CLI_RUN_DISK_start		;c494	21 be c4 	! . .
@@ -767,8 +784,12 @@ SETUP_ENTER_KEY_STRINGS:
 ; BLOCK 'STR_CLI_RUN_DISK' (start 0xc4be end 0xc4cb)
 STR_CLI_RUN_DISK_start:
   defb '|CLI',13,'RUN"DISC',13 ; adding a ' to make my editor happy otherwise it thinks the string was left open (it was)
-STR_CLI_RUN_DISK_end:
+
+
 CHECK_FOR_CPM_ROM:
+;Apparently RODOS searches for |DIR to see if the AMSDOS rom exists.
+;I patched AMSDOS.ROM and changed DIR to FIR and RODOS threw the
+;"CPM ROM Missing" error message
 	ld ix,0bee0h		;c4cc	dd 21 e0 be 	. ! . .
 	ld (ix+000h),'D'		;c4d0	dd 36 00 44 	. 6 . D
 	ld (ix+001h),'I'		;c4d4	dd 36 01 49 	. 6 . I
