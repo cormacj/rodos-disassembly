@@ -186,7 +186,7 @@ RSX_JUMPS:
 	jp RSX_CLI		;c0ae	c3 fc f1 	. . .
 	jp RSX_ACCESS		;c0b1	c3 36 cd 	. 6 .
 	jp RSX_COPY		;c0b4	c3 bd cd 	. . .
-  ;See page 27 of the RODOS Manul for more details about how to use these.
+  ;See page 27 of the RODOS Manual for more details about how to use these.
 	jp RSX_HIDDEN_04		;c0b7	c3 cb c7 	. . .
 	jp RSX_HIDDEN_05		;c0ba	c3 aa c7 	. . .
 	jp RSX_HIDDEN_06		;c0bd	c3 06 c9 	. . .
