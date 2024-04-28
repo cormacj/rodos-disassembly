@@ -1,12 +1,34 @@
+;*****************************************************
+;*                    RODOS V2.19                    *
+;*****************************************************
+;
+; Reverse engineered by Cormac McGaughey 2023/2024
+; Repo located at: https://github.com/cormacj/rodos-disassembly
+;
+;Originlly disassembled using:
 ; z80dasm 1.1.6
 ; command line: z80dasm -b blockfile.txt -g 0xc000 -S Firmware_labels.txt -s syms.txt -r default -l -t -v RODOS219.ROM
 
 org	0c000h
+
+;---------------------------------------------------------------------------------------------------
+;Define version details
+;This allows for more easy porting of code to v2.20
+ROM_MAJOR: equ 2
+ROM_MARK: equ 1
+ROM_MOD: equ 9
+;---------------------------------------------------------------------------------------------------
+
+;---------------------------------------------------------------------------------------------------
+;These labels relate to the |ZAP, |ROM buffers and usage.
+;
 POST_BOOT_MSG: equ 0xbec1  ;This location is overwritten by the relocation code in ROM_SELECT_DESELECT_RELOCATED - fixed in v2.20
 ;This is where the |zap and |rom store the command data.
-;The first 10 characters are stomped on by what looks like calls
-ROM_SELECT_DESELECT_RELOCATED:equ 0xbec0
-
+;The first 10 characters are stomped on by what looks like call code. The v2.20 fix moves the area to somewhere safer.
+;This is v2.19 and maintains the bug.
+BOOT_CMD_AREA: equ 0bec0h ;This is for forwards compatibility with the bugfix for V2.20
+ROM_SELECT_DESELECT_RELOCATED: equ 0xbec0
+;---------------------------------------------------------------------------------------------------
 ;RODOS error message store
 DISK_ERROR_MESSAGE_FLAG: equ 0xbe78
 
@@ -70,6 +92,12 @@ RSX_MKDIR:	equ 0xdf64
 ;In this case 003h is actually "Current Drive Letter" so I'm creating some EQUs for readability
 WS_CURRENT_DRIVE_LETTER: equ 003h ;Current Drive Letter
 WS_DRIVE_NUMBER: 				 equ 004h ;Current Drive Number (mostly used when patching (See Appendix F))
+WS_CD_HOME_DRIVE_NUMBER: equ 042h ;Home drive number for |CD
+WS_CD_HOME_DRIVE_LETTER: equ 043h ;Home drive letter for |CD
+WS_CD_HOME_TRACK:				 equ 044h ;Home track for |CD
+WS_EXPANSION_RAM_COUNT:	 equ 00bh ;Expansion ram count (in 16k blocks)
+WS_START_PRBUFF_BANK:	   equ 00ch ;Printer Buffer Bank
+
 ; BLOCK 'ROM_TYPE' (start 0xc000 end 0xc001)
 ROM_TYPE:
 ; The ROM type can be one of the following values:
@@ -83,10 +111,11 @@ ROM_TYPE:
 
 ; BLOCK 'ROM_VERSION' (start 0xc001 end 0xc004)
 ROM_VERSION:
-;Aka v2.19
-	defb 002h		;c001	02 	.
-	defb 001h		;c002	01 	.
-	defb 009h		;c003	09 	.
+;eg v2.19
+
+	defb ROM_MAJOR		;c001	02 	.
+	defb ROM_MARK		;c002	01 	.
+	defb ROM_MOD		;c003	09 	.
 
 
 ; BLOCK 'COMMAND_TABLE' (start 0xc004 end 0xc006)
@@ -434,7 +463,7 @@ lc2afh:
 	ei			;c2ca	fb 	.
 	ret			;c2cb	c9 	.
 sub_c2cch:
-	call sub_fb0bh		;c2cc	cd 0b fb 	. . .
+	call CALCULATE_RAM_BLOCKS		;c2cc	cd 0b fb 	. . .
 	ld hl,VERSION_MSG		;c2cf	21 95 ff 	! . .
 	call DISPLAY_MSG		;c2d2	cd 6a d9 	. j .
 	call sub_c3c3h		;c2d5	cd c3 c3 	. . .
@@ -463,7 +492,7 @@ sub_c2cch:
 	xor a			;c302	af 	.
 	ld (iy+011h),a		;c303	fd 77 11 	. w .
 	dec a			;c306	3d 	=
-	ld (iy+00ch),a		;c307	fd 77 0c 	. w .
+	ld (iy+WS_START_PRBUFF_BANK),a		;c307	fd 77 0c 	. w .
 	ld a,001h		;c30a	3e 01 	> .
 	ld (iy+041h),a		;c30c	fd 77 41 	. w A
 	call sub_f541h		;c30f	cd 41 f5 	. A .
@@ -489,9 +518,9 @@ INITIALISE_VARIABLES:
 	ld (iy+016h),a		;c336	fd 77 16 	. w .
 	ld (iy+03bh),a		;c339	fd 77 3b 	. w ;
 	ld (iy+04eh),a		;c33c	fd 77 4e 	. w N
-	ld (iy+042h),a		;Home drive number for |CD   ;c33f	fd 77 42 	. w B
-	ld (iy+043h),a		;Home drive letter for |CD   ;c342	fd 77 43 	. w C
-	ld (iy+044h),a		;Home track for |CD          ;c345	fd 77 44 	. w D
+	ld (iy+WS_CD_HOME_DRIVE_NUMBER),a		;Home drive number for |CD   ;c33f	fd 77 42 	. w B
+	ld (iy+WS_CD_HOME_DRIVE_LETTER),a		;Home drive letter for |CD   ;c342	fd 77 43 	. w C
+	ld (iy+WS_CD_HOME_TRACK),a		;Home track for |CD          ;c345	fd 77 44 	. w D
 	ld (DISK_ERROR_MESSAGE_FLAG),a		;c348	32 78 be 	2 x .
 	dec a			;c34b	3d 	=
 	ld (iy+04fh),a		;c34c	fd 77 4f 	. w O
@@ -2566,10 +2595,10 @@ ld116h:
 	ld d,e			;d118	53 	S
 	ret nc			;d119	d0 	.
 sub_d11ah:
-	ld hl,STR_LOADING_end		;d11a	21 55 d1 	! U .
+	ld hl,STR_SAVING		;d11a	21 55 d1 	! U .
 	jr ld122h		;d11d	18 03 	. .
 sub_d11fh:
-	ld hl,STR_LOADING_start		;d11f	21 4c d1 	! L .
+	ld hl,STR_LOADING		;d11f	21 4c d1 	! L .
 ld122h:
 	call DISPLAY_MSG		;d122	cd 6a d9 	. j .
 	ld hl,(0bee2h)		;d125	2a e2 be 	* . .
@@ -2598,14 +2627,13 @@ ld149h:
 	ret			;d14b	c9 	.
 
 ; BLOCK 'STR_LOADING' (start 0xd14c end 0xd155)
-STR_LOADING_start:
+STR_LOADING:
 	defb 'Loading ',0
-STR_LOADING_end:
 
 ; BLOCK 'STR_SAVING' (start 0xd155 end 0xd15d)
-STR_SAVING_start:
+STR_SAVING:
 	defb 'Saving ',0
-STR_SAVING_end:
+
 
 ;=======================================================================
 RSX_INFO:
@@ -3583,14 +3611,14 @@ PROCESS_DRIVE_CHANGE:
 	jp nz,MSG_DISC_NOT_FORMATTED		;d806	c2 22 fc 	. " .
 	ld a,(iy+WS_CURRENT_DRIVE_LETTER)		;d809	fd 7e 03 	. ~ .
 	ld (iy+013h),a		;d80c	fd 77 13 	. w .
-	ld (iy+043h),a		;d80f	fd 77 43 	. w C
+	ld (iy+WS_CD_HOME_DRIVE_LETTER),a		;d80f	fd 77 43 	. w C
 	call sub_da62h		;d812	cd 62 da 	. b .
 	ld a,(iy+005h)		;d815	fd 7e 05 	. ~ .
-	ld (iy+044h),a		;d818	fd 77 44 	. w D
+	ld (iy+WS_CD_HOME_TRACK),a		;d818	fd 77 44 	. w D
 	ld a,(iy+006h)		;d81b	fd 7e 06 	. ~ .
 	ld (iy+045h),a		;d81e	fd 77 45 	. w E
 	ld a,(iy+WS_DRIVE_NUMBER)		;d821	fd 7e 04 	. ~ .
-	ld (iy+042h),a		;d824	fd 77 42 	. w B
+	ld (iy+WS_CD_HOME_DRIVE_NUMBER),a		;d824	fd 77 42 	. w B
 ld827h:
 	cp 008h		;d827	fe 08 	. .
 	ret z			;d829	c8 	.
@@ -4186,8 +4214,8 @@ ldba2h:
 	ld (iy+WS_DRIVE_NUMBER),a		;dbbe	fd 77 04 	. w .
 	cp 008h		;dbc1	fe 08 	. .
 	jr nz,ldbd7h		;dbc3	20 12 	  .
-	ld e,(iy+00bh)		;dbc5	fd 5e 0b 	. ^ .
-	bit 7,(iy+00ch)		;dbc8	fd cb 0c 7e 	. . . ~
+	ld e,(iy+WS_EXPANSION_RAM_COUNT)		;dbc5	fd 5e 0b 	. ^ .
+	bit 7,(iy+WS_START_PRBUFF_BANK)		;dbc8	fd cb 0c 7e 	. . . ~
 	call z,sub_dc04h		;dbcc	cc 04 dc 	. . .
 	dec e			;dbcf	1d 	.
 	ld hl,ldc09h		;dbd0	21 09 dc 	! . .
@@ -4217,7 +4245,7 @@ ldbd7h:
 	and a			;dc02	a7 	.
 	ret			;dc03	c9 	.
 sub_dc04h:
-	ld e,(iy+00ch)		;dc04	fd 5e 0c 	. ^ .
+	ld e,(iy+WS_START_PRBUFF_BANK)		;dc04	fd 5e 0c 	. ^ .
 	dec e			;dc07	1d 	.
 	ret			;dc08	c9 	.
 ldc09h:
@@ -4866,14 +4894,14 @@ le041h:
 	ld a,(iy+WS_DRIVE_NUMBER)		;e044	fd 7e 04 	. ~ .
 	jp ld827h		;e047	c3 27 d8 	. ' .
 le04ah:
-	ld a,(iy+043h)		;e04a	fd 7e 43 	. ~ C
+	ld a,(iy+WS_CD_HOME_DRIVE_LETTER)		;e04a	fd 7e 43 	. ~ C
 	ld (iy+WS_CURRENT_DRIVE_LETTER),a		;e04d	fd 77 03 	. w .
 	ld e,a			;e050	5f 	_
-	ld a,(iy+044h)		;e051	fd 7e 44 	. ~ D
+	ld a,(iy+WS_CD_HOME_TRACK)		;e051	fd 7e 44 	. ~ D
 	ld (iy+005h),a		;e054	fd 77 05 	. w .
 	ld a,(iy+045h)		;e057	fd 7e 45 	. ~ E
 	ld (iy+006h),a		;e05a	fd 77 06 	. w .
-	ld a,(iy+042h)		;e05d	fd 7e 42 	. ~ B
+	ld a,(iy+WS_CD_HOME_DRIVE_NUMBER)		;e05d	fd 7e 42 	. ~ B
 	ld (iy+WS_DRIVE_NUMBER),a		;e060	fd 77 04 	. w .
 	ld hl,0be00h		;e063	21 00 be 	! . .
 	ld d,000h		;e066	16 00 	. .
@@ -4914,7 +4942,7 @@ RSX_LINK:
 	call sub_da62h		;e0b1	cd 62 da 	. b .
 	call sub_ec09h		;e0b4	cd 09 ec 	. . .
 	ret nz			;e0b7	c0 	.
-	ld de,lffeeh		;e0b8	11 ee ff 	. . .
+	ld de,0ffeeh		;e0b8	11 ee ff 	. . .
 	add hl,de			;e0bb	19 	.
 	ex de,hl			;e0bc	eb 	.
 	ld hl,0bee0h		;e0bd	21 e0 be 	! . .
@@ -5568,7 +5596,7 @@ le5feh:
 sub_e604h:
 	ld l,(iy+017h)		;e604	fd 6e 17 	. n .
 	ld h,(iy+018h)		;e607	fd 66 18 	. f .
-	ld de,lfff1h		;e60a	11 f1 ff 	. . .
+	ld de,0fff1h		;e60a	11 f1 ff 	. . .
 	add hl,de			;e60d	19 	.
 	ld e,(iy+019h)		;e60e	fd 5e 19 	. ^ .
 	ld d,(iy+01ah)		;e611	fd 56 1a 	. V .
@@ -7632,7 +7660,16 @@ sub_f48bh:
 	and a			;f49c	a7 	.
 	ret z			;f49d	c8 	.
 	push bc			;f49e	c5
-	ld de,ROM_SELECT_DESELECT_RELOCATED		;f49f	11 c0 be 	. . .
+
+	;Next part takes the command parameter from |ZAP and stores it in the buffers
+	;Orginally this next line read: ld de,0bec0h
+	;That clashed with the zap,rom functions.
+	;I've reverted this (for now) to the BE80 which worked well in v2.13
+	;BOOT_CMD_AREA is the destination buffer
+	;HL is the string parameter
+	;A is the length of the string
+
+	ld de,BOOT_CMD_AREA		;f49f	11 c0 be 	. . .
 	ld c,a			;f4a2	4f 	O
 	ld b,000h		;f4a3	06 00 	. .
 	ldir		;f4a5	ed b0 	. .
@@ -7762,7 +7799,8 @@ lf51bh:
 	ld a,(0bebfh)		;f528	3a bf be 	: . .
 	and a			;f52b	a7 	.
 	jr z,lf53eh		;f52c	28 10 	( .
-	ld hl,ROM_SELECT_DESELECT_RELOCATED		;f52e	21 c0 be 	! . .
+;Bugfix here related to the |ZAP or |ROM buffer collision bug (see definition of BOOT_CMD_AREA for details)
+	ld hl,BOOT_CMD_AREA		;f52e	21 c0 be 	! . .
 
 	ld b,08ch		;f531	06 8c 	. .
 	ld c,a			;f533	4f 	O
@@ -7795,7 +7833,7 @@ sub_f541h:
 	pop hl			;f564	e1 	.
 	add hl,de			;f565	19 	.
 	jp KL_ADD_FRAME_FLY		;f566	c3 da bc 	. . .
-	ld a,(iy+00bh)		;f569	fd 7e 0b 	. ~ .
+	ld a,(iy+WS_EXPANSION_RAM_COUNT)		;f569	fd 7e 0b 	. ~ .
 	and a			;f56c	a7 	.
 	ret nz			;f56d	c0 	.
 	pop hl			;f56e	e1 	.
@@ -7864,7 +7902,7 @@ RSX_PRBUFF:
 	ret nc			;f5e9	d0 	.
 	jr lf607h		;f5ea	18 1b 	. .
 lf5ech:
-	ld a,(iy+00bh)		;f5ec	fd 7e 0b 	. ~ .
+	ld a,(iy+WS_EXPANSION_RAM_COUNT)		;f5ec	fd 7e 0b 	. ~ .
 	jr lf607h		;f5ef	18 16 	. .
 lf5f1h:
 	ld a,(ix+000h)		;f5f1	dd 7e 00 	. ~ .
@@ -7879,7 +7917,7 @@ lf5fbh:
 	ld e,(ix+002h)		;f601	dd 5e 02 	. ^ .
 	ld d,(ix+003h)		;f604	dd 56 03 	. V .
 lf607h:
-	ld (iy+00ch),a		;f607	fd 77 0c 	. w .
+	ld (iy+WS_START_PRBUFF_BANK),a		;f607	fd 77 0c 	. w .
 	ld (iy+050h),e		;f60a	fd 73 50 	. s P
 	ld (iy+051h),d		;f60d	fd 72 51 	. r Q
 	ld (iy+052h),l		;f610	fd 75 52 	. u R
@@ -7912,7 +7950,7 @@ lf643h:
 	ld (iy+00eh),a		;f64b	fd 77 0e 	. w .
 	ld l,(iy+056h)		;f64e	fd 6e 56 	. n V
 	ld h,(iy+057h)		;f651	fd 66 57 	. f W
-	ld a,(iy+00ch)		;f654	fd 7e 0c 	. ~ .
+	ld a,(iy+WS_START_PRBUFF_BANK)		;f654	fd 7e 0c 	. ~ .
 	and a			;f657	a7 	.
 	call nz,sub_f6e5h		;f658	c4 e5 f6 	. . .
 	pop af			;f65b	f1 	.
@@ -7975,7 +8013,7 @@ sub_f6a4h:
 	ret z			;f6ba	c8 	.
 lf6bbh:
 	push hl			;f6bb	e5 	.
-	ld a,(iy+00ch)		;f6bc	fd 7e 0c 	. ~ .
+	ld a,(iy+WS_START_PRBUFF_BANK)		;f6bc	fd 7e 0c 	. ~ .
 	and a			;f6bf	a7 	.
 	call nz,sub_f6e5h		;f6c0	c4 e5 f6 	. . .
 	ld a,(hl)			;f6c3	7e 	~
@@ -8309,7 +8347,7 @@ RSX_ASKRAM:
 ;=======================================================================
 	cp 003h		;f925	fe 03 	. .
 	jp nc,MSG_TOO_MANY_PARAMETERS		;f927	d2 9f fb 	. . .
-	ld l,(iy+00bh)		;f92a	fd 6e 0b 	. n .
+	ld l,(iy+WS_EXPANSION_RAM_COUNT)		;f92a	fd 6e 0b 	. n .
 	ld h,000h		;f92d	26 00 	& .
 	cp 001h		;f92f	fe 01 	. .
 	jr z,lf93eh		;f931	28 0b 	( .
@@ -8591,7 +8629,7 @@ sub_faa0h:
 	ld h,a			;fade	67 	g
 	inc e			;fadf	1c 	.
 	ld a,e			;fae0	7b 	{
-	cp (iy+00bh)		;fae1	fd be 0b 	. . .
+	cp (iy+WS_EXPANSION_RAM_COUNT)		;fae1	fd be 0b 	. . .
 	jp nc,MSG_CORRUPTED_DISC		;fae4	d2 1a fc 	. . .
 	xor a			;fae7	af 	.
 	ret			;fae8	c9 	.
@@ -8626,9 +8664,9 @@ lfaeah:
 ; 	call m,lfefdh		;fb06	fc fd fe 	. . .
 ; 	rst 38h			;fb09	ff 	.
 ; 	ret nz			;fb0a	c0 	.
-sub_fb0bh:
+CALCULATE_RAM_BLOCKS:
 	ld a,001h		;fb0b	3e 01 	> .
-	ld (iy+00bh),a		;fb0d	fd 77 0b 	. w .
+	ld (iy+WS_EXPANSION_RAM_COUNT),a		;fb0d	fd 77 0b 	. w .
 	ld ix,04000h		;fb10	dd 21 00 40 	. ! . @
 	ld hl,lfaeah+1		;fb14	21 eb fa 	! . .
 	ld bc,07fc0h		;fb17	01 c0 7f 	. . 
@@ -8654,9 +8692,9 @@ lfb26h:
 	jr nz,lfb51h		;fb3f	20 10 	  .
 	out (c),c		;fb41	ed 49 	. I
 	dec (ix+000h)		;fb43	dd 35 00 	. 5 .
-	ld a,(iy+00bh)		;fb46	fd 7e 0b 	. ~ .
+	ld a,(iy+WS_EXPANSION_RAM_COUNT)		;fb46	fd 7e 0b 	. ~ .
 	inc a			;fb49	3c 	<
-	ld (iy+00bh),a		;fb4a	fd 77 0b 	. w .
+	ld (iy+WS_EXPANSION_RAM_COUNT),a		;fb4a	fd 77 0b 	. w .
 	cp 020h		;fb4d	fe 20 	.
 	jr nz,lfb26h		;fb4f	20 d5 	  .
 lfb51h:
@@ -8666,16 +8704,16 @@ lfb51h:
 	ld c,0c0h		;fb58	0e c0 	. .
 	out (c),c		;fb5a	ed 49 	. I
 	ld (ix+000h),e		;fb5c	dd 73 00 	. s .
-	ld a,(iy+00bh)		;fb5f	fd 7e 0b 	. ~ .
+	ld a,(iy+WS_EXPANSION_RAM_COUNT)		;fb5f	fd 7e 0b 	. ~ .
 	cp 001h		;fb62	fe 01 	. .
 	ret nz			;fb64	c0 	.
 	xor a			;fb65	af 	.
-	ld (iy+00bh),a		;fb66	fd 77 0b 	. w .
+	ld (iy+WS_EXPANSION_RAM_COUNT),a		;fb66	fd 77 0b 	. w .
 	ret			;fb69	c9 	.
 ERROR_HANDLER:
 	ld b,a			;fb6a	47 	G
 	ld (0be6dh),a		;fb6b	32 6d be 	2 m .
-	ld hl,RODOS_MSGS_start		;fb6e	21 c0 fc 	! . .
+	ld hl,RODOS_MSGS_ARRAY		;fb6e	21 c0 fc 	! . .
 lfb71h:
 	ld a,(hl)			;fb71	7e 	~
 	inc hl			;fb72	23 	#
@@ -8881,7 +8919,7 @@ lfcb7h:
 	jp lda0fh		;fcbd	c3 0f da 	. . .
 
 ; BLOCK 'RODOS_MSGS' (start 0xfcc0 end 0xffc7)
-RODOS_MSGS_start:
+RODOS_MSGS_ARRAY:
 	defb 05ch ; Starts with a slash for some reason (probably because this is error 0)
 	defb 'Too many parameters',05ch ;Error 1
 	defb 'Bad file name',05ch ;Error 2
@@ -8935,17 +8973,13 @@ MSG_RETRY_IGNORE_CANCEL:
 VERSION_MSG:
 	defb 00fh		;ff95	0f 	.
 	defb 002h		;ff96	02 	.
-	defb ' RODOS V2.19 '
+	;Saves having to update the version all over the place
+	defb ' RODOS V',ROM_MAJOR+48,'.',ROM_MARK+48,ROM_MOD+48,' '
+
 	defb 0a4h		;ffa4	a4 	.
 	defb ' Romantic Robot U.K. Ltd.{{'
 	defb 00fh		;ffc0	0f 	.
 	defb 001h		;ffc1	01 	.
-	defb 000h		;ffc2	00 	.
-	defb 000h		;ffc3	00 	.
-	defb 000h		;ffc4	00 	.
-	defb 000h		;ffc5	00 	.
-	defb 000h		;ffc6	00 	.
-RODOS_MSGS_end:
 ; Debug code I added to dump what was happening in buffers
 ; DUMP_BUFFER:
 ; 	push hl
@@ -8993,64 +9027,8 @@ RODOS_MSGS_end:
 ; 	call lc234h
 ; 	ret
 
-	nop			;ffc7	00 	.
-	nop			;ffc8	00 	.
-	nop			;ffc9	00 	.
-	nop			;ffca	00 	.
-	nop			;ffcb	00 	.
-	nop			;ffcc	00 	.
-	nop			;ffcd	00 	.
-	nop			;ffce	00 	.
-	nop			;ffcf	00 	.
-	nop			;ffd0	00 	.
-	nop			;ffd1	00 	.
-	nop			;ffd2	00 	.
-	nop			;ffd3	00 	.
-	nop			;ffd4	00 	.
-	nop			;ffd5	00 	.
-	nop			;ffd6	00 	.
-	nop			;ffd7	00 	.
-	nop			;ffd8	00 	.
-	nop			;ffd9	00 	.
-	nop			;ffda	00 	.
-	nop			;ffdb	00 	.
-	nop			;ffdc	00 	.
-	nop			;ffdd	00 	.
-	nop			;ffde	00 	.
-	nop			;ffdf	00 	.
-	nop			;ffe0	00 	.
-	nop			;ffe1	00 	.
-	nop			;ffe2	00 	.
-	nop			;ffe3	00 	.
-	nop			;ffe4	00 	.
-	nop			;ffe5	00 	.
-	nop			;ffe6	00 	.
-	nop			;ffe7	00 	.
-	nop			;ffe8	00 	.
-	nop			;ffe9	00 	.
-	nop			;ffea	00 	.
-	nop			;ffeb	00 	.
-	nop			;ffec	00 	.
-	nop			;ffed	00 	.
-lffeeh:
-	nop			;ffee	00 	.
-	nop			;ffef	00 	.
-	nop			;fff0	00 	.
-lfff1h:
-nop			;fff1	00 	.
-nop			;fff2	00 	.
-nop			;fff3	00 	.
-nop			;fff4	00 	.
-lfff5h:
-nop			;fff5	00 	.
-nop			;fff6	00 	.
-nop			;fff7	00 	.
-nop			;fff8	00 	.
-lfff9h:
-nop			;fff9	00 	.
-nop			;fffa	00 	.
-nop			;fffb	00 	.
-nop			;fffc	00 	.
-nop			;fffd	00 	.
-nop			;fffe	00 	.
-nop			;ffff	00 	.
+;Now we pad with zeros to make the ROM the correct size
+l_END_OF_ROM_CODE:
+;Notes: z80asm uses ds for "define space".
+;I'm mathing this to calculate from here to 0xFFFF and define that space as zeroes
+	ds 0x10000 - l_END_OF_ROM_CODE,0
