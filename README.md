@@ -52,3 +52,18 @@ This is free software. You may redistribute copies of it under the terms of
 the GNU General Public License <http://www.gnu.org/licenses/gpl.html>.
 There is NO WARRANTY, to the extent permitted by law.
 ```
+** Configuration notes **
+
+Makefile:
+
+make validate  - check to see if the working asm file compiles to a binary match with RODOS219
+make diffs - If you have a binary difference this uses a brief diff so you can see where the drift happened
+make fullcompare - If you have a binary difference this puts up a side-by-side diff so you can see where the drift happened
+make run - Build and run the rom in Caprice32
+make release - generate a zip file suitable for uploading
+make: 'help' is up to date.
+
+I also use Capric32 to validate and test the builds.
+This is available at: https://github.com/ColinPitrat/caprice32
+
+I have Caprice32 configured to run in ~/Amstrad and to load a.bin as a ROM and a blank Amstrad .dsk file for `make run`
