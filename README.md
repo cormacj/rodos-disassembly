@@ -57,8 +57,10 @@ There is NO WARRANTY, to the extent permitted by law.
 Makefile:
 ```
 make validate  - check to see if the working asm file compiles to a binary match with RODOS219
-make diffs - If you have a binary difference this uses a brief diff so you can see where the drift happened
-make fullcompare - If you have a binary difference this puts up a side-by-side diff so you can see where the drift happened
+make diffs - If you have a binary difference this uses a brief diff so you can see where the
+             drift happened
+make fullcompare - If you have a binary difference this puts up a side-by-side diff so you can
+                   see where the drift happened
 make run - Build and run the rom in Caprice32
 make release - generate a zip file suitable for uploading
 make: 'help' is up to date.
