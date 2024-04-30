@@ -66,7 +66,8 @@ make release - generate a zip file suitable for uploading
 make: 'help' is up to date.
 ````
 
-I also use Capric32 to validate and test the builds.
+I also use Caprice32 to validate and test the builds.
+
 This is available at: https://github.com/ColinPitrat/caprice32
 
 I have Caprice32 configured to run in ~/Amstrad and to load a.bin as a ROM and a blank Amstrad .dsk file for `make run`
