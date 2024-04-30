@@ -203,64 +203,64 @@ lc0c8h:
 ; I'm not sure why this label is pointed at the last byte of RODOS ROM, unless its the start of the command table-1
     defb 0cdh                                                  ; RODOS ROM
     ;RSX Command table definitions (Command name, with last letter+128)
-    defb "CL", 'S' + 0x80                                      ; 0d3h ;CLS
-    defb "DIS", 'C' + 0x80                                     ;  DISC
-    defb "DISC.I", 'N' + 0x80                                  ; 0xce ; DISC.IN
-    defb 'DISC.OU', 'T' + 0x80                                 ; 0xd4 ; DISC.OUT
-    defb 'DIS', 'K' + 0x80                                     ; 0xcb ; DISK
-    defb 'DISK.I', 'N' + 0x80                                  ; 0xce ; DISK.IN
-    defb 'DISK.OU', 'T' + 0x80                                 ; 0xd4 ; DISK.OUT
-    defb  0xc1                                                 ;  A - Z80asm has a bug where 'A' + 0x80 won't work
-    defb  0xc2                                                 ;  B
-    defb 'DRIV', 'E' + 0x80                                    ; 0xc5 ; DRIVE
-    defb 'USE', 'R' + 0x80                                     ;  0xd2 ; USER
-    defb 'DI', 'R' + 0x80                                      ; 0xd2 ; DIR
-    defb 'ER', 'A' + 0x80                                      ;  0xc1 ; ERA
-    defb 'RE', 'N' + 0x80                                      ; 0xce ; REN
-    defb 'FORMA', 'T' + 0x80                                   ; 0xd4 ; FORMAT
-    defb 'MKDI', 'R' + 0x80                                    ; 0xd2 ; MKDIR
-    defb 'C', 'D' + 0x80                                       ; 0xc4 ; CD
-    defb 'CA', 'T' + 0x80                                      ; 0xd4 ; CAT
-    defb 'TITL', 'E' + 0x80                                    ; 0xc5 ; TITLE
-    defb 'RANDO', 'M' + 0x80                                   ; 0xcd ; RANDOM
-    defb 'POIN', 'T' + 0x80                                    ; 0xd4 ; POINT
-    defb 'MOTOR.O', 'N' + 0x80                                 ; 0xce ; MOTOR.ON
-    defb 'MOTOR.OF', 'F'  + 0x80                               ; 0xc6 ; MOTOR.OFF
-    defb 'OP', 'T' + 0x80                                      ; 0xd4 ; OPT
-    defb 'BPU', 'T' + 0x80                                     ; 0xd4 ; BPUT
-    defb 'BGE', 'T' + 0x80                                     ; 0xd4 ; BGET
-    defb 'F', 'S' + 0x80                                       ; 0xd3 ; FS
-    defb 'SAV', 'E' + 0x80                                     ; 0xc5 ; SAVE
-    defb 'LOA', 'D' + 0x80                                     ; 0xc4 ; LOAD
-    defb 'EXE', 'C' + 0x80                                     ; 0xc3 ; EXEC
-    defb 'READSEC', 'T' + 0x80                                 ; 0xd4 ; READSECT
-    defb 'WRITESEC', 'T' + 0x80                                ; 0xd4 ; WRITESECT
-    defb 'LIN', 'K' + 0x80                                     ; 0xcb ; LINK
-    defb 'RMDI', 'R' + 0x80                                    ; 0xd2 ; RMDIR
-    defb 'ERADI', 'R' + 0x80                                   ; 0xd2 ; ERADIR
-    defb 'R', 'M' + 0x80                                       ; 0xcd ; RM
-    defb 'E', 'B' + 0x80                                       ; ,0xc2 ; EB
-    defb 'L', 'S' + 0x80                                       ; ,0xd3 ; LS
-    defb 'M', 'D' + 0x80                                       ; 0xc4 ; MD
-    defb 0xc3                                                  ;  C ;Z80asm bug - can't do a + 0x80 on a single character
-    defb 'INF', 'O' + 0x80                                     ; 0xcf ; INFO
-    defb 'LIS', 'T' + 0x80                                     ; 0xd4 ; LIST
-    defb 'DUM', 'P' + 0x80                                     ; 0xd0 ; DUMP
-    defb 'ZA', 'P' + 0x80                                      ; 0xd0 ; ZAP
-    defb 'ROM', 'S' + 0x80                                     ; 0xd3 ; ROMS
-    defb 'CL', 'I' + 0x80                                      ; 0xc9 ; CLI
-    defb 'TDUM', 'P' + 0x80                                    ; 0xd0 ; TDUMP
-    defb 'SPOO', 'L' + 0x80                                    ; 0xcc ; SPOOL
-    defb 'PRIN', 'T' + 0x80                                    ; 0xd4 ; PRINT
-    defb 'PRBUF', 'F' + 0x80                                   ; 0xc6 ; PRBUFF
-    defb 'ALIA', 'S' + 0x80                                    ; 0xd3 ; ALIAS
-    defb 'ASKRA', 'M' + 0x80                                   ; 0xcd ; ASKRAM
-    defb 'POK', 'E' + 0x80                                     ; 0xc5 ; POKE
-    defb 'PEE', 'K' + 0x80                                     ; 0xcb ; PEEK
-    defb 'HEL', 'P' + 0x80                                     ; 0xd0 ; HELP
-    defb 'D', 'O' + 0x80                                       ; 0xcf ; DO
-    defb 'ACCES', 'S' + 0x80                                   ; 0xd3 ; ACCESS
-    defb 'COP', 'Y' + 0x80                                     ; 0xd9 ; COPY
+    defb "CL", 'S' + 0x80                                      ; CLS
+    defb "DIS", 'C' + 0x80                                     ; DISC
+    defb "DISC.I", 'N' + 0x80                                  ; DISC.IN
+    defb 'DISC.OU', 'T' + 0x80                                 ; DISC.OUT
+    defb 'DIS', 'K' + 0x80                                     ; DISK
+    defb 'DISK.I', 'N' + 0x80                                  ; DISK.IN
+    defb 'DISK.OU', 'T' + 0x80                                 ; DISK.OUT
+    defb  0xc1                                                 ; A - Z80asm has a bug where 'A' + 0x80 won't work
+    defb  0xc2                                                 ; B
+    defb 'DRIV', 'E' + 0x80                                    ; DRIVE
+    defb 'USE', 'R' + 0x80                                     ; USER
+    defb 'DI', 'R' + 0x80                                      ; DIR
+    defb 'ER', 'A' + 0x80                                      ; ERA
+    defb 'RE', 'N' + 0x80                                      ; REN
+    defb 'FORMA', 'T' + 0x80                                   ; FORMAT
+    defb 'MKDI', 'R' + 0x80                                    ; MKDIR
+    defb 'C', 'D' + 0x80                                       ; CD
+    defb 'CA', 'T' + 0x80                                      ; CAT
+    defb 'TITL', 'E' + 0x80                                    ; TITLE
+    defb 'RANDO', 'M' + 0x80                                   ; RANDOM
+    defb 'POIN', 'T' + 0x80                                    ; POINT
+    defb 'MOTOR.O', 'N' + 0x80                                 ; MOTOR.ON
+    defb 'MOTOR.OF', 'F'  + 0x80                               ; MOTOR.OFF
+    defb 'OP', 'T' + 0x80                                      ; OPT
+    defb 'BPU', 'T' + 0x80                                     ; BPUT
+    defb 'BGE', 'T' + 0x80                                     ; BGET
+    defb 'F', 'S' + 0x80                                       ; FS
+    defb 'SAV', 'E' + 0x80                                     ; SAVE
+    defb 'LOA', 'D' + 0x80                                     ; LOAD
+    defb 'EXE', 'C' + 0x80                                     ; EXEC
+    defb 'READSEC', 'T' + 0x80                                 ; READSECT
+    defb 'WRITESEC', 'T' + 0x80                                ; WRITESECT
+    defb 'LIN', 'K' + 0x80                                     ; LINK
+    defb 'RMDI', 'R' + 0x80                                    ; RMDIR
+    defb 'ERADI', 'R' + 0x80                                   ; ERADIR
+    defb 'R', 'M' + 0x80                                       ; RM
+    defb 'E', 'B' + 0x80                                       ; EB
+    defb 'L', 'S' + 0x80                                       ; LS
+    defb 'M', 'D' + 0x80                                       ; MD
+    defb 0xc3                                                  ; C - Z80asm bug - can't do a + 0x80 on a single character
+    defb 'INF', 'O' + 0x80                                     ; INFO
+    defb 'LIS', 'T' + 0x80                                     ; LIST
+    defb 'DUM', 'P' + 0x80                                     ; DUMP
+    defb 'ZA', 'P' + 0x80                                      ; ZAP
+    defb 'ROM', 'S' + 0x80                                     ; ROMS
+    defb 'CL', 'I' + 0x80                                      ; CLI
+    defb 'TDUM', 'P' + 0x80                                    ; TDUMP
+    defb 'SPOO', 'L' + 0x80                                    ; SPOOL
+    defb 'PRIN', 'T' + 0x80                                    ; PRINT
+    defb 'PRBUF', 'F' + 0x80                                   ; PRBUFF
+    defb 'ALIA', 'S' + 0x80                                    ; ALIAS
+    defb 'ASKRA', 'M' + 0x80                                   ; ASKRAM
+    defb 'POK', 'E' + 0x80                                     ; POKE
+    defb 'PEE', 'K' + 0x80                                     ; PEEK
+    defb 'HEL', 'P' + 0x80                                     ; HELP
+    defb 'D', 'O' + 0x80                                       ; DO
+    defb 'ACCES', 'S' + 0x80                                   ; ACCESS
+    defb 'COP', 'Y' + 0x80                                     ; COPY
     ;See page 27 of the RODOS Manul for more details about how to use these next commands
     defb 084h                                                  ; Hidden command 4 aka ^D
     defb 085h                                                  ; Hidden command 5 aka ^E
