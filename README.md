@@ -1,6 +1,7 @@
 # rodos-disassembly
 
 **About RODOS**
+
 This project is a disassembly of RODOS v2.19.
 
 RODOS was a high-capacity disc operating system released by Romantic Robot for Amstrad CPC computers. The main aim was to allow you to make use of the extra capacity on 3.5in discs. It shipped on a single 16k sideways ROM.
@@ -12,6 +13,7 @@ Unlike other similar DOSses (ParaDOS, MS800, S-DOS, ROMDOS), RODOS aimed to do s
 * 'Autorun' facility (automatically loads DISC., DISC.BAS or DISC.BIN if present)
 
 **Details about this project**
+
 There are two folders here:
 * rodos-219 - This is a faithful disassembly and documentation of RODOS v2.19. This was the last known official release of RODOS
 * rodos-220 - This is a version that fixes a buffer collision bug that caused a couple of commands (|ZAP, |ROMS) to not fully work.
@@ -20,6 +22,7 @@ There are two folders here:
 
 
 **Tools needed**
+
 This project is done on Linux. I've not looked at tools for other environments.
 
 linux: z80asm and z80dasm
