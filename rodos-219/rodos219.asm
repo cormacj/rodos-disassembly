@@ -120,7 +120,7 @@ ROM_VERSION:
 
 ; BLOCK 'COMMAND_TABLE' (start 0xc004 end 0xc006)
 COMMAND_TABLE:
-    ;This is a vector to the address of where the RSX names are defined.
+    ;This is a pointer to the address of where the RSX names are defined.
     ;defw 0c0c0h        ;c004    c0 c0     . .
     defw RSX_COMMANDS_start
     ;This is the location of the commands
@@ -487,7 +487,7 @@ sub_c2cch:
     call nz,RESET_INTERNAL_VARIABLES_TO_DEFAULT                ; c2ee    c4 99 c3     . . .
 
     call sub_cb6dh                                             ; c2f1    cd 6d cb     . m .
-    call sub_c636h                                             ; c2f4    cd 36 c6     . 6 .
+    call sub_c636h ;Configure a jump table and an RST &18 call ; c2f4    cd 36 c6     . 6 .
 
     ;Check for SHIFT key
     ld a,015h                                                  ; c2f7    3e 15     > .
@@ -682,16 +682,15 @@ sub_c3c3h:
     ld b,001h                                                  ; c3e1    06 01     . .
     jp MAKE_JP_AT_DE_USING_HL                                  ; c3e3    c3 74 de     . t .
 lc3e6h:
-    ;db 0e8h,0c3h
-    dw EXECUTE_RSX_COMMAND                                     ; Vector to the sub below. Used in sub_c3c3h
+    dw EXECUTE_RSX_COMMAND                                     ; Pointer to the sub below. Used in sub_c3c3h
 EXECUTE_RSX_COMMAND:
 ;This is a z80dasm fixup - theres a call to mid z80dasm instruction so it misses a label.
     RES        0x2,(IY+0xd)                                    ; ram:c3e8 fd cb 0d 96
     ; z80dasm started at the db 0c3h part above, and missed that theres a call into here.
     ; Old instructions were:
-    ; jp lcbfch+1        ;c3e7    c3 fd cb     . . .
-    ; dec c            ;c3ea    0d     .
-    ; sub (hl)            ;c3eb    96        .
+    ; jp lcbfch+1       ;c3e7    c3 fd cb     . . .
+    ; dec c             ;c3ea    0d     .
+    ; sub (hl)          ;c3eb    96        .
     ld a,(hl)                                                  ; c3ec    7e     ~
     cp 03ah                                                    ; c3ed    fe 3a     . :
     jp nc,lc47dh                                               ; c3ef    d2 7d c4     . } .
@@ -1026,20 +1025,36 @@ lc627h:
     add hl,de                                                  ; c632    19     .
     jp KL_LOG_EXT                                              ; c633    c3 d1 bc     . . .
 sub_c636h:
-    call sub_c666h                                             ; c636    cd 66 c6     . f .
-    push hl                                                    ; c639    e5     .
+; Input needs: HL, IX and IY
+;   HL=location for pointer pointing to address in IY+185 (iy+0xb9)
+;   IY=pointer location for jump table.
+;   IX=
+; 1. Set a pointer at (HL) pointing to IY+185 (iy+0xb9)
+; 2. Builds eight 'jp &0000' instructions at IY+185 (iy+0xb9)
+; 3. If finishes with building a RST &18 using an address at hl=iy+0x13ah
+;From debugging, on entry:
+; HL=&BEE6
+; IX=&d11a
+; IY=&97d1 (our workspace)
+;
+    call sub_c666h ;HL=iy+0x9f (aka 159)                       ; c636    cd 66 c6     . f .
+    push hl   ;save hl                                         ; c639    e5     .
     ld de,0001ah                                               ; c63a    11 1a 00     . . .
-    add hl,de                                                  ; c63d    19     .
-    ex de,hl                                                   ; c63e    eb     .
-    pop hl                                                     ; c63f    e1     .
+    add hl,de ;hl=hl+0x1a (aka 26) - HL is now iy+185          ; c63d    19     .
+    ex de,hl  ;de=hl                                           ; c63e    eb     .
+    pop hl    ;restore hl                                      ; c63f    e1     .
+;by now in real world, HL=&9870 and DE=&988A
     ld (hl),e                                                  ; c640    73     s
     inc hl                                                     ; c641    23     #
-    ld (hl),d                                                  ; c642    72     r
+    ld (hl),d ;address at hl=de                                ; c642    72     r
+    ;So
     inc hl                                                     ; c643    23     #
     ld b,008h                                                  ; c644    06 08     . .
     xor a                                                      ; c646    af     .
 lc647h:
-    ld (hl),0c3h                                               ; c647    36 c3     6 .
+    ;Seems complex for unknown reasons.
+    ; So it pokes (HL) to (HL+24), with JP &0000
+    ld (hl),0c3h  ;(opcode for jp)                             ; c647    36 c3     6 .
     inc hl                                                     ; c649    23     #
     ld (hl),a                                                  ; c64a    77     w
     inc hl                                                     ; c64b    23     #
@@ -1047,7 +1062,7 @@ lc647h:
     inc hl                                                     ; c64d    23     #
     djnz lc647h                                                ; c64e    10 f7     . .
     ld (hl),a                                                  ; c650    77     w
-    call sub_c66eh                                             ; c651    cd 6e c6     . n .
+    call sub_c66eh ; hl=iy+0x13ah                              ; c651    cd 6e c6     . n .
     ld b,001h                                                  ; c654    06 01     . .
     push ix                                                    ; c656    dd e5     . .
     ld ix,lc664h                                               ; c658    dd 21 64 c6     . ! d .
@@ -1056,15 +1071,19 @@ lc647h:
     ld (hl),000h                                               ; c661    36 00     6 .
     ret                                                        ; c663    c9     .
 lc664h:
-    ld e,b                                                     ; c664    58     X
-    rst 0                                                      ; c665    c7     .
+    ;ld e,b                                                     ; c664    58     X
+    ;rst 0                                                      ; c665    c7     .
+    ;not code - actually a pointer
+    dw lc758
 sub_c666h:
+;HL=iy+0x9f (aka 159)
     push iy                                                    ; c666    fd e5     . .
     pop hl                                                     ; c668    e1     .
     ld de,0009fh                                               ; c669    11 9f 00     . . .
     add hl,de                                                  ; c66c    19     .
     ret                                                        ; c66d    c9     .
 sub_c66eh:
+; hl=iy+0x13ah
     push iy                                                    ; c66e    fd e5     . .
     pop hl                                                     ; c670    e1     .
     ld de,0013ah                                               ; c671    11 3a 01     . : .
@@ -1239,6 +1258,7 @@ lc751h:
     inc hl                                                     ; c754    23     #
     ld (hl),000h                                               ; c755    36 00     6 .
     ret                                                        ; c757    c9     .
+lc758: ;Called from a pointer from RST &18
     and a                                                      ; c758    a7     .
     call nz,sub_c76bh                                          ; c759    c4 6b c7     . k .
     push hl                                                    ; c75c    e5     .
@@ -1764,6 +1784,27 @@ sub_cab5h:
     and 0f8h                                                   ; cad2    e6 f8     . .
     ret                                                        ; cad4    c9     .
 sub_cad5h:
+    ; undefined FUN_ram_cad5(void)
+    ;
+    ; {
+    ;   undefined2 in_AF;
+    ;   undefined uVar1;
+    ;   char cVar2;
+    ;
+    ;   do {
+    ;   } while (CARRY1(DAT_io_007e,DAT_io_007e) == false);
+    ;   uVar1 = (undefined)((ushort)in_AF >> 8);
+    ;   if (CARRY1(DAT_io_007e * '\x02',DAT_io_007e * '\x02') != false) {
+    ;     return uVar1;
+    ;   }
+    ;   DAT_io_007f = uVar1;
+    ;   cVar2 = '\x0f';
+    ;   do {
+    ;     cVar2 = cVar2 + -1;
+    ;   } while (cVar2 != '\0');
+    ;   return 0;
+    ; }
+
     push af                                                    ; cad5    f5     .
     ld bc,0fb7eh                                               ; cad6    01 7e fb     . ~ .
 lcad9h:
@@ -3882,7 +3923,8 @@ DELETE_CHAR:
     pop af                                                     ; d99b    f1     .
     ret                                                        ; d99c    c9     .
 FUNC_SUBTRACT_32:
-    sub 020h                                                   ; A=A-32 (aka A=A-0x20);d99d    d6 20     .
+    sub 020h                                                   ;d99d    d6 20     .
+    ; A=A-32 (aka A=A-0x20)
     ret                                                        ; d99f    c9     .
 sub_d9a0h:
     ld a,(iy+WS_DRIVE_NUMBER)                                  ; d9a0    fd 7e 04     . ~ .
@@ -4181,6 +4223,7 @@ RSX_FORMAT:
     jp z,ldd25h                                                ; db63    ca 25 dd     . % .
     jp nc,MSG_TOO_MANY_PARAMETERS                              ; db66    d2 9f fb     . . .
     ld c,000h                                                  ; db69    0e 00     . .
+    ;Did we get four paramters?
     cp 004h                                                    ; db6b    fe 04     . .
     jr c,ldb77h                                                ; db6d    38 08     8 .
     ld c,(ix+000h)                                             ; db6f    dd 4e 00     . N .
@@ -4188,6 +4231,7 @@ RSX_FORMAT:
     inc ix                                                     ; db73    dd 23     . #
     inc ix                                                     ; db75    dd 23     . #
 ldb77h:
+    ;Check for 3 parameters
     ld (iy+010h),c                                             ; db77    fd 71 10     . q .
     ld c,0ffh                                                  ; db7a    0e ff     . .
     cp 003h                                                    ; db7c    fe 03     . .
@@ -4415,7 +4459,6 @@ ldd25h:
     ld (iy+WS_DRIVE_NUMBER),e                                  ; dd37    fd 73 04     . s .
     ld (iy+WS_CURRENT_DRIVE_LETTER),008h                       ; dd3a    fd 36 03 08     . 6 . .
 sub_dd3eh:
-
     ;Check for ESC pressed
     ld a,042h                                                  ; dd3e    3e 42     > B
     call KM_TEST_KEY                                           ; dd40    cd 1e bb     . . .
@@ -4467,6 +4510,7 @@ ldd83h:
     ex af,af'                                                  ; dd8b    08     . ;adding a ' to make my editor happy.
     add hl,bc                                                  ; dd8c    09     .
 ldd8dh:
+;RODOS format definition?
     ld bc,08141h                                               ; dd8d    01 41 81     . A .
     pop bc                                                     ; dd90    c1     .
     adc a,e                                                    ; dd91    8b     .
@@ -4630,28 +4674,80 @@ MAKE_JP_AT_DE_USING_HL:
     ;address to jump is in HL
     ;address to patch is in DE
     ;So this code makes (DE)=JP (HL)
-    ld a,0c3h                                                  ; opcode for "jp" ;de74    3e c3     > .
-    ld (de),a                                                  ; de76    12     .
+    ld a,0c3h  ; opcode for "jp"                               ; de74    3e c3     > .
+    ld (de),a  ; stow the jp                                   ; de76    12     .
     inc de                                                     ; de77    13     .
-    ld a,l                                                     ; de78    7d     }
+    ld a,l     ; stow the low byte                             ; de78    7d     }
     ld (de),a                                                  ; de79    12     .
     inc de                                                     ; de7a    13     .
-    ld a,h                                                     ; de7b    7c     |
+    ld a,h     ; stow the high byte                            ; de7b    7c     |
     ld (de),a                                                  ; de7c    12     .
     inc de                                                     ; de7d    13     .
+    ;So now the address has been patched to be jp (hl)
 GENERATE_RST18_AT_HL:
     ;This patches the address at HL
     ;0df is RST 18
     ;The RST &18 instruction works a bit differently. Instead of taking parameters in HL and C, it expects them to be in the program flow directly. This is interesting because all registers are passed as is to the called code. You can use them to pass data to the ROM code, bypassing the usual RSX parameter list.
-                ;
-                ;     RST &18;
-                ;     DW table
-                ;         RET
-                ; table
-                ;     DW &C009 ; Address of code to call
-                ;     DB &04 ; Rom number to connect
+    ;
+    ;     RST &18;
+    ;     DW table
+    ;     RET
+    ; table
+    ;     DW &C009 ; Address of code to call
+    ;     DB &04 ; Rom number to connect
+    ;
+    ; This code shows RST 18 usage:
+    ; org &4000
+    ;
+    ; PrintChar     equ &BB5A
+    ;
+    ; start:
+    ;     ld hl,not_rst
+    ;     call PrintString
+    ;
+    ;     rst &18
+    ;     dw table
+          ;(or RST &18,table) depending on your assembler
+    ;
+    ;     ld hl,not_rst
+    ;     call PrintString
+    ;
+    ;     ret
+    ;
+    ; table:
+    ;     dw testrst
+    ;     db 0
+    ;
+    ; testrst:
+    ;     ld hl,done
+    ;     call PrintString
+    ;     ret
+    ;
+    ; not_rst:
+    ;     db 'Not RST 18!',10,13,'$'
+    ; yesrst:
+    ;     db 'RST 18!',10,13,'$'
+    ; done:
+    ;     db 'Done!',10,13,'$'
+    ;
+    ; PrintString:
+    ;     ld a,(hl)
+    ;     cp '$'
+    ;     ret z
+    ;     inc hl
+    ;     call PrintChar
+    ;     jr PrintString
 
-    ld (hl),0dfh                                               ; rst &18    ;de7e    36 df     6 .
+    ;So this creates an RST 18,Table with the Table immediately following.
+    ;The table is made using ix for the jump, and iy for the rom.
+    ;eg, HL=0x4000, and ix=0x5000, and iy=0x5100.
+    ;if 0x5000 is a word contain &BB5D and 0x5100 is a byte with &12 then
+    ;the generated code at 0x4000 is:
+    ; 0x4000 RST 0x18,0x4004
+    ; 0x4005 RET
+    ; 0x4006 dw 0xBB5D
+    ; 0x4008 db 0x12
+    ld (hl),0dfh ;RST &18                                      ; rst &18    ;de7e    36 df     6 .
     inc hl                                                     ; de80    23     #
     ld a,l                                                     ; de81    7d     }
     add a,003h                                                 ; de82    c6 03     . .
@@ -4661,7 +4757,7 @@ GENERATE_RST18_AT_HL:
     inc hl                                                     ; de88    23     #
     ld (hl),a                                                  ; de89    77     w
     inc hl                                                     ; de8a    23     #
-    ld (hl),0c9h                                               ; c9=ret    ;de8b    36 c9     6 .
+    ld (hl),0c9h ; c9=ret                                      ; de8b    36 c9     6 .
     inc hl                                                     ; de8d    23     #
     ld a,(ix+000h)                                             ; de8e    dd 7e 00     . ~ .
     ld (hl),a                                                  ; de91    77     w
