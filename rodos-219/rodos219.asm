@@ -285,9 +285,9 @@ ROM_INIT:
     push af                                                    ; c1d1    f5     .
     push hl                                                    ; c1d2    e5     .
     ld a,03dh                                                  ; c1d3    3e 3d     > =
-  ;The 03dh here is the D key. Pressing D disables the ROM on boot.
+    ;The 03dh here is the D key. Pressing D disables the ROM on boot.
     call CHECK_FOR_KEY_PRESSED                                 ; c1d5    cd 59 c2     . Y .
-  ;That is the keyboard test thing. Looks like it bypassed the usual rom call.
+    ;That is the keyboard test thing. Looks like it bypassed the usual rom call.
     pop hl                                                     ; c1d8    e1     .
     jr nz,PRINT_RODOS_OFF                                      ; c1d9    20 59       Y
 lc1dbh:
@@ -295,9 +295,9 @@ lc1dbh:
     push de                                                    ; c1dc    d5     .
     push bc                                                    ; c1dd    c5     .
     push ix                                                    ; c1de    dd e5     . .
-;Next part reserves &AEC byte for workspace.
-;It's a lot and one of the drawbacks of RODOS
-;It eats too much RAM from basic.
+    ;Next part reserves &AEC byte for workspace.
+    ;It's a lot and one of the drawbacks of RODOS
+    ;It eats too much RAM from basic.
     ld de,00aech                                               ; c1e0    11 ec 0a     . . .
     and a                                                      ; c1e3    a7     .
     sbc hl,de                                                  ; c1e4    ed 52     . R
@@ -468,7 +468,7 @@ sub_c2cch:
     call CALCULATE_RAM_BLOCKS                                  ; c2cc    cd 0b fb     . . .
     ld hl,VERSION_MSG                                          ; c2cf    21 95 ff     ! . .
     call DISPLAY_MSG                                           ; c2d2    cd 6a d9     . j .
-    call sub_c3c3h                                             ; c2d5    cd c3 c3     . . .
+    call COPY_KL_FIND_COMAMAND_TO_WORKSPACE_0x33                                             ; c2d5    cd c3 c3     . . .
     call CHECK_FOR_CPM_ROM                                     ; c2d8    cd cc c4     . . .
     call SETUP_ENTER_KEY_STRINGS                               ; c2db    cd 91 c4     . . .
     call INITIALISE_VARIABLES                                  ; c2de    cd 29 c3     . ) .
@@ -664,7 +664,8 @@ DISK_SETUP_TIMING_BLOCK_DATA:
   db         0Fh                                            ; BE49 Head settle time - default=&F
   db         0Ch                                            ; BE4A Step rate period - default=&C
 
-sub_c3c3h:
+COPY_KL_FIND_COMAMAND_TO_WORKSPACE_0x33:
+    ;Takes the vector for KL_FIND_COMMAND and copies that to IY+0x33
     push iy                                                    ; c3c3    fd e5     . .
     pop hl                                                     ; c3c5    e1     .
     ld de,00033h                                               ; c3c6    11 33 00     . 3 .
@@ -682,7 +683,7 @@ sub_c3c3h:
     ld b,001h                                                  ; c3e1    06 01     . .
     jp MAKE_JP_AT_DE_USING_HL                                  ; c3e3    c3 74 de     . t .
 lc3e6h:
-    dw EXECUTE_RSX_COMMAND                                     ; Pointer to the sub below. Used in sub_c3c3h
+    dw EXECUTE_RSX_COMMAND                                     ; Pointer to the sub below. Used in COPY_KL_FIND_COMAMAND_TO_WORKSPACE_0x33
 EXECUTE_RSX_COMMAND:
 ;This is a z80dasm fixup - theres a call to mid z80dasm instruction so it misses a label.
     RES        0x2,(IY+0xd)                                    ; ram:c3e8 fd cb 0d 96
@@ -693,9 +694,9 @@ EXECUTE_RSX_COMMAND:
     ; sub (hl)          ;c3eb    96        .
     ld a,(hl)                                                  ; c3ec    7e     ~
     cp 03ah                                                    ; c3ed    fe 3a     . :
-    jp nc,lc47dh                                               ; c3ef    d2 7d c4     . } .
+    jp nc,RODOS_WORKSPACE_KL_FIND_COMMAND                                               ; c3ef    d2 7d c4     . } .
     sub 030h                                                   ; c3f2    d6 30     . 0
-    jp c,lc47dh                                                ; c3f4    da 7d c4     . } .
+    jp c,RODOS_WORKSPACE_KL_FIND_COMMAND                                                ; c3f4    da 7d c4     . } .
     push ix                                                    ; c3f7    dd e5     . .
     ld c,a                                                     ; c3f9    4f     O
     inc hl                                                     ; c3fa    23     #
@@ -727,7 +728,7 @@ lc41eh:
     jr z,lc41eh                                                ; c426    28 f6     ( .
     ld hl,0beb0h                                               ; c428    21 b0 be     ! . .
     push bc                                                    ; c42b    c5     .
-    call lc47dh                                                ; c42c    cd 7d c4     . } .
+    call RODOS_WORKSPACE_KL_FIND_COMMAND                                                ; c42c    cd 7d c4     . } .
     pop bc                                                     ; c42f    c1     .
     pop hl                                                     ; c430    e1     .
     jr nc,lc460h                                               ; c431    30 2d     0 -
@@ -777,23 +778,28 @@ lc468h:
     pop ix                                                     ; c479    dd e1     . .
     xor a                                                      ; c47b    af     .
     ret                                                        ; c47c    c9     .
-lc47dh:
-;This is something hacky
-;&BF00 onwards is the machine stack
-;This probably equates to jp (iy+0x33)
-;It seems to be the equivalent of find command
+RODOS_WORKSPACE_KL_FIND_COMMAND:
+    ;This is something hacky
+    ;&BF00 onwards is the machine stack
+    ;This probably equates to jp (iy+0x33)
+    ;It seems to be the equivalent of find command
+    ;&BCD4 - CF B1 82 w/rodos disabled
+    ;
     push hl                                                    ; c47d    e5     .
     push iy                                                    ; c47e    fd e5     . .
     pop hl                                                     ; c480    e1     .
-;Functionally that set hl=iy
+    ;Functionally that set hl=iy
 
     ld de,00033h                                               ; c481    11 33 00     . 3 .
     add hl,de                                                  ; c484    19     .
-;So... iy+0x33
+    ;So... iy+0x33
     ld (0bf01h),hl                                             ; c485    22 01 bf     " . .
-    ld a,0c3h                                                  ; JP opocde here    ;c488    3e c3     > .
-    ld (0bf00h),a                                              ; So bf00 is the size of the stack, with &BF01... being what is stored.    ;c48a    32 00 bf     2 . .
+    ld a,0c3h                                                  ; c488    3e c3     > .
+    ; JP opocde here (&C3)
+    ld (0bf00h),a                                              ; c48a    32 00 bf     2 . .
+    ; So bf00 is the size of the stack, with &BF01... being what is stored.
     pop hl                                                     ; c48d    e1     .
+    ;So now we have prepped &BF00 to be "jp (iy+0x33)"
     jp 0bf00h                                                  ; c48e    c3 00 bf     . . .
 
 SETUP_ENTER_KEY_STRINGS:
@@ -831,7 +837,7 @@ CHECK_FOR_CPM_ROM:
     ld (ix+002h),'R' + 0x80                                    ; 0d2h        ;c4d8    dd 36 02 d2     . 6 . .
     ld hl,0bee0h                                               ; c4dc    21 e0 be     ! . .
     xor a                                                      ; c4df    af     .
-    call lc47dh                                                ; c4e0    cd 7d c4     . } .
+    call RODOS_WORKSPACE_KL_FIND_COMMAND                                                ; c4e0    cd 7d c4     . } .
     ld a,c                                                     ; c4e3    79     y
     jr c,lc4efh                                                ; c4e4    38 09     8 .
     call MSG_CPM_ROM_MISSING                                   ; c4e6    cd ba fb     . . .
@@ -3380,7 +3386,7 @@ ld62ah:
     pop de                                                     ; d646    d1     .
     ld hl,0bed0h                                               ; d647    21 d0 be     ! . .
     push bc                                                    ; d64a    c5     .
-    ld bc,SIDE_CALL_RST_2                                      ; d64b    01 10 00     . . .
+    ld bc,0x10                                                 ; d64b    01 10 00     . . .
     ldir                                                       ; d64e    ed b0     . .
     pop bc                                                     ; d650    c1     .
     call sub_efbch                                             ; d651    cd bc ef     . . .
@@ -5460,7 +5466,7 @@ sub_e374h:
     push ix                                                    ; e3f5    dd e5     . .
     pop de                                                     ; e3f7    d1     .
     pop hl                                                     ; e3f8    e1     .
-    ld bc,SIDE_CALL_RST_2                                      ; e3f9    01 10 00     . . .
+    ld bc,0x10                                                 ; e3f9    01 10 00     . . .
     ldir                                                       ; e3fc    ed b0     . .
     inc hl                                                     ; e3fe    23     #
     ld bc,00007h                                               ; e3ff    01 07 00     . . .
@@ -5961,7 +5967,7 @@ le813h:
     jr le855h                                                  ; e840    18 13     . .
 le842h:
     ld ix,0bef0h                                               ; e842    dd 21 f0 be     . ! . .
-    ;Stores\ DISC into IX
+    ;Stores DISC into IX location
     call IX_STORE_DISC                                         ; e846    cd 01 e9     . . .
     ;Next bit stows "OUT" but T is T+0x80
     ld (ix+006h),'O'                                           ; e849    dd 36 06 4f     . 6 . O
@@ -6019,10 +6025,10 @@ le8b7h:
     push ix                                                    ; e8bc    dd e5     . .
     push ix                                                    ; e8be    dd e5     . .
     pop hl                                                     ; e8c0    e1     .
-    ld bc,SIDE_CALL_RST_2                                      ; e8c1    01 10 00     . . .
+    ld bc,0x10                                                 ; e8c1    01 10 00     . . .
     ldir                                                       ; e8c4    ed b0     . .
     pop hl                                                     ; e8c6    e1     .
-    ld bc,SIDE_CALL_RST_2                                      ; e8c7    01 10 00     . . .
+    ld bc,0x10                                                 ; e8c7    01 10 00     . . .
     ldir                                                       ; e8ca    ed b0     . .
 ;Next bit stows 'BAK '
     ld a,'B'                                                   ; e8cc    3e 42     > B
@@ -8198,9 +8204,10 @@ lf70bh:
     ld (iy+013h),000h                                          ; f74c    fd 36 13 00     . 6 . .
     ret                                                        ; f750    c9     .
 lf751h:
+    ;Now copy DISC and whitespace to 0xbef0
     ld hl,lf788h                                               ; f751    21 88 f7     ! . .
     ld de,0bef0h                                               ; f754    11 f0 be     . . .
-    ld bc,SIDE_CALL_RST_2                                      ; f757    01 10 00     . . .
+    ld bc,0x10                                                 ; f757    01 10 00     . . .
     ldir                                                       ; f75a    ed b0     . .
     ld ix,0bef0h                                               ; f75c    dd 21 f0 be     . ! . .
     ld (iy+014h),000h                                          ; f760    fd 36 14 00     . 6 . .
@@ -8213,9 +8220,18 @@ lf751h:
     bit 3,(iy+041h)                                            ; f774    fd cb 41 5e     . . A ^
     ret z                                                      ; f778    c8     .
 lf779h:
-    ;M key, maybe?
+    ;Part of the |ZAP function
+    ;04dh/77 - Joystick right, or Z
     ld a,04dh                                                  ; f779    3e 4d     > M
     call KM_TEST_KEY                                           ; f77b    cd 1e bb     . . .
+    ;Action: Tests if a particular key (or joystick direction or button) is pressed
+    ;Entry:  A contains the key/joystick nurnber
+    ;Exit:   If the requested key is pressed, then Zero is false; otherwise Zero is true for both, Carry is false A and
+    ;          HL are corrupt. C holds the Sbift and Control status and others are preserved
+    ;Notes:  After calling this, C will hold the state of shift and control - if bit 7 is set then Control was pressed, and if
+    ;          bit 5 is set then Shift was pressed
+    ;
+    ;Not sure why this is here as its never actually tested, unless its just to create a short delay?
     inc hl                                                     ; f77e    23     #
     ld (hl),0bfh                                               ; f77f    36 bf     6 .
     inc hl                                                     ; f781    23     #
@@ -8223,18 +8239,10 @@ lf779h:
     ld (hl),07fh                                               ; f783    36 7f     6 
     jp lda0ah                                                  ; f785    c3 0a da     . . .
 lf788h:
-    ld b,h                                                     ; f788    44     D
-    ld c,c                                                     ; f789    49     I
-    ld d,e                                                     ; f78a    53     S
-    ld b,e                                                     ; f78b    43     C
-    jr nz,$+34                                                 ; f78c    20 20
-    jr nz,$+34                                                 ; f78e    20 20
-    jr nz,lf7b2h                                               ; f790    20 20
-    jr nz,$+34                                                 ; f792    20 20
-    ccf                                                        ; f794    3f     ?
-    ccf                                                        ; f795    3f     ?
-    ccf                                                        ; f796    3f     ?
-    ccf                                                        ; f797    3f     ?
+    db "DISC"
+    db "    "
+    db "    "
+    db "????"
 sub_f798h:
     res 3,(iy+041h)                                            ; f798    fd cb 41 9e     . . A .
     call sub_d9a0h                                             ; f79c    cd a0 d9     . . .
@@ -8745,7 +8753,7 @@ sub_faa0h:
 lfae9h:
     db 0c0h
 lfaeah:
-    ;CPC Standard Disk (178k) disk format definition
+    ;CPC Standard Disk (178k) disk format definition (maybe?)
     db 0c4h,0c5h,0c6h,0c7h,0cch,0cdh,0ceh,0cfh
     db 0d4h,0d5h,0d6h,0d7h,0dch,0ddh,0deh,0dfh
     db 0e4h,0e5h,0e6h,0e7h,0ech,0edh,0eeh,0efh

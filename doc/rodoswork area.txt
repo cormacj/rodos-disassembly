@@ -11,10 +11,8 @@ In code this is usually referenced to by IY
 25 2 Address of input buffer (sector block)
 27 2 Address of output buffer (header)
 29 2 Address of output buffer (sector block)
+51 3 Original contents of KL_FIND_COMMAND location. (KL_FIND_COMMAND was patched by RODOS)
 66 1 Home drive number for |CD
 67 1 Home drive letter for |CD
 68 1 Home track for |CD
 69 1 Home sector for |CD
-
-
-iy+3 - current drive number
