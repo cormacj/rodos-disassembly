@@ -1146,14 +1146,12 @@ This powerful command allows you to set several RODOS defaults:
 2,n - case sensitivity on file names (on/off)
 3,n - cassette loading messages {(on/off)
 4,n - overwrite file. n=0, 1 or 2
-0 - ask 1 - erase (overwrite) 2 -~ create backup
-
+      0 - ask 1 - erase (overwrite) 2 - create backup
 5.n - disk read error retry count (default=16)
 6,n - disk error messages (on/off)
-
 7,nn- motor on time in 1/50 sec. (default=1l sec)
 8.nn- motor off time in 1/50 sec. (default=7 sec)
-8.,n - drive tracking speed in ms. (default=12)
+9,n - drive tracking speed in ms. (default=12)
 10.n - head load delay in ms. (default=1)
 11,n - head unload delay in ms. (default=1)
 12,n - extra external disk drives port number

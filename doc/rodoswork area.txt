@@ -4,10 +4,13 @@ In code this is usually referenced to by IY
 1 1 CPM rom number
 3 1 Current drive letter, eg, A,B,C,D,E,F etc
 4 1 Current drive number, See appendix A
+8 1 Loading messages (|opt,1,x)
+9 1 Disk read error retry count (|opt,5,x)
 11 1 Expansion Ram count (in 16k blocks)
 12 1 Start prbuff bank
 18 1 Current side of disc (0 or 1)
 19 1 Previous Drive, eg |C:|dir,"A:" will make location 3 0 (for drive A), and location 19 will be 2 (for drive C)
+22 1 Overwrite file: 0=ask 1=overwrite 2=create backup
 23 2 Address of input buffer (file header)
 25 2 Address of input buffer (sector block)
 27 2 Address of output buffer (header)
@@ -22,3 +25,4 @@ In code this is usually referenced to by IY
 70 2 HL Value from KM_TEST_KEY on boot
 78 1 RODOS User Number (0-255)
 79 1 RODOS User Number Reserved - Set to 255
+88 2 Extra external disk drives port number

@@ -92,17 +92,22 @@ RSX_MKDIR:          equ 0xdf64
 ;In this case 003h is actually "Current Drive Letter" so I'm creating some EQUs for readability
 WS_CURRENT_DRIVE_LETTER:    equ 003h  ; Current Drive Letter
 WS_DRIVE_NUMBER:            equ 004h  ; Current Drive Number (mostly used when patching (See Appendix F))
+WS_LOADING_MESSAGES:        equ 008h  ; Loading messages (|OPT,1,x)
+WS_DISK_ERROR_RETRY_COUNT:  equ 009h  ; Disk read error retry count (|OPT,5,x)
 WS_EXPANSION_RAM_COUNT:     equ 00bh  ; Expansion ram count (in 16k blocks)
 WS_START_PRBUFF_BANK:       equ 00ch  ; Printer Buffer Bank
 WS_PREVIOUS_DRIVE_LETTER:   equ 013h  ; Previous value of WS_CURRENT_DRIVE_LETTER
+WS_OVERWRITE_FILE:          equ 016h  ; Overwrite file: 0=ask 1=overwrite 2=create backup
 WS_USER_NUMBER:             equ 036h  ; Current User Number
 WS_CASE_SENSITIVITY:        equ 041h  ; Case sensitivity of filenames. (1=Off, 0=On)
 WS_CD_HOME_DRIVE_NUMBER:    equ 042h  ; Home drive number for |CD
 WS_CD_HOME_DRIVE_LETTER:    equ 043h  ; Home drive letter for |CD
 WS_CD_HOME_TRACK:           equ 044h  ; Home track for |CD
+WS_CD_HOME_SECTOR:          equ 045h  ; Home sector for |CD
 WS_RODOS_USER_NUMBER_LOW:   equ 04eh  ; RODOS User number (0 to 255). Rodos supports 0-65535 but only 0-255 are supported
 WS_RODOS_USER_NUMBER_HIGH:  equ 04fh  ; RODOS User number (current reserved, set to 255). Rodos supports 0-65535 but only 0-255 are supported
-
+WS_EXTRA_DRIVE_PORT_LOW:    equ 058h  ; Extra external disk drives port number (0-65535)
+WS_EXTRA_DRIVE_PORT_HIGH:   equ 059h  ;
 
 ; BLOCK 'ROM_TYPE' (start 0xc000 end 0xc001)
 ROM_TYPE:
@@ -531,9 +536,12 @@ INITIALISE_VARIABLES:
     ;TODO find out what these actually relate to
     ld (iy+WS_PREVIOUS_DRIVE_LETTER),a                                             ; c32a    fd 77 13     . w .
     ld (iy+WS_USER_NUMBER),a                                             ; c32d    fd 77 36     . w 6
-    ld (iy+008h),a                                             ; c330    fd 77 08     . w .
-    ld (iy+015h),a                                             ; c333    fd 77 15     . w .
-    ld (iy+016h),a                                             ; c336    fd 77 16     . w .
+    ld (iy+WS_LOADING_MESSAGES),a                                             ; c330    fd 77 08     . w .
+
+    ;iy+-15 is only ever used one at location d20c
+    ld (iy+015h),a                                              ; c333    fd 77 15     . w .
+
+    ld (iy+WS_OVERWRITE_FILE),a                                             ; c336    fd 77 16     . w .
     ld (iy+03bh),a                                             ; c339    fd 77 3b     . w ;
     ld (iy+WS_RODOS_USER_NUMBER_LOW),a                                             ; c33c    fd 77 4e     . w N
     ld (iy+WS_CD_HOME_DRIVE_NUMBER),a                          ; c33f    fd 77 42     . w B
@@ -545,13 +553,13 @@ INITIALISE_VARIABLES:
     ld (iy+03fh),a                                             ; c34f    fd 77 3f     . w ?
     ld (iy+040h),a                                             ; c352    fd 77 40     . w @
     ld hl,0faffh                                               ; c355    21 ff fa     ! . .
-    ld (iy+058h),l                                             ; c358    fd 75 58     . u X
-    ld (iy+059h),h                                             ; c35b    fd 74 59     . t Y
+    ld (iy+WS_EXTRA_DRIVE_PORT_LOW),l                                             ; c358    fd 75 58     . u X
+    ld (iy+WS_EXTRA_DRIVE_PORT_HIGH),h                                             ; c35b    fd 74 59     . t Y
     call sub_f174h                                             ; c35e    cd 74 f1     . t .
     ld a,081h                                                  ; c361    3e 81     > .
-    ld (iy+045h),a                                             ; Home sector for |CD         ;c363    fd 77 45     . w E
+    ld (iy+WS_CD_HOME_SECTOR),a                                             ; Home sector for |CD         ;c363    fd 77 45     . w E
     ld a,010h                                                  ; c366    3e 10     > .
-    ld (iy+009h),a                                             ; c368    fd 77 09     . w .
+    ld (iy+WS_DISK_ERROR_RETRY_COUNT),a                                             ; c368    fd 77 09     . w .
 
     ld de,00021h                                               ; c36b    11 21 00     . ! .
     push iy                                                    ; c36e    fd e5     . .
@@ -1909,7 +1917,7 @@ lcb40h:
     jr nz,lcb3ah                                               ; cb47    20 f1       .
     ret                                                        ; cb49    c9     .
 sub_cb4ah:
-    ld a,(iy+009h)                                             ; cb4a    fd 7e 09     . ~ .
+    ld a,(iy+WS_DISK_ERROR_RETRY_COUNT)                                             ; cb4a    fd 7e 09     . ~ .
     ld (iy+00ah),a                                             ; cb4d    fd 77 0a     . w .
     ret                                                        ; cb50    c9     .
 sub_cb51h:
@@ -2543,7 +2551,7 @@ lcff7h:
     ld (0bee2h),hl                                             ; d00f    22 e2 be     " . .
     ld a,b                                                     ; d012    78     x
     ld (0bee4h),a                                              ; d013    32 e4 be     2 . .
-    ld a,(iy+008h)                                             ; d016    fd 7e 08     . ~ .
+    ld a,(iy+WS_LOADING_MESSAGES)                                             ; d016    fd 7e 08     . ~ .
     and a                                                      ; d019    a7     .
     call nz,sub_d11fh                                          ; d01a    c4 1f d1     . . .
     ld a,b                                                     ; d01d    78     x
@@ -2575,7 +2583,7 @@ ld028h:
     ld (0bee2h),hl                                             ; d057    22 e2 be     " . .
     ld a,b                                                     ; d05a    78     x
     ld (0bee4h),a                                              ; d05b    32 e4 be     2 . .
-    ld a,(iy+008h)                                             ; d05e    fd 7e 08     . ~ .
+    ld a,(iy+WS_LOADING_MESSAGES)                                             ; d05e    fd 7e 08     . ~ .
     and a                                                      ; d061    a7     .
     call nz,sub_d11ah                                          ; d062    c4 1a d1     . . .
     ld a,b                                                     ; d065    78     x
@@ -2799,7 +2807,7 @@ ld1cfh:
     ld a,(iy+015h)                                             ; d20c    fd 7e 15     . ~ .
     ld (hl),a                                                  ; d20f    77     w
     inc hl                                                     ; d210    23     #
-    ld a,(iy+016h)                                             ; d211    fd 7e 16     . ~ .
+    ld a,(iy+WS_OVERWRITE_FILE)                                             ; d211    fd 7e 16     . ~ .
     ld (hl),a                                                  ; d214    77     w
     call sub_d1c4h                                             ; d215    cd c4 d1     . . .
     ld a,(iy+012h)                                             ; d218    fd 7e 12     . ~ .
@@ -3003,7 +3011,7 @@ OPT_1:
     cp 001h                                                    ; d381    fe 01     . .
     jr nz,OPT_2                                                ; d383    20 07       .
     ld a,(ix+000h)                                             ; d385    dd 7e 00     . ~ .
-    ld (iy+008h),a                                             ; d388    fd 77 08     . w .
+    ld (iy+WS_LOADING_MESSAGES),a                                             ; d388    fd 77 08     . w .
     ret                                                        ; d38b    c9     .
 OPT_2:
 ;Case sensitivity of filesnames off/on
@@ -3031,14 +3039,14 @@ OPT_4:
     cp 004h                                                    ; d3b0    fe 04     . .
     jr nz,OPT_5                                                ; d3b2    20 07       .
     ld a,(ix+000h)                                             ; d3b4    dd 7e 00     . ~ .
-    ld (iy+016h),a                                             ; d3b7    fd 77 16     . w .
+    ld (iy+WS_OVERWRITE_FILE),a                                             ; d3b7    fd 77 16     . w .
     ret                                                        ; d3ba    c9     .
 OPT_5:
 ;disk read error retry count (default=16)
     cp 005h                                                    ; d3bb    fe 05     . .
     jr nz,OPT_6                                                ; d3bd    20 0a       .
     ld a,(ix+000h)                                             ; d3bf    dd 7e 00     . ~ .
-    ld (iy+009h),a                                             ; d3c2    fd 77 09     . w .
+    ld (iy+WS_DISK_ERROR_RETRY_COUNT),a                                             ; d3c2    fd 77 09     . w .
     ld (0be66h),a                                              ; d3c5    32 66 be     2 f .
     ret                                                        ; d3c8    c9     .
 OPT_6:
@@ -3092,9 +3100,9 @@ OPT_12:
     cp 00ch                                                    ; d411    fe 0c     . .
     jr nz,OPT_13                                               ; d413    20 0d       .
     ld a,(ix+000h)                                             ; d415    dd 7e 00     . ~ .
-    ld (iy+058h),a                                             ; d418    fd 77 58     . w X
+    ld (iy+WS_EXTRA_DRIVE_PORT_LOW),a                                             ; d418    fd 77 58     . w X
     ld a,(ix+001h)                                             ; d41b    dd 7e 01     . ~ .
-    ld (iy+059h),a                                             ; d41e    fd 77 59     . w Y
+    ld (iy+WS_EXTRA_DRIVE_PORT_HIGH),a                                             ; d41e    fd 77 59     . w Y
     ret                                                        ; d421    c9     .
 OPT_13:
 ;Enable 40 track disk to be read in 80 track drive in double step (off/on)
@@ -3686,7 +3694,7 @@ PROCESS_DRIVE_CHANGE:
     ld a,(iy+005h)                                             ; d815    fd 7e 05     . ~ .
     ld (iy+WS_CD_HOME_TRACK),a                                 ; d818    fd 77 44     . w D
     ld a,(iy+006h)                                             ; d81b    fd 7e 06     . ~ .
-    ld (iy+045h),a                                             ; d81e    fd 77 45     . w E
+    ld (iy+WS_CD_HOME_SECTOR),a                                             ; d81e    fd 77 45     . w E
     ld a,(iy+WS_DRIVE_NUMBER)                                  ; d821    fd 7e 04     . ~ .
     ld (iy+WS_CD_HOME_DRIVE_NUMBER),a                          ; d824    fd 77 42     . w B
 ld827h:
@@ -5025,7 +5033,7 @@ le04ah:
     ld e,a                                                     ; e050    5f     _
     ld a,(iy+WS_CD_HOME_TRACK)                                 ; e051    fd 7e 44     . ~ D
     ld (iy+005h),a                                             ; e054    fd 77 05     . w .
-    ld a,(iy+045h)                                             ; e057    fd 7e 45     . ~ E
+    ld a,(iy+WS_CD_HOME_SECTOR)                                             ; e057    fd 7e 45     . ~ E
     ld (iy+006h),a                                             ; e05a    fd 77 06     . w .
     ld a,(iy+WS_CD_HOME_DRIVE_NUMBER)                          ; e05d    fd 7e 42     . ~ B
     ld (iy+WS_DRIVE_NUMBER),a                                  ; e060    fd 77 04     . w .
@@ -6011,7 +6019,7 @@ le855h:
 le888h:
     bit 2,(hl)                                                 ; e888    cb 56     . V
     jp nz,MSG_DIR_ALREADY_EXISTS                               ; e88a    c2 be fb     . . .
-    ld a,(iy+016h)                                             ; e88d    fd 7e 16     . ~ .
+    ld a,(iy+WS_OVERWRITE_FILE)                                             ; e88d    fd 7e 16     . ~ .
     cp 002h                                                    ; e890    fe 02     . .
     jr z,le8b7h                                                ; e892    28 23     ( #
     cp 001h                                                    ; e894    fe 01     . .
@@ -7310,8 +7318,8 @@ lf16eh:
     ret                                                        ; f173    c9     .
 sub_f174h:
     push bc                                                    ; f174    c5     .
-    ld c,(iy+058h)                                             ; f175    fd 4e 58     . N X
-    ld b,(iy+059h)                                             ; f178    fd 46 59     . F Y
+    ld c,(iy+WS_EXTRA_DRIVE_PORT_LOW)                                             ; f175    fd 4e 58     . N X
+    ld b,(iy+WS_EXTRA_DRIVE_PORT_HIGH)                                             ; f178    fd 46 59     . F Y
     out (c),a                                                  ; f17b    ed 79     . y
     cp (iy+03ch)                                               ; f17d    fd be 3c     . . <
     call nz,sub_f185h                                          ; f180    c4 85 f1     . . .
