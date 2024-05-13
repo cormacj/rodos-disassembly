@@ -90,13 +90,19 @@ RSX_MKDIR:          equ 0xdf64
 ;Workspace offset definitions
 ;This typically shows up in code as something like "ld (iy+WS_CURRENT_DRIVE_LETTER),a" or "ld a,(iy+WS_CURRENT_DRIVE_LETTER)"
 ;In this case 003h is actually "Current Drive Letter" so I'm creating some EQUs for readability
-WS_CURRENT_DRIVE_LETTER: equ 003h  ; Current Drive Letter
-WS_DRIVE_NUMBER:         equ 004h  ; Current Drive Number (mostly used when patching (See Appendix F))
-WS_CD_HOME_DRIVE_NUMBER: equ 042h  ; Home drive number for |CD
-WS_CD_HOME_DRIVE_LETTER: equ 043h  ; Home drive letter for |CD
-WS_CD_HOME_TRACK:        equ 044h  ; Home track for |CD
-WS_EXPANSION_RAM_COUNT:  equ 00bh  ; Expansion ram count (in 16k blocks)
-WS_START_PRBUFF_BANK:    equ 00ch  ; Printer Buffer Bank
+WS_CURRENT_DRIVE_LETTER:    equ 003h  ; Current Drive Letter
+WS_DRIVE_NUMBER:            equ 004h  ; Current Drive Number (mostly used when patching (See Appendix F))
+WS_EXPANSION_RAM_COUNT:     equ 00bh  ; Expansion ram count (in 16k blocks)
+WS_START_PRBUFF_BANK:       equ 00ch  ; Printer Buffer Bank
+WS_PREVIOUS_DRIVE_LETTER:   equ 013h  ; Previous value of WS_CURRENT_DRIVE_LETTER
+WS_USER_NUMBER:             equ 036h  ; Current User Number
+WS_CASE_SENSITIVITY:        equ 041h  ; Case sensitivity of filenames. (1=Off, 0=On)
+WS_CD_HOME_DRIVE_NUMBER:    equ 042h  ; Home drive number for |CD
+WS_CD_HOME_DRIVE_LETTER:    equ 043h  ; Home drive letter for |CD
+WS_CD_HOME_TRACK:           equ 044h  ; Home track for |CD
+WS_RODOS_USER_NUMBER_LOW:   equ 04eh  ; RODOS User number (0 to 255). Rodos supports 0-65535 but only 0-255 are supported
+WS_RODOS_USER_NUMBER_HIGH:  equ 04fh  ; RODOS User number (current reserved, set to 255). Rodos supports 0-65535 but only 0-255 are supported
+
 
 ; BLOCK 'ROM_TYPE' (start 0xc000 end 0xc001)
 ROM_TYPE:
@@ -492,8 +498,15 @@ sub_c2cch:
     ;Check for SHIFT key
     ld a,015h                                                  ; c2f7    3e 15     > .
     call KM_TEST_KEY                                           ; c2f9    cd 1e bb     . . .
+    ;Action:    Tests if a particular key (or joystick direction or button) is pressed
+    ;Entry:     A contains the key/joystick number
+    ;Exit:      If the requested key is pressed, then Zero is false; otherwise Zero is true for both, Carry is false A and
+    ;           HL are corrupt. C holds the Sbift and Control status and others are preserved
+    ;Notes:     After calling this, C will hold the state of shift and control - if bit 7 is set then Control was pressed, and if
+    ;           bit 5 is set then Shift was pressed
     ld (iy+046h),l                                             ; c2fc    fd 75 46     . u F
     ld (iy+047h),h                                             ; c2ff    fd 74 47     . t G
+    ;It's odd that HL is stored, because its corrupt coming out of KM_TEST_KEY, unless its patched.
     xor a                                                      ; c302    af     .
     ld (iy+011h),a                                             ; c303    fd 77 11     . w .
     dec a                                                      ; c306    3d     =
@@ -516,19 +529,19 @@ INITIALISE_VARIABLES:
     ;A=0
     ;Now set the working space variables to initial values
     ;TODO find out what these actually relate to
-    ld (iy+013h),a                                             ; c32a    fd 77 13     . w .
-    ld (iy+036h),a                                             ; c32d    fd 77 36     . w 6
+    ld (iy+WS_PREVIOUS_DRIVE_LETTER),a                                             ; c32a    fd 77 13     . w .
+    ld (iy+WS_USER_NUMBER),a                                             ; c32d    fd 77 36     . w 6
     ld (iy+008h),a                                             ; c330    fd 77 08     . w .
     ld (iy+015h),a                                             ; c333    fd 77 15     . w .
     ld (iy+016h),a                                             ; c336    fd 77 16     . w .
     ld (iy+03bh),a                                             ; c339    fd 77 3b     . w ;
-    ld (iy+04eh),a                                             ; c33c    fd 77 4e     . w N
-    ld (iy+WS_CD_HOME_DRIVE_NUMBER),a                          ; Home drive number for |CD   ;c33f    fd 77 42     . w B
-    ld (iy+WS_CD_HOME_DRIVE_LETTER),a                          ; Home drive letter for |CD   ;c342    fd 77 43     . w C
-    ld (iy+WS_CD_HOME_TRACK),a                                 ; Home track for |CD          ;c345    fd 77 44     . w D
+    ld (iy+WS_RODOS_USER_NUMBER_LOW),a                                             ; c33c    fd 77 4e     . w N
+    ld (iy+WS_CD_HOME_DRIVE_NUMBER),a                          ; c33f    fd 77 42     . w B
+    ld (iy+WS_CD_HOME_DRIVE_LETTER),a                          ; c342    fd 77 43     . w C
+    ld (iy+WS_CD_HOME_TRACK),a                                 ; c345    fd 77 44     . w D
     ld (DISK_ERROR_MESSAGE_FLAG),a                             ; c348    32 78 be     2 x .
-    dec a                                                      ; c34b    3d     =
-    ld (iy+04fh),a                                             ; c34c    fd 77 4f     . w O
+    dec a ;Set A=255                                                     ; c34b    3d     =
+    ld (iy+WS_RODOS_USER_NUMBER_HIGH),a                                             ; c34c    fd 77 4f     . w O
     ld (iy+03fh),a                                             ; c34f    fd 77 3f     . w ?
     ld (iy+040h),a                                             ; c352    fd 77 40     . w @
     ld hl,0faffh                                               ; c355    21 ff fa     ! . .
@@ -2187,10 +2200,10 @@ RSX_ACCESS:
 sub_cd6eh:
     push hl                                                    ; cd6e    e5     .
     pop ix                                                     ; cd6f    dd e1     . .
-    ld a,(iy+04eh)                                             ; cd71    fd 7e 4e     . ~ N
+    ld a,(iy+WS_RODOS_USER_NUMBER_LOW)                                             ; cd71    fd 7e 4e     . ~ N
     cp (ix+01bh)                                               ; cd74    dd be 1b     . . .
     jp nz,MSG_ACCESS_DENIED                                    ; cd77    c2 a7 fb     . . .
-    ld a,(iy+04fh)                                             ; cd7a    fd 7e 4f     . ~ O
+    ld a,(iy+WS_RODOS_USER_NUMBER_HIGH)                                             ; cd7a    fd 7e 4f     . ~ O
     cp (ix+01ch)                                               ; cd7d    dd be 1c     . . .
     jp nz,MSG_ACCESS_DENIED                                    ; cd80    c2 a7 fb     . . .
     ld a,(iy+002h)                                             ; cd83    fd 7e 02     . ~ .
@@ -2254,7 +2267,7 @@ RSX_COPY:
     bit 7,e                                                    ; cdfc    cb 7b     . {
     jr z,lce4ah                                                ; cdfe    28 4a     ( J
     ld (iy+014h),003h                                          ; ce00    fd 36 14 03     . 6 . .
-    ld a,(iy+013h)                                             ; ce04    fd 7e 13     . ~ .
+    ld a,(iy+WS_PREVIOUS_DRIVE_LETTER)                                             ; ce04    fd 7e 13     . ~ .
     push af                                                    ; ce07    f5     .
     call sub_da04h                                             ; ce08    cd 04 da     . . .
     push af                                                    ; ce0b    f5     .
@@ -2774,7 +2787,7 @@ ld1cfh:
     ld a,(iy+01bh)                                             ; d1f4    fd 7e 1b     . ~ .
     ld (hl),a                                                  ; d1f7    77     w
     call sub_d1c4h                                             ; d1f8    cd c4 d1     . . .
-    ld e,(iy+013h)                                             ; d1fb    fd 5e 13     . ^ .
+    ld e,(iy+WS_PREVIOUS_DRIVE_LETTER)                                             ; d1fb    fd 5e 13     . ^ .
     ld d,(iy+014h)                                             ; d1fe    fd 56 14     . V .
     ld a,e                                                     ; d201    7b     {
     or d                                                       ; d202    b2     .
@@ -3267,10 +3280,10 @@ RSX_USER:
     jr z,ld558h                                                ; d553    28 03     ( .
     ld a,(ix+000h)                                             ; d555    dd 7e 00     . ~ .
 ld558h:
-    ld (iy+04eh),a                                             ; d558    fd 77 4e     . w N
-    ld (iy+04fh),0ffh                                          ; d55b    fd 36 4f ff     . 6 O .
+    ld (iy+WS_RODOS_USER_NUMBER_LOW),a                                             ; d558    fd 77 4e     . w N
+    ld (iy+WS_RODOS_USER_NUMBER_HIGH),0ffh                                          ; d55b    fd 36 4f ff     . 6 O .
     and 00fh                                                   ; d55f    e6 0f     . .
-    ld (iy+036h),a                                             ; d561    fd 77 36     . w 6
+    ld (iy+WS_USER_NUMBER),a                                             ; d561    fd 77 36     . w 6
     ld ix,0bef0h                                               ; d564    dd 21 f0 be     . ! . .
     ld a,(iy+001h)                                             ; d568    fd 7e 01     . ~ .
     ld (ix+000h),a                                             ; d56b    dd 77 00     . w .
@@ -3280,7 +3293,7 @@ ld558h:
     ld (ix+003h),'E'                                           ; d576    dd 36 03 45     . 6 . E
     ld (ix+004h),'R' + 0x80                                    ; d57a    dd 36 04 d2     . 6 . .
     ld ix,0bef5h                                               ; d57e    dd 21 f5 be     . ! . .
-    ld a,(iy+036h)                                             ; d582    fd 7e 36     . ~ 6
+    ld a,(iy+WS_USER_NUMBER)                                             ; d582    fd 7e 36     . ~ 6
     ld (ix+000h),a                                             ; d585    dd 77 00     . w .
     ld (ix+001h),000h                                          ; d588    dd 36 01 00     . 6 . .
     jp ld687h                                                  ; d58c    c3 87 d6     . . .
@@ -3667,7 +3680,7 @@ PROCESS_DRIVE_CHANGE:
     ret nc                                                     ; d805    d0     .
     jp nz,MSG_DISC_NOT_FORMATTED                               ; d806    c2 22 fc     . " .
     ld a,(iy+WS_CURRENT_DRIVE_LETTER)                          ; d809    fd 7e 03     . ~ .
-    ld (iy+013h),a                                             ; d80c    fd 77 13     . w .
+    ld (iy+WS_PREVIOUS_DRIVE_LETTER),a                                             ; d80c    fd 77 13     . w .
     ld (iy+WS_CD_HOME_DRIVE_LETTER),a                          ; d80f    fd 77 43     . w C
     call sub_da62h                                             ; d812    cd 62 da     . b .
     ld a,(iy+005h)                                             ; d815    fd 7e 05     . ~ .
@@ -4060,7 +4073,7 @@ lda47h:
     pop af                                                     ; da60    f1     .
     ret                                                        ; da61    c9     .
 sub_da62h:
-    ld a,(iy+013h)                                             ; Probably Current Side of Disc    ;da62    fd 7e 13     . ~ .
+    ld a,(iy+WS_PREVIOUS_DRIVE_LETTER)                                             ; Probably Current Side of Disc    ;da62    fd 7e 13     . ~ .
     ld (iy+WS_CURRENT_DRIVE_LETTER),a                          ; Probably Current Disc    ;da65    fd 77 03     . w .
     jr lda47h                                                  ; da68    18 dd     . .
 sub_da6ah:
@@ -4179,11 +4192,11 @@ sub_db19h:
     ld bc,KL_FAR_PCHL                                          ; db1b    01 1b 00     . . .
     add hl,bc                                                  ; db1e    09     .
     ld a,(hl)                                                  ; db1f    7e     ~
-    cp (iy+04eh)                                               ; db20    fd be 4e     . . N
+    cp (iy+WS_RODOS_USER_NUMBER_LOW)                                               ; db20    fd be 4e     . . N
     jr nz,ldb36h                                               ; db23    20 11       .
     inc hl                                                     ; db25    23     #
     ld a,(hl)                                                  ; db26    7e     ~
-    cp (iy+04fh)                                               ; db27    fd be 4f     . . O
+    cp (iy+WS_RODOS_USER_NUMBER_HIGH)                                               ; db27    fd be 4f     . . O
     jr nz,ldb36h                                               ; db2a    20 0a       .
     pop hl                                                     ; db2c    e1     .
     push hl                                                    ; db2d    e5     .
@@ -4269,7 +4282,7 @@ ldba2h:
     jr nz,ldbd7h                                               ; dbaf    20 26       &
     ld b,028h                                                  ; dbb1    06 28     . (
     ld a,(iy+WS_DRIVE_NUMBER)                                  ; dbb3    fd 7e 04     . ~ .
-    ld e,(iy+013h)                                             ; dbb6    fd 5e 13     . ^ .
+    ld e,(iy+WS_PREVIOUS_DRIVE_LETTER)                                             ; dbb6    fd 5e 13     . ^ .
     cp 0ffh                                                    ; dbb9    fe ff     . .
     call z,sub_f11ah                                           ; dbbb    cc 1a f1     . . .
     ld (iy+WS_DRIVE_NUMBER),a                                  ; dbbe    fd 77 04     . w .
@@ -4989,7 +5002,7 @@ le010h:
     ld a,(iy+WS_CURRENT_DRIVE_LETTER)                          ; e01c    fd 7e 03     . ~ .
     cp 008h                                                    ; e01f    fe 08     . .
     jr nz,le041h                                               ; e021    20 1e       .
-    ld a,(iy+013h)                                             ; e023    fd 7e 13     . ~ .
+    ld a,(iy+WS_PREVIOUS_DRIVE_LETTER)                                             ; e023    fd 7e 13     . ~ .
     cp (iy+WS_CURRENT_DRIVE_LETTER)                            ; e026    fd be 03     . . .
     ret z                                                      ; e029    c8     .
     ld (iy+WS_CURRENT_DRIVE_LETTER),a                          ; e02a    fd 77 03     . w .
@@ -5003,7 +5016,7 @@ le010h:
     ld a,(iy+WS_DRIVE_NUMBER)                                  ; e03b    fd 7e 04     . ~ .
     jp ld827h                                                  ; e03e    c3 27 d8     . ' .
 le041h:
-    ld (iy+013h),a                                             ; e041    fd 77 13     . w .
+    ld (iy+WS_PREVIOUS_DRIVE_LETTER),a                                             ; e041    fd 77 13     . w .
     ld a,(iy+WS_DRIVE_NUMBER)                                  ; e044    fd 7e 04     . ~ .
     jp ld827h                                                  ; e047    c3 27 d8     . ' .
 le04ah:
@@ -5046,7 +5059,7 @@ RSX_LINK:
     cp 0feh                                                    ; e09b    fe fe     . .
     jp nz,MSG_CANT_LINK_TO_LINKED_FILE                         ; e09d    c2 d6 fb     . . .
     ld l,(iy+WS_CURRENT_DRIVE_LETTER)                          ; e0a0    fd 6e 03     . n .
-    ld a,(iy+013h)                                             ; e0a3    fd 7e 13     . ~ .
+    ld a,(iy+WS_PREVIOUS_DRIVE_LETTER)                                             ; e0a3    fd 7e 13     . ~ .
     cp l                                                       ; e0a6    bd     .
     ld l,(iy+WS_DRIVE_NUMBER)                                  ; e0a7    fd 6e 04     . n .
     call z,sub_e0cfh                                           ; e0aa    cc cf e0     . . .
@@ -6428,9 +6441,9 @@ lec2bh:
     ld (ix+018h),a                                             ; ec49    dd 77 18     . w .
     ld (ix+019h),a                                             ; ec4c    dd 77 19     . w .
     ld (ix+01ah),a                                             ; ec4f    dd 77 1a     . w .
-    ld a,(iy+04eh)                                             ; ec52    fd 7e 4e     . ~ N
+    ld a,(iy+WS_RODOS_USER_NUMBER_LOW)                                             ; ec52    fd 7e 4e     . ~ N
     ld (ix+01bh),a                                             ; ec55    dd 77 1b     . w .
-    ld a,(iy+04fh)                                             ; ec58    fd 7e 4f     . ~ O
+    ld a,(iy+WS_RODOS_USER_NUMBER_HIGH)                                             ; ec58    fd 7e 4f     . ~ O
     ld (ix+01ch),a                                             ; ec5b    dd 77 1c     . w .
     ld (ix+01dh),0feh                                          ; ec5e    dd 36 1d fe     . 6 . .
     ld a,000h                                                  ; ec62    3e 00     > .
@@ -8193,7 +8206,7 @@ lf70bh:
     res 0,(iy+00dh)                                            ; f72c    fd cb 0d 86     . . . .
     bit 5,a                                                    ; f730    cb 6f     . o
     jr nz,lf751h                                               ; f732    20 1d       .
-    ld (iy+013h),001h                                          ; f734    fd 36 13 01     . 6 . .
+    ld (iy+WS_PREVIOUS_DRIVE_LETTER),001h                                          ; f734    fd 36 13 01     . 6 . .
     call sub_da62h                                             ; f738    cd 62 da     . b .
     set 0,(iy+00dh)                                            ; f73b    fd cb 0d c6     . . . .
     call sub_cab5h                                             ; f73f    cd b5 ca     . . .
@@ -8201,7 +8214,7 @@ lf70bh:
     bit 5,a                                                    ; f746    cb 6f     . o
     call nz,lf751h                                             ; f748    c4 51 f7     . Q .
     ret nz                                                     ; f74b    c0     .
-    ld (iy+013h),000h                                          ; f74c    fd 36 13 00     . 6 . .
+    ld (iy+WS_PREVIOUS_DRIVE_LETTER),000h                                          ; f74c    fd 36 13 00     . 6 . .
     ret                                                        ; f750    c9     .
 lf751h:
     ;Now copy DISC and whitespace to 0xbef0
@@ -8358,7 +8371,7 @@ lf873h:
     push hl                                                    ; f875    e5     .
     push bc                                                    ; f876    c5     .
     ld a,(hl)                                                  ; f877    7e     ~
-    cp (iy+036h)                                               ; f878    fd be 36     . . 6
+    cp (iy+WS_USER_NUMBER)                                               ; f878    fd be 36     . . 6
     jr nz,lf8d4h                                               ; f87b    20 57       W
     inc hl                                                     ; f87d    23     #
     ld b,00bh                                                  ; f87e    06 0b     . .

@@ -7,12 +7,18 @@ In code this is usually referenced to by IY
 11 1 Expansion Ram count (in 16k blocks)
 12 1 Start prbuff bank
 18 1 Current side of disc (0 or 1)
+19 1 Previous Drive, eg |C:|dir,"A:" will make location 3 0 (for drive A), and location 19 will be 2 (for drive C)
 23 2 Address of input buffer (file header)
 25 2 Address of input buffer (sector block)
 27 2 Address of output buffer (header)
 29 2 Address of output buffer (sector block)
 51 3 Original contents of KL_FIND_COMMAND location. (KL_FIND_COMMAND was patched by RODOS)
+54 1 AMSDOS User Number (0-16)
+65 1 Case sensitivity on file names (0=On, Case sensitive. 1=Off, Case insensitive)
 66 1 Home drive number for |CD
 67 1 Home drive letter for |CD
 68 1 Home track for |CD
 69 1 Home sector for |CD
+70 2 HL Value from KM_TEST_KEY on boot
+78 1 RODOS User Number (0-255)
+79 1 RODOS User Number Reserved - Set to 255
