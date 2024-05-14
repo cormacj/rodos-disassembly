@@ -90,14 +90,23 @@ RSX_MKDIR:          equ 0xdf64
 ;Workspace offset definitions
 ;This typically shows up in code as something like "ld (iy+WS_CURRENT_DRIVE_LETTER),a" or "ld a,(iy+WS_CURRENT_DRIVE_LETTER)"
 ;In this case 003h is actually "Current Drive Letter" so I'm creating some EQUs for readability
+WS_RODOS_ROM_NUMBER:        equ 000h  ; The rom slot number of the RODOS rom
+WS_CPM_ROM_NUMBER:          equ 001h  ; The rom slot number of the CPM (aka AMSDOS) rom (normally slot 7) plus &30.
+                                      ; If the rom is missing or non standard this value is &3F
 WS_CURRENT_DRIVE_LETTER:    equ 003h  ; Current Drive Letter
 WS_DRIVE_NUMBER:            equ 004h  ; Current Drive Number (mostly used when patching (See Appendix F))
 WS_LOADING_MESSAGES:        equ 008h  ; Loading messages (|OPT,1,x)
 WS_DISK_ERROR_RETRY_COUNT:  equ 009h  ; Disk read error retry count (|OPT,5,x)
 WS_EXPANSION_RAM_COUNT:     equ 00bh  ; Expansion ram count (in 16k blocks)
 WS_START_PRBUFF_BANK:       equ 00ch  ; Printer Buffer Bank
+WS_SCREEN_OUTPUT_VALUE:     equ 011h  ; Sets normal screen output according to n, where n is the sum of the following:
+                                      ;     +1 - screen output to current open file.
+                                      ;     +2 - screen output to printer.
+                                      ;     +4 - screen echo disabled.
 WS_PREVIOUS_DRIVE_LETTER:   equ 013h  ; Previous value of WS_CURRENT_DRIVE_LETTER
 WS_OVERWRITE_FILE:          equ 016h  ; Overwrite file: 0=ask 1=overwrite 2=create backup
+WS_INPUT_BUFF_ADDR_FILE:    equ 017h  ; Address of input buffer (file header)
+WS_INPUT_BUFF_ADDR_SECTOR:  equ 019h  ; Address of input buffer (sector block)
 WS_USER_NUMBER:             equ 036h  ; Current User Number
 WS_CASE_SENSITIVITY:        equ 041h  ; Case sensitivity of filenames. (1=Off, 0=On)
 WS_CD_HOME_DRIVE_NUMBER:    equ 042h  ; Home drive number for |CD
@@ -108,6 +117,8 @@ WS_RODOS_USER_NUMBER_LOW:   equ 04eh  ; RODOS User number (0 to 255). Rodos supp
 WS_RODOS_USER_NUMBER_HIGH:  equ 04fh  ; RODOS User number (current reserved, set to 255). Rodos supports 0-65535 but only 0-255 are supported
 WS_EXTRA_DRIVE_PORT_LOW:    equ 058h  ; Extra external disk drives port number (0-65535)
 WS_EXTRA_DRIVE_PORT_HIGH:   equ 059h  ;
+WS_ORIGINAL_TXT_OUTPUT:     equ 05Ah  ; Original contents of TXT_OUTUT (&bb5a-&bb5c)
+
 
 ; BLOCK 'ROM_TYPE' (start 0xc000 end 0xc001)
 ROM_TYPE:
@@ -316,7 +327,7 @@ lc1dbh:
     inc hl                                                     ; c1e7    23     #
     push hl                                                    ; c1e8    e5     .
     pop iy                                                     ; c1e9    fd e1     . .
-    ld (iy+000h),a                                             ; c1eb    fd 77 00     . w .
+    ld (iy+WS_RODOS_ROM_NUMBER),a                                             ; c1eb    fd 77 00     . w .
     call sub_c2cch                                             ; c1ee    cd cc c2     . . .
     pop hl                                                     ; c1f1    e1     .
     pop ix                                                     ; c1f2    dd e1     . .
@@ -509,15 +520,15 @@ sub_c2cch:
     ;           HL are corrupt. C holds the Sbift and Control status and others are preserved
     ;Notes:     After calling this, C will hold the state of shift and control - if bit 7 is set then Control was pressed, and if
     ;           bit 5 is set then Shift was pressed
-    ld (iy+046h),l                                             ; c2fc    fd 75 46     . u F
-    ld (iy+047h),h                                             ; c2ff    fd 74 47     . t G
+    ld (iy+WS_CD_HOME_SECTOR+1),l                                             ; c2fc    fd 75 46     . u F
+    ld (iy+WS_CD_HOME_SECTOR+2),h                                             ; c2ff    fd 74 47     . t G
     ;It's odd that HL is stored, because its corrupt coming out of KM_TEST_KEY, unless its patched.
     xor a                                                      ; c302    af     .
-    ld (iy+011h),a                                             ; c303    fd 77 11     . w .
+    ld (iy+WS_SCREEN_OUTPUT_VALUE),a                                             ; c303    fd 77 11     . w .
     dec a                                                      ; c306    3d     =
     ld (iy+WS_START_PRBUFF_BANK),a                             ; c307    fd 77 0c     . w .
     ld a,001h                                                  ; c30a    3e 01     > .
-    ld (iy+041h),a                                             ; c30c    fd 77 41     . w A
+    ld (iy+WS_CASE_SENSITIVITY),a                                             ; c30c    fd 77 41     . w A
     call sub_f541h                                             ; c30f    cd 41 f5     . A .
     ld a,004h                                                  ; c312    3e 04     > .
     ld (iy+00dh),a                                             ; c314    fd 77 0d     . w .
@@ -525,9 +536,9 @@ sub_c2cch:
     ;at iy+5a to iy+5c
     ld hl,(0bb5bh)                                             ; c317    2a 5b bb     * [ .
     ld a,(TXT_OUTPUT)                                          ; c31a    3a 5a bb     : Z .
-    ld (iy+05ah),a                                             ; c31d    fd 77 5a     . w Z
-    ld (iy+05bh),l                                             ; c320    fd 75 5b     . u [
-    ld (iy+05ch),h                                             ; c323    fd 74 5c     . t \
+    ld (iy+WS_ORIGINAL_TXT_OUTPUT),a                                             ; c31d    fd 77 5a     . w Z
+    ld (iy+WS_ORIGINAL_TXT_OUTPUT+1),l                                             ; c320    fd 75 5b     . u [
+    ld (iy+WS_ORIGINAL_TXT_OUTPUT+2),h                                             ; c323    fd 74 5c     . t \
     jp ldf4fh                                                  ; c326    c3 4f df     . O .
 INITIALISE_VARIABLES:
     xor a                                                      ; c329    af     .
@@ -863,11 +874,11 @@ CHECK_FOR_CPM_ROM:
     jr c,lc4efh                                                ; c4e4    38 09     8 .
     call MSG_CPM_ROM_MISSING                                   ; c4e6    cd ba fb     . . .
     ld a,03fh                                                  ; c4e9    3e 3f     > ?
-    ld (iy+001h),a                                             ; c4eb    fd 77 01     . w .
+    ld (iy+WS_CPM_ROM_NUMBER),a                                             ; c4eb    fd 77 01     . w .
     ret                                                        ; c4ee    c9     .
 lc4efh:
     add a,030h                                                 ; c4ef    c6 30     . 0
-    ld (iy+001h),a                                             ; c4f1    fd 77 01     . w .
+    ld (iy+WS_CPM_ROM_NUMBER),a                                             ; c4f1    fd 77 01     . w .
     ret                                                        ; c4f4    c9     .
 
 ;=======================================================================
@@ -1642,7 +1653,7 @@ lc996h:
     and 003h                                                   ; c99c    e6 03     . .
     call sub_cad5h                                             ; c99e    cd d5 ca     . . .
     ld a,d                                                     ; c9a1    7a     z
-    bit 1,(iy+041h)                                            ; c9a2    fd cb 41 4e     . . A N
+    bit 1,(iy+WS_CASE_SENSITIVITY)                                            ; c9a2    fd cb 41 4e     . . A N
     jr z,lc9a9h                                                ; c9a6    28 01     ( .
     add a,a                                                    ; c9a8    87     .
 lc9a9h:
@@ -1967,8 +1978,8 @@ RSX_RANDOM:
     jp nz,MSG_OUTPUT_FILE_ALEADY_OPEN                          ; cb93    c2 ce fb     . . .
 
     ;Check input buffer (file header)
-    ld l,(iy+017h)                                             ; cb96    fd 6e 17     . n .
-    ld h,(iy+018h)                                             ; cb99    fd 66 18     . f .
+    ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; cb96    fd 6e 17     . n .
+    ld h,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                                             ; cb99    fd 66 18     . f .
     ld a,h                                                     ; cb9c    7c     |
     or l                                                       ; cb9d    b5     .
     jp z,MSG_INPUT_FILE_NOT_OPEN                               ; cb9e    ca ca fb     . . .
@@ -2007,8 +2018,8 @@ RSX_POINT:
     jp nc,MSG_TOO_MANY_PARAMETERS                              ; cbda    d2 9f fb     . . .
     and a                                                      ; cbdd    a7     .
     jp z,MSG_WRONG_PARAMETER_AMT                               ; cbde    ca 97 fb     . . .
-    ld a,(iy+017h)                                             ; cbe1    fd 7e 17     . ~ .
-    or (iy+018h)                                               ; cbe4    fd b6 18     . . .
+    ld a,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; cbe1    fd 7e 17     . ~ .
+    or (iy+WS_INPUT_BUFF_ADDR_FILE+1)                                               ; cbe4    fd b6 18     . . .
     jp z,MSG_INPUT_FILE_NOT_OPEN                               ; cbe7    ca ca fb     . . .
     ld c,(iy+01fh)                                             ; cbea    fd 4e 1f     . N .
     ld b,(iy+020h)                                             ; cbed    fd 46 20     . F
@@ -2033,8 +2044,8 @@ lcc06h:
     ld b,(ix+001h)                                             ; cc0f    dd 46 01     . F .
     and a                                                      ; cc12    a7     .
     sbc hl,bc                                                  ; cc13    ed 42     . B
-    ld c,(iy+017h)                                             ; cc15    fd 4e 17     . N .
-    ld b,(iy+018h)                                             ; cc18    fd 46 18     . F .
+    ld c,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; cc15    fd 4e 17     . N .
+    ld b,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                                             ; cc18    fd 46 18     . F .
     push bc                                                    ; cc1b    c5     .
     pop ix                                                     ; cc1c    dd e1     . .
 lcc1eh:
@@ -2202,7 +2213,7 @@ RSX_ACCESS:
     ld (iy+014h),002h                                          ; cd5e    fd 36 14 02     . 6 . .
     call sub_f798h                                             ; cd62    cd 98 f7     . . .
     ret nc                                                     ; cd65    d0     .
-    bit 3,(iy+041h)                                            ; cd66    fd cb 41 5e     . . A ^
+    bit 3,(iy+WS_CASE_SENSITIVITY)                                            ; cd66    fd cb 41 5e     . . A ^
     jp z,MSG_NO_MATCH                                          ; cd6a    ca ab fb     . . .
     ret                                                        ; cd6d    c9     .
 sub_cd6eh:
@@ -2355,8 +2366,8 @@ sub_ce5ch:
     jr nc,sub_ceach                                            ; ce93    30 17     0 .
     call CAS_OUT_CHAR                                          ; ce95    cd 95 bc     . . .
     jr nc,sub_ceach                                            ; ce98    30 12     0 .
-    set 2,(iy+041h)                                            ; ce9a    fd cb 41 d6     . . A .
-    set 4,(iy+041h)                                            ; ce9e    fd cb 41 e6     . . A .
+    set 2,(iy+WS_CASE_SENSITIVITY)                                            ; ce9a    fd cb 41 d6     . . A .
+    set 4,(iy+WS_CASE_SENSITIVITY)                                            ; ce9e    fd cb 41 e6     . . A .
 lcea2h:
     call CAS_IN_CHAR                                           ; cea2    cd 80 bc     . . .
     jr nc,lceb9h                                               ; cea5    30 12     0 .
@@ -2366,7 +2377,7 @@ lcea7h:
 sub_ceach:
     call CAS_OUT_ABANDON                                       ; ceac    cd 92 bc     . . .
     call CAS_IN_ABANDON                                        ; ceaf    cd 7d bc     . } .
-    res 4,(iy+041h)                                            ; ceb2    fd cb 41 a6     . . A .
+    res 4,(iy+WS_CASE_SENSITIVITY)                                            ; ceb2    fd cb 41 a6     . . A .
     jp lda0ah                                                  ; ceb6    c3 0a da     . . .
 lceb9h:
     cp 01ah                                                    ; ceb9    fe 1a     . .
@@ -2642,8 +2653,8 @@ ld0bdh:
     ld a,(0bf09h)                                              ; d0d5    3a 09 bf     : . .
     ld (CAS_IN_OPEN),a                                         ; d0d8    32 77 bc     2 w .
     xor a                                                      ; d0db    af     .
-    ld (iy+017h),a                                             ; d0dc    fd 77 17     . w .
-    ld (iy+018h),a                                             ; d0df    fd 77 18     . w .
+    ld (iy+WS_INPUT_BUFF_ADDR_FILE),a                                             ; d0dc    fd 77 17     . w .
+    ld (iy+WS_INPUT_BUFF_ADDR_FILE+1),a                                             ; d0df    fd 77 18     . w .
 ld0e2h:
     ld hl,(0bc8dh)                                             ; d0e2    2a 8d bc     * . .
     ld a,(0bf0dh)                                              ; d0e5    3a 0d bf     : . .
@@ -2739,7 +2750,7 @@ ld17ch:
     ld (iy+014h),001h                                          ; d188    fd 36 14 01     . 6 . .
     call sub_f798h                                             ; d18c    cd 98 f7     . . .
     ret nc                                                     ; d18f    d0     .
-    bit 3,(iy+041h)                                            ; d190    fd cb 41 5e     . . A ^
+    bit 3,(iy+WS_CASE_SENSITIVITY)                                            ; d190    fd cb 41 5e     . . A ^
     jp z,MSG_NO_MATCH                                          ; d194    ca ab fb     . . .
     ret                                                        ; d197    c9     .
 ld198h:
@@ -2789,7 +2800,7 @@ ld1cfh:
     pop iy                                                     ; d1e7    fd e1     . .
     ld a,(iy+012h)                                             ; d1e9    fd 7e 12     . ~ .
     call sub_d1c4h                                             ; d1ec    cd c4 d1     . . .
-    ld a,(iy+01ah)                                             ; d1ef    fd 7e 1a     . ~ .
+    ld a,(iy+WS_INPUT_BUFF_ADDR_SECTOR+1)                                             ; d1ef    fd 7e 1a     . ~ .
     ld (hl),a                                                  ; d1f2    77     w
     inc hl                                                     ; d1f3    23     #
     ld a,(iy+01bh)                                             ; d1f4    fd 7e 1b     . ~ .
@@ -2816,8 +2827,8 @@ ld1cfh:
     ld (hl),000h                                               ; d21d    36 00     6 .
     ret                                                        ; d21f    c9     .
 sub_d220h:
-    ld e,(iy+018h)                                             ; d220    fd 5e 18     . ^ .
-    ld d,(iy+019h)                                             ; d223    fd 56 19     . V .
+    ld e,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                                             ; d220    fd 5e 18     . ^ .
+    ld d,(iy+WS_INPUT_BUFF_ADDR_SECTOR)                                             ; d223    fd 56 19     . V .
     ret                                                        ; d226    c9     .
 
 ;=======================================================================
@@ -3021,10 +3032,10 @@ OPT_2:
     xor 001h                                                   ; d393    ee 01     . .
     and 001h                                                   ; d395    e6 01     . .
     ld c,a                                                     ; d397    4f     O
-    ld a,(iy+041h)                                             ; d398    fd 7e 41     . ~ A
+    ld a,(iy+WS_CASE_SENSITIVITY)                                             ; d398    fd 7e 41     . ~ A
     and 0feh                                                   ; d39b    e6 fe     . .
     or c                                                       ; d39d    b1     .
-    ld (iy+041h),a                                             ; d39e    fd 77 41     . w A
+    ld (iy+WS_CASE_SENSITIVITY),a                                             ; d39e    fd 77 41     . w A
     ret                                                        ; d3a1    c9     .
 OPT_3:
 ;Cassette loading messages off/on
@@ -3107,17 +3118,17 @@ OPT_12:
 OPT_13:
 ;Enable 40 track disk to be read in 80 track drive in double step (off/on)
     cp 00dh                                                    ; d422    fe 0d     . .
-    jr nz,OPT_14                                               ; d424    20 12       .
+    jr nz,OPT_ERROR                                               ; d424    20 12       .
     ld a,(ix+000h)                                             ; d426    dd 7e 00     . ~ .
     sla a                                                      ; d429    cb 27     . '
     and 002h                                                   ; d42b    e6 02     . .
     ld c,a                                                     ; d42d    4f     O
-    ld a,(iy+041h)                                             ; d42e    fd 7e 41     . ~ A
+    ld a,(iy+WS_CASE_SENSITIVITY)                                             ; d42e    fd 7e 41     . ~ A
     and 0fdh                                                   ; d431    e6 fd     . .
     or c                                                       ; d433    b1     .
-    ld (iy+041h),a                                             ; d434    fd 77 41     . w A
+    ld (iy+WS_CASE_SENSITIVITY),a                                             ; d434    fd 77 41     . w A
     ret                                                        ; d437    c9     .
-OPT_14:
+OPT_ERROR:
 ;Head settle time in ms (default 15)
     cp 00eh                                                    ; d438    fe 0e     . .
     jp nz,MSG_WRONG_PARAMETER_AMT                              ; d43a    c2 97 fb     . . .
@@ -4794,7 +4805,7 @@ GENERATE_RST18_AT_HL:
     ld (hl),a                                                  ; de98    77     w
     inc ix                                                     ; de99    dd 23     . #
     inc hl                                                     ; de9b    23     #
-    ld a,(iy+000h)                                             ; de9c    fd 7e 00     . ~ .
+    ld a,(iy+WS_RODOS_ROM_NUMBER)                                             ; de9c    fd 7e 00     . ~ .
     ld (hl),a                                                  ; de9f    77     w
     inc hl                                                     ; dea0    23     #
     djnz MAKE_JP_AT_DE_USING_HL                                ; dea1    10 d1     . .
@@ -4817,22 +4828,22 @@ ldeb7h:
     cp 0a0h                                                    ; deba    fe a0     . .
     jr z,ldeb7h                                                ; debc    28 f9     ( .
     pop af                                                     ; debe    f1     .
-    bit 0,(iy+011h)                                            ; debf    fd cb 11 46     . . . F
+    bit 0,(iy+WS_SCREEN_OUTPUT_VALUE)                                            ; debf    fd cb 11 46     . . . F
     call nz,sub_defah                                          ; dec3    c4 fa de     . . .
-    bit 1,(iy+011h)                                            ; dec6    fd cb 11 4e     . . . N
+    bit 1,(iy+WS_SCREEN_OUTPUT_VALUE)                                            ; dec6    fd cb 11 4e     . . . N
     call nz,SEND_CHARACTER_TO_PRINTER                          ; deca    c4 00 df     . . .
-    bit 2,(iy+011h)                                            ; decd    fd cb 11 56     . . . V
+    bit 2,(iy+WS_SCREEN_OUTPUT_VALUE)                                            ; decd    fd cb 11 56     . . . V
     ret nz                                                     ; ded1    c0     .
     ld hl,(TXT_OUTPUT)                                         ; ded2    2a 5a bb     * Z .
     push hl                                                    ; ded5    e5     .
     ld hl,(0bb5ch)                                             ; ded6    2a 5c bb     * \ .
     ld h,a                                                     ; ded9    67     g
-    ld a,(iy+05ah)                                             ; deda    fd 7e 5a     . ~ Z
+    ld a,(iy+WS_ORIGINAL_TXT_OUTPUT)                                             ; deda    fd 7e 5a     . ~ Z
 sub_deddh:
     ld (TXT_OUTPUT),a                                          ; dedd    32 5a bb     2 Z .
-    ld a,(iy+05bh)                                             ; dee0    fd 7e 5b     . ~ [
+    ld a,(iy+WS_ORIGINAL_TXT_OUTPUT+1)                                             ; dee0    fd 7e 5b     . ~ [
     ld (0bb5bh),a                                              ; dee3    32 5b bb     2 [ .
-    ld a,(iy+05ch)                                             ; dee6    fd 7e 5c     . ~ \
+    ld a,(iy+WS_ORIGINAL_TXT_OUTPUT+2)                                             ; dee6    fd 7e 5c     . ~ \
     ld (0bb5ch),a                                              ; dee9    32 5c bb     2 \ .
     ld a,h                                                     ; deec    7c     |
     call TXT_OUTPUT                                            ; deed    cd 5a bb     . Z .
@@ -4871,7 +4882,7 @@ CHECK_FOR_ESC:
     pop af                                                     ; df17    f1     .
     jr SEND_CHARACTER_TO_PRINTER                               ; df18    18 e6     . .
 ldf1ah:
-    res 1,(iy+011h)                                            ; df1a    fd cb 11 8e     . . . .
+    res 1,(iy+WS_SCREEN_OUTPUT_VALUE)                                            ; df1a    fd cb 11 8e     . . . .
     pop af                                                     ; df1e    f1     .
     ret                                                        ; df1f    c9     .
 
@@ -4881,7 +4892,7 @@ RSX_SPOOL:
     and a                                                      ; df20    a7     .
     jr nz,ldf2ah                                               ; df21    20 07       .
 sub_df23h:
-    res 0,(iy+011h)                                            ; df23    fd cb 11 86     . . . .
+    res 0,(iy+WS_SCREEN_OUTPUT_VALUE)                                            ; df23    fd cb 11 86     . . . .
     jp CAS_OUT_CLOSE                                           ; df27    c3 8f bc     . . .
 ldf2ah:
     cp 002h                                                    ; df2a    fe 02     . .
@@ -4890,7 +4901,7 @@ ldf2ah:
     ld de,08000h                                               ; df32    11 00 80     . . .
     call CAS_OUT_OPEN                                          ; df35    cd 8c bc     . . .
     ret nc                                                     ; df38    d0     .
-    set 0,(iy+011h)                                            ; df39    fd cb 11 c6     . . . .
+    set 0,(iy+WS_SCREEN_OUTPUT_VALUE)                                            ; df39    fd cb 11 c6     . . . .
     jp ldf4fh                                                  ; df3d    c3 4f df     . O .
 
 ;=======================================================================
@@ -4902,7 +4913,7 @@ RSX_PRINT:
     jp nc,MSG_TOO_MANY_PARAMETERS                              ; df45    d2 9f fb     . . .
     ld a,(ix+000h)                                             ; df48    dd 7e 00     . ~ .
 ldf4bh:
-    ld (iy+011h),a                                             ; df4b    fd 77 11     . w .
+    ld (iy+WS_SCREEN_OUTPUT_VALUE),a                                             ; df4b    fd 77 11     . w .
     ret                                                        ; df4e    c9     .
 ldf4fh:
     ld b,001h                                                  ; df4f    06 01     . .
@@ -5220,8 +5231,8 @@ le1a7h:
     set 7,(hl)                                                 ; e1b5    cb fe     . .
     xor a                                                      ; e1b7    af     .
     ret                                                        ; e1b8    c9     .
-    ld l,(iy+017h)                                             ; e1b9    fd 6e 17     . n .
-    ld a,(iy+018h)                                             ; e1bc    fd 7e 18     . ~ .
+    ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; e1b9    fd 6e 17     . n .
+    ld a,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                                             ; e1bc    fd 7e 18     . ~ .
     or l                                                       ; e1bf    b5     .
     jp nz,lda0fh                                               ; e1c0    c2 0f da     . . .
     push de                                                    ; e1c3    d5     .
@@ -5430,9 +5441,9 @@ le35bh:
     ld l,(iy+WS_DRIVE_NUMBER)                                  ; e36f    fd 6e 04     . n .
     jr le348h                                                  ; e372    18 d4     . .
 sub_e374h:
-    bit 0,(iy+011h)                                            ; e374    fd cb 11 46     . . . F
+    bit 0,(iy+WS_SCREEN_OUTPUT_VALUE)                                            ; e374    fd cb 11 46     . . . F
     ret z                                                      ; e378    c8     .
-    res 0,(iy+011h)                                            ; e379    fd cb 11 86     . . . .
+    res 0,(iy+WS_SCREEN_OUTPUT_VALUE)                                            ; e379    fd cb 11 86     . . . .
     jp CAS_OUT_CLOSE                                           ; e37d    c3 8f bc     . . .
     push de                                                    ; e380    d5     .
     pop ix                                                     ; e381    dd e1     . .
@@ -5522,12 +5533,12 @@ le417h:
     ld a,(iy+006h)                                             ; e440    fd 7e 06     . ~ .
     ld (ix-00ah),a                                             ; e443    dd 77 f6     . w .
     ld hl,(0bee0h)                                             ; e446    2a e0 be     * . .
-    ld (iy+019h),l                                             ; e449    fd 75 19     . u .
-    ld (iy+01ah),h                                             ; e44c    fd 74 1a     . t .
+    ld (iy+WS_INPUT_BUFF_ADDR_SECTOR),l                                             ; e449    fd 75 19     . u .
+    ld (iy+WS_INPUT_BUFF_ADDR_SECTOR+1),h                                             ; e44c    fd 74 1a     . t .
     push ix                                                    ; e44f    dd e5     . .
     pop hl                                                     ; e451    e1     .
-    ld (iy+017h),l                                             ; e452    fd 75 17     . u .
-    ld (iy+018h),h                                             ; e455    fd 74 18     . t .
+    ld (iy+WS_INPUT_BUFF_ADDR_FILE),l                                             ; e452    fd 75 17     . u .
+    ld (iy+WS_INPUT_BUFF_ADDR_FILE+1),h                                             ; e455    fd 74 18     . t .
     ld e,(ix+015h)                                             ; e458    dd 5e 15     . ^ .
     ld d,(ix+016h)                                             ; e45b    dd 56 16     . V .
     ld c,(ix+013h)                                             ; e45e    dd 4e 13     . N .
@@ -5604,8 +5615,8 @@ le4b2h:
     ld (0bc9ch),hl                                             ; e4fb    22 9c bc     " . .
     ld hl,(0bf02h)                                             ; e4fe    2a 02 bf     * . .
     ret                                                        ; e501    c9     .
-    ld l,(iy+017h)                                             ; e502    fd 6e 17     . n .
-    ld h,(iy+018h)                                             ; e505    fd 66 18     . f .
+    ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; e502    fd 6e 17     . n .
+    ld h,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                                             ; e505    fd 66 18     . f .
     ld a,l                                                     ; e508    7d     }
     or h                                                       ; e509    b4     .
     jp z,lda0fh                                                ; e50a    ca 0f da     . . .
@@ -5614,8 +5625,8 @@ le4b2h:
     ld a,(ix-00fh)                                             ; e510    dd 7e f1     . ~ .
     cp 052h                                                    ; e513    fe 52     . R
     call z,sub_eb34h                                           ; e515    cc 34 eb     . 4 .
-    ld l,(iy+017h)                                             ; e518    fd 6e 17     . n .
-    ld h,(iy+018h)                                             ; e51b    fd 66 18     . f .
+    ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; e518    fd 6e 17     . n .
+    ld h,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                                             ; e51b    fd 66 18     . f .
     push hl                                                    ; e51e    e5     .
     pop ix                                                     ; e51f    dd e1     . .
     ld a,h                                                     ; e521    7c     |
@@ -5623,12 +5634,12 @@ le4b2h:
     jp z,lda0ah                                                ; e523    ca 0a da     . . .
     ld (ix-00fh),043h                                          ; e526    dd 36 f1 43     . 6 . C
     xor a                                                      ; e52a    af     .
-    ld (iy+017h),a                                             ; e52b    fd 77 17     . w .
-    ld (iy+018h),a                                             ; e52e    fd 77 18     . w .
+    ld (iy+WS_INPUT_BUFF_ADDR_FILE),a                                             ; e52b    fd 77 17     . w .
+    ld (iy+WS_INPUT_BUFF_ADDR_FILE+1),a                                             ; e52e    fd 77 18     . w .
     ld (iy+039h),000h                                          ; e531    fd 36 39 00     . 6 9 .
     jp lda0ah                                                  ; e535    c3 0a da     . . .
-    ld a,(iy+017h)                                             ; e538    fd 7e 17     . ~ .
-    or (iy+018h)                                               ; e53b    fd b6 18     . . .
+    ld a,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; e538    fd 7e 17     . ~ .
+    or (iy+WS_INPUT_BUFF_ADDR_FILE+1)                                               ; e53b    fd b6 18     . . .
     jp z,le696h                                                ; e53e    ca 96 e6     . . .
     ld a,(iy+039h)                                             ; e541    fd 7e 39     . ~ 9
     and a                                                      ; e544    a7     .
@@ -5636,8 +5647,8 @@ le4b2h:
     push hl                                                    ; e548    e5     .
     push de                                                    ; e549    d5     .
     push bc                                                    ; e54a    c5     .
-    ld l,(iy+017h)                                             ; e54b    fd 6e 17     . n .
-    ld h,(iy+018h)                                             ; e54e    fd 66 18     . f .
+    ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; e54b    fd 6e 17     . n .
+    ld h,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                                             ; e54e    fd 66 18     . f .
     push hl                                                    ; e551    e5     .
     pop ix                                                     ; e552    dd e1     . .
     bit 2,(ix-007h)                                            ; e554    dd cb f9 56     . . . V
@@ -5729,20 +5740,20 @@ le5feh:
     pop hl                                                     ; e600    e1     .
     jp le696h                                                  ; e601    c3 96 e6     . . .
 sub_e604h:
-    ld l,(iy+017h)                                             ; e604    fd 6e 17     . n .
-    ld h,(iy+018h)                                             ; e607    fd 66 18     . f .
+    ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; e604    fd 6e 17     . n .
+    ld h,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                                             ; e607    fd 66 18     . f .
     ld de,0fff1h                                               ; e60a    11 f1 ff     . . .
     add hl,de                                                  ; e60d    19     .
-    ld e,(iy+019h)                                             ; e60e    fd 5e 19     . ^ .
-    ld d,(iy+01ah)                                             ; e611    fd 56 1a     . V .
+    ld e,(iy+WS_INPUT_BUFF_ADDR_SECTOR)                                             ; e60e    fd 5e 19     . ^ .
+    ld d,(iy+WS_INPUT_BUFF_ADDR_SECTOR+1)                                             ; e611    fd 56 1a     . V .
     push de                                                    ; e614    d5     .
     ld bc,0000fh                                               ; e615    01 0f 00     . . .
     ldir                                                       ; e618    ed b0     . .
     pop hl                                                     ; e61a    e1     .
     ld de,0000fh                                               ; e61b    11 0f 00     . . .
     add hl,de                                                  ; e61e    19     .
-    ld (iy+017h),l                                             ; e61f    fd 75 17     . u .
-    ld (iy+018h),h                                             ; e622    fd 74 18     . t .
+    ld (iy+WS_INPUT_BUFF_ADDR_FILE),l                                             ; e61f    fd 75 17     . u .
+    ld (iy+WS_INPUT_BUFF_ADDR_FILE+1),h                                             ; e622    fd 74 18     . t .
     push hl                                                    ; e625    e5     .
     pop ix                                                     ; e626    dd e1     . .
     ld a,(ix-00bh)                                             ; e628    dd 7e f5     . ~ .
@@ -5807,8 +5818,8 @@ le696h:
     call z,sub_e604h                                           ; e6a6    cc 04 e6     . . .
     pop de                                                     ; e6a9    d1     .
     pop bc                                                     ; e6aa    c1     .
-    ld l,(iy+017h)                                             ; e6ab    fd 6e 17     . n .
-    ld h,(iy+018h)                                             ; e6ae    fd 66 18     . f .
+    ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; e6ab    fd 6e 17     . n .
+    ld h,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                                             ; e6ae    fd 66 18     . f .
     push hl                                                    ; e6b1    e5     .
     pop ix                                                     ; e6b2    dd e1     . .
     pop hl                                                     ; e6b4    e1     .
@@ -5822,8 +5833,8 @@ le696h:
     jp nz,lda0fh                                               ; e6c6    c2 0f da     . . .
     call sub_e648h                                             ; e6c9    cd 48 e6     . H .
     ex de,hl                                                   ; e6cc    eb     .
-    ld l,(iy+017h)                                             ; e6cd    fd 6e 17     . n .
-    ld h,(iy+018h)                                             ; e6d0    fd 66 18     . f .
+    ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; e6cd    fd 6e 17     . n .
+    ld h,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                                             ; e6d0    fd 66 18     . f .
     push hl                                                    ; e6d3    e5     .
     pop ix                                                     ; e6d4    dd e1     . .
 le6d6h:
@@ -6090,8 +6101,8 @@ le91ch:
     ld (iy+01bh),a                                             ; e924    fd 77 1b     . w .
     ld (iy+01ch),a                                             ; e927    fd 77 1c     . w .
     ld (iy+03ah),a                                             ; e92a    fd 77 3a     . w :
-    res 2,(iy+041h)                                            ; e92d    fd cb 41 96     . . A .
-    res 4,(iy+041h)                                            ; e931    fd cb 41 a6     . . A .
+    res 2,(iy+WS_CASE_SENSITIVITY)                                            ; e92d    fd cb 41 96     . . A .
+    res 4,(iy+WS_CASE_SENSITIVITY)                                            ; e931    fd cb 41 a6     . . A .
     jp lda0ah                                                  ; e935    c3 0a da     . . .
 sub_e938h:
     ld (0bf03h),a                                              ; e938    32 03 bf     2 . .
@@ -6100,9 +6111,9 @@ sub_e938h:
     ld a,(iy+01ch)                                             ; e940    fd 7e 1c     . ~ .
     or (iy+01bh)                                               ; e943    fd b6 1b     . . .
     jp z,lda0fh                                                ; e946    ca 0f da     . . .
-    bit 4,(iy+041h)                                            ; e949    fd cb 41 66     . . A f
+    bit 4,(iy+WS_CASE_SENSITIVITY)                                            ; e949    fd cb 41 66     . . A f
     jr nz,le953h                                               ; e94d    20 04       .
-    res 2,(iy+041h)                                            ; e94f    fd cb 41 96     . . A .
+    res 2,(iy+WS_CASE_SENSITIVITY)                                            ; e94f    fd cb 41 96     . . A .
 le953h:
     push hl                                                    ; e953    e5     .
     ld l,(iy+01bh)                                             ; e954    fd 6e 1b     . n .
@@ -6131,7 +6142,7 @@ le975h:
 sub_e97ah:
     ld a,(ix-00ch)                                             ; e97a    dd 7e f4     . ~ .
     ld (iy+WS_DRIVE_NUMBER),a                                  ; e97d    fd 77 04     . w .
-    res 2,(iy+041h)                                            ; e980    fd cb 41 96     . . A .
+    res 2,(iy+WS_CASE_SENSITIVITY)                                            ; e980    fd cb 41 96     . . A .
     call lf07ch                                                ; e984    cd 7c f0     . | .
     ret nz                                                     ; e987    c0     .
     ld b,(iy+037h)                                             ; e988    fd 46 37     . F 7
@@ -6204,7 +6215,7 @@ sub_e97ah:
     pop hl                                                     ; ea19    e1     .
     ld b,(ix-002h)                                             ; ea1a    dd 46 fe     . F .
     ld c,(ix-001h)                                             ; ea1d    dd 4e ff     . N .
-    bit 2,(iy+041h)                                            ; ea20    fd cb 41 56     . . A V
+    bit 2,(iy+WS_CASE_SENSITIVITY)                                            ; ea20    fd cb 41 56     . . A V
     jp nz,lda14h                                               ; ea24    c2 14 da     . . .
     call sub_efd5h                                             ; ea27    cd d5 ef     . . .
     ret                                                        ; ea2a    c9     .
@@ -6313,7 +6324,7 @@ leaceh:
     ld (ix-005h),h                                             ; eb18    dd 74 fb     . t .
     ld (ix-004h),000h                                          ; eb1b    dd 36 fc 00     . 6 . .
     ld (ix-003h),000h                                          ; eb1f    dd 36 fd 00     . 6 . .
-    bit 2,(iy+041h)                                            ; eb23    fd cb 41 56     . . A V
+    bit 2,(iy+WS_CASE_SENSITIVITY)                                            ; eb23    fd cb 41 56     . . A V
     jp nz,sub_ea38h                                            ; eb27    c2 38 ea     . 8 .
     push ix                                                    ; eb2a    dd e5     . .
     pop hl                                                     ; eb2c    e1     .
@@ -6370,7 +6381,7 @@ sub_eb81h:
     ld a,h                                                     ; eba4    7c     |
     or l                                                       ; eba5    b5     .
     jp z,lda0fh                                                ; eba6    ca 0f da     . . .
-    res 2,(iy+041h)                                            ; eba9    fd cb 41 96     . . A .
+    res 2,(iy+WS_CASE_SENSITIVITY)                                            ; eba9    fd cb 41 96     . . A .
     push hl                                                    ; ebad    e5     .
     pop ix                                                     ; ebae    dd e1     . .
     ld hl,(0bef0h)                                             ; ebb0    2a f0 be     * . .
@@ -6395,7 +6406,7 @@ sub_eb81h:
     call RAM_LAM                                               ; ebe4    cd 20 00     .   .
     call sub_e938h                                             ; ebe7    cd 38 e9     . 8 .
     jr nc,lec03h                                               ; ebea    30 17     0 .
-    set 2,(iy+041h)                                            ; ebec    fd cb 41 d6     . . A .
+    set 2,(iy+WS_CASE_SENSITIVITY)                                            ; ebec    fd cb 41 d6     . . A .
     jr lebfah                                                  ; ebf0    18 08     . .
 lebf2h:
     call RAM_LAM                                               ; ebf2    cd 20 00     .   .
@@ -6598,7 +6609,7 @@ sub_ed38h:
     push bc                                                    ; ed49    c5     .
     ld b,010h                                                  ; ed4a    06 10     . .
     inc hl                                                     ; ed4c    23     #
-    bit 0,(iy+041h)                                            ; ed4d    fd cb 41 46     . . A F
+    bit 0,(iy+WS_CASE_SENSITIVITY)                                            ; ed4d    fd cb 41 46     . . A F
     jr nz,led68h                                               ; ed51    20 15       .
 led53h:
     ld a,(ix+000h)                                             ; ed53    dd 7e 00     . ~ .
@@ -7118,7 +7129,7 @@ lf07ch:
     ld (iy+037h),d                                             ; f082    fd 72 37     . r 7
     ld (iy+038h),e                                             ; f085    fd 73 38     . s 8
 lf088h:
-    bit 2,(iy+041h)                                            ; f088    fd cb 41 56     . . A V
+    bit 2,(iy+WS_CASE_SENSITIVITY)                                            ; f088    fd cb 41 56     . . A V
     jp nz,lda14h                                               ; f08c    c2 14 da     . . .
     call sub_f010h                                             ; f08f    cd 10 f0     . . .
     ret                                                        ; f092    c9     .
@@ -7811,7 +7822,7 @@ sub_f48bh:
     ld c,a                                                     ; f4a2    4f     O
     ld b,000h                                                  ; f4a3    06 00     . .
     ldir                                                       ; f4a5    ed b0     . .
-    ld a,(iy+000h)                                             ; f4a7    fd 7e 00     . ~ .
+    ld a,(iy+WS_RODOS_ROM_NUMBER)                                             ; f4a7    fd 7e 00     . ~ .
     ld (0bebeh),a                                              ; f4aa    32 be be     2 . .
     ld hl,lf779h                                               ; f4ad    21 79 f7     ! y .
     ld (0bebch),hl                                             ; f4b0    22 bc be     " . .
@@ -7959,7 +7970,7 @@ sub_f541h:
     pop hl                                                     ; f54d    e1     .
     ld bc,00086h                                               ; f54e    01 86 00     . . .
     add hl,bc                                                  ; f551    09     .
-    ld c,(iy+000h)                                             ; f552    fd 4e 00     . N .
+    ld c,(iy+WS_RODOS_ROM_NUMBER)                                             ; f552    fd 4e 00     . N .
     ld b,080h                                                  ; f555    06 80     . .
     call KL_INIT_EVENT                                         ; f557    cd ef bc     . . .
     ld a,032h                                                  ; f55a    3e 32     > 2
@@ -8003,7 +8014,7 @@ sub_f593h:
     ret nz                                                     ; f5a8    c0     .
 lf5a9h:
     ld (iy+03bh),a                                             ; f5a9    fd 77 3b     . w ;
-    bit 4,(iy+041h)                                            ; f5ac    fd cb 41 66     . . A f
+    bit 4,(iy+WS_CASE_SENSITIVITY)                                            ; f5ac    fd cb 41 66     . . A f
     jr nz,lf5b9h                                               ; f5b0    20 07       .
     dec a                                                      ; f5b2    3d     =
     ld (iy+040h),a                                             ; f5b3    fd 77 40     . w @
@@ -8238,7 +8249,7 @@ lf751h:
     res 0,(iy+00dh)                                            ; f76c    fd cb 0d 86     . . . .
     pop af                                                     ; f770    f1     .
     jp nz,lda14h                                               ; f771    c2 14 da     . . .
-    bit 3,(iy+041h)                                            ; f774    fd cb 41 5e     . . A ^
+    bit 3,(iy+WS_CASE_SENSITIVITY)                                            ; f774    fd cb 41 5e     . . A ^
     ret z                                                      ; f778    c8     .
 lf779h:
     ;Part of the |ZAP function
@@ -8265,7 +8276,7 @@ lf788h:
     db "    "
     db "????"
 sub_f798h:
-    res 3,(iy+041h)                                            ; f798    fd cb 41 9e     . . A .
+    res 3,(iy+WS_CASE_SENSITIVITY)                                            ; f798    fd cb 41 9e     . . A .
     call sub_d9a0h                                             ; f79c    cd a0 d9     . . .
     ret nz                                                     ; f79f    c0     .
     and a                                                      ; f7a0    a7     .
@@ -8280,7 +8291,7 @@ lf7b2h:
     jp nz,lda18h                                               ; f7b2    c2 18 da     . . .
     call sub_c5ffh                                             ; f7b5    cd ff c5     . . .
     jp nz,lda0fh                                               ; f7b8    c2 0f da     . . .
-    set 3,(iy+041h)                                            ; f7bb    fd cb 41 de     . . A .
+    set 3,(iy+WS_CASE_SENSITIVITY)                                            ; f7bb    fd cb 41 de     . . A .
     ld a,(iy+014h)                                             ; f7bf    fd 7e 14     . ~ .
     and a                                                      ; f7c2    a7     .
     jp z,lda18h                                                ; f7c3    ca 18 da     . . .
@@ -8406,7 +8417,7 @@ lf893h:
     pop ix                                                     ; f89e    dd e1     . .
     call sub_c5ffh                                             ; f8a0    cd ff c5     . . .
     jp nz,lda0fh                                               ; f8a3    c2 0f da     . . .
-    set 3,(iy+041h)                                            ; f8a6    fd cb 41 de     . . A .
+    set 3,(iy+WS_CASE_SENSITIVITY)                                            ; f8a6    fd cb 41 de     . . A .
     ld a,(iy+014h)                                             ; f8aa    fd 7e 14     . ~ .
     and a                                                      ; f8ad    a7     .
     jp z,lda18h                                                ; f8ae    ca 18 da     . . .
@@ -8858,7 +8869,7 @@ lfb71h:
     cp 05ch                                                    ; fb73    fe 5c     . \
     jr nz,lfb71h                                               ; fb75    20 fa       .
     djnz lfb71h                                                ; fb77    10 f8     . .
-    res 2,(iy+011h)                                            ; fb79    fd cb 11 96     . . . .
+    res 2,(iy+WS_SCREEN_OUTPUT_VALUE)                                            ; fb79    fd cb 11 96     . . . .
     call DISPLAY_MSG                                           ; fb7d    cd 6a d9     . j .
     call MAKE_A_BEEP                                           ; fb80    cd 88 fb     . . .
     ld a,092h                                                  ; fb83    3e 92     > .
