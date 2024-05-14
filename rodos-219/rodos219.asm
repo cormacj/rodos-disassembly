@@ -88,36 +88,43 @@ JUMP_RESTORE:       equ 0xbd37
 RSX_MKDIR:          equ 0xdf64
 
 ;Workspace offset definitions
-;This typically shows up in code as something like "ld (iy+WS_CURRENT_DRIVE_LETTER),a" or "ld a,(iy+WS_CURRENT_DRIVE_LETTER)"
+;z80dasm typically shows this in code as something like "ld (iy+003h),a" or "ld a,(iy+003h)"
 ;In this case 003h is actually "Current Drive Letter" so I'm creating some EQUs for readability
-WS_RODOS_ROM_NUMBER:        equ 000h  ; The rom slot number of the RODOS rom
-WS_CPM_ROM_NUMBER:          equ 001h  ; The rom slot number of the CPM (aka AMSDOS) rom (normally slot 7) plus &30.
+;I'm also converting these offsets to decimal to match with the workspace area definitions as
+;documented in the manual.
+
+WS_RODOS_ROM_NUMBER:         equ 0  ; The rom slot number of the RODOS rom
+WS_CPM_ROM_NUMBER:           equ 1  ; The rom slot number of the CPM (aka AMSDOS) rom (normally slot 7) plus &30.
                                       ; If the rom is missing or non standard this value is &3F
-WS_CURRENT_DRIVE_LETTER:    equ 003h  ; Current Drive Letter
-WS_DRIVE_NUMBER:            equ 004h  ; Current Drive Number (mostly used when patching (See Appendix F))
-WS_LOADING_MESSAGES:        equ 008h  ; Loading messages (|OPT,1,x)
-WS_DISK_ERROR_RETRY_COUNT:  equ 009h  ; Disk read error retry count (|OPT,5,x)
-WS_EXPANSION_RAM_COUNT:     equ 00bh  ; Expansion ram count (in 16k blocks)
-WS_START_PRBUFF_BANK:       equ 00ch  ; Printer Buffer Bank
-WS_SCREEN_OUTPUT_VALUE:     equ 011h  ; Sets normal screen output according to n, where n is the sum of the following:
+WS_CURRENT_DRIVE_LETTER:     equ 3  ; Current Drive Letter
+WS_DRIVE_NUMBER:             equ 4  ; Current Drive Number (mostly used when patching (See Appendix F))
+WS_LOADING_MESSAGES:         equ 8  ; Loading messages (|OPT,1,x)
+WS_DISK_ERROR_RETRY_COUNT:   equ 9  ; Disk read error retry count (|OPT,5,x)
+WS_EXPANSION_RAM_COUNT:      equ 11  ; Expansion ram count (in 16k blocks)
+WS_START_PRBUFF_BANK:        equ 12  ; Printer Buffer Bank
+WS_SCREEN_OUTPUT_VALUE:      equ 17  ; Sets normal screen output according to n, where n is the sum of the following:
                                       ;     +1 - screen output to current open file.
                                       ;     +2 - screen output to printer.
                                       ;     +4 - screen echo disabled.
-WS_PREVIOUS_DRIVE_LETTER:   equ 013h  ; Previous value of WS_CURRENT_DRIVE_LETTER
-WS_OVERWRITE_FILE:          equ 016h  ; Overwrite file: 0=ask 1=overwrite 2=create backup
-WS_INPUT_BUFF_ADDR_FILE:    equ 017h  ; Address of input buffer (file header)
-WS_INPUT_BUFF_ADDR_SECTOR:  equ 019h  ; Address of input buffer (sector block)
-WS_USER_NUMBER:             equ 036h  ; Current User Number
-WS_CASE_SENSITIVITY:        equ 041h  ; Case sensitivity of filenames. (1=Off, 0=On)
-WS_CD_HOME_DRIVE_NUMBER:    equ 042h  ; Home drive number for |CD
-WS_CD_HOME_DRIVE_LETTER:    equ 043h  ; Home drive letter for |CD
-WS_CD_HOME_TRACK:           equ 044h  ; Home track for |CD
-WS_CD_HOME_SECTOR:          equ 045h  ; Home sector for |CD
-WS_RODOS_USER_NUMBER_LOW:   equ 04eh  ; RODOS User number (0 to 255). Rodos supports 0-65535 but only 0-255 are supported
-WS_RODOS_USER_NUMBER_HIGH:  equ 04fh  ; RODOS User number (current reserved, set to 255). Rodos supports 0-65535 but only 0-255 are supported
-WS_EXTRA_DRIVE_PORT_LOW:    equ 058h  ; Extra external disk drives port number (0-65535)
-WS_EXTRA_DRIVE_PORT_HIGH:   equ 059h  ;
-WS_ORIGINAL_TXT_OUTPUT:     equ 05Ah  ; Original contents of TXT_OUTUT (&bb5a-&bb5c)
+WS_PREVIOUS_DRIVE_LETTER:    equ 19  ; Previous value of WS_CURRENT_DRIVE_LETTER
+WS_OVERWRITE_FILE:           equ 22  ; Overwrite file: 0=ask 1=overwrite 2=create backup
+WS_INPUT_BUFF_ADDR_FILE:     equ 23  ; Address of input buffer (file header)
+WS_INPUT_BUFF_ADDR_SECTOR:   equ 25  ; Address of input buffer (sector block)
+WS_OUTPUT_BUFF_ADDR_HEADER:  equ 27  ; Address of output buffer (header)
+WS_OUTPUT_BUFF_ADDR_SECTOR:  equ 29  ; Address of output buffer (sector block)
+WS_ORIGINAL_KL_FIND_COMMAND: equ 51  ; Original contents of KL_FIND_COMMAND location. (KL_FIND_COMMAND was patched by RODOS)
+WS_USER_NUMBER:              equ 54  ; Current User Number
+WS_CASE_SENSITIVITY:         equ 65  ; Case sensitivity of filenames. (1=Off, 0=On)
+WS_CD_HOME_DRIVE_NUMBER:     equ 66  ; Home drive number for |CD
+WS_CD_HOME_DRIVE_LETTER:     equ 67  ; Home drive letter for |CD
+WS_CD_HOME_TRACK:            equ 68  ; Home track for |CD
+WS_CD_HOME_SECTOR:           equ 69  ; Home sector for |CD
+WS_KM_TEST_KEY_VALUE:        equ 70  ; HL Value from KM_TEST_KEY on boot
+WS_RODOS_USER_NUMBER_LOW:    equ 78  ; RODOS User number (0 to 255). Rodos supports 0-65535 but only 0-255 are supported
+WS_RODOS_USER_NUMBER_HIGH:   equ 79  ; RODOS User number (current reserved, set to 255). Rodos supports 0-65535 but only 0-255 are supported
+WS_EXTRA_DRIVE_PORT_LOW:     equ 88  ; Extra external disk drives port number (0-65535) low byte
+WS_EXTRA_DRIVE_PORT_HIGH:    equ 89  ; Extra external disk drives port number (0-65535) high byte
+WS_ORIGINAL_TXT_OUTPUT:      equ 90  ; Original contents of TXT_OUTUT (&bb5a-&bb5c)
 
 
 ; BLOCK 'ROM_TYPE' (start 0xc000 end 0xc001)
@@ -700,7 +707,7 @@ COPY_KL_FIND_COMAMAND_TO_WORKSPACE_0x33:
     ;Takes the vector for KL_FIND_COMMAND and copies that to IY+0x33
     push iy                                                    ; c3c3    fd e5     . .
     pop hl                                                     ; c3c5    e1     .
-    ld de,00033h                                               ; c3c6    11 33 00     . 3 .
+    ld de,WS_ORIGINAL_KL_FIND_COMMAND                          ; c3c6    11 33 00     . 3 .
     add hl,de                                                  ; c3c9    19     .
     ld de,KL_FIND_COMMAND                                      ; c3ca    11 d4 bc     . . .
     ex de,hl                                                   ; c3cd    eb     .
@@ -822,7 +829,7 @@ RODOS_WORKSPACE_KL_FIND_COMMAND:
     pop hl                                                     ; c480    e1     .
     ;Functionally that set hl=iy
 
-    ld de,00033h                                               ; c481    11 33 00     . 3 .
+    ld de,WS_ORIGINAL_KL_FIND_COMMAND                          ; c481    11 33 00     . 3 .
     add hl,de                                                  ; c484    19     .
     ;So... iy+0x33
     ld (0bf01h),hl                                             ; c485    22 01 bf     " . .
@@ -1973,8 +1980,8 @@ RSX_RANDOM:
     jp nz,MSG_TOO_MANY_PARAMETERS                              ; cb8a    c2 9f fb     . . .
 
     ;Check output buffer (header)
-    ld a,(iy+01bh)                                             ; cb8d    fd 7e 1b     . ~ .
-    or (iy+01ch)                                               ; cb90    fd b6 1c     . . .
+    ld a,(iy+WS_OUTPUT_BUFF_ADDR_HEADER)                                             ; cb8d    fd 7e 1b     . ~ .
+    or (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1)                                               ; cb90    fd b6 1c     . . .
     jp nz,MSG_OUTPUT_FILE_ALEADY_OPEN                          ; cb93    c2 ce fb     . . .
 
     ;Check input buffer (file header)
@@ -1995,8 +2002,8 @@ RSX_RANDOM:
     jp nz,MSG_INPUT_FILE_NOT_OPEN                              ; cbb1    c2 ca fb     . . .
     push ix                                                    ; cbb4    dd e5     . .
     pop hl                                                     ; cbb6    e1     .
-    ld (iy+01bh),l                                             ; cbb7    fd 75 1b     . u .
-    ld (iy+01ch),h                                             ; cbba    fd 74 1c     . t .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER),l                                             ; cbb7    fd 75 1b     . u .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1),h                                             ; cbba    fd 74 1c     . t .
     ld (ix-00fh),052h                                          ; Buffer type - Random (R/052h) ;cbbd    dd 36 f1 52     . 6 . R
     ld (iy+03ah),002h                                          ; cbc1    fd 36 3a 02     . 6 : .
     ret                                                        ; cbc5    c9     .
@@ -2675,8 +2682,8 @@ ld0f0h:
     ld a,(0bf0ch)                                              ; d108    3a 0c bf     : . .
     ld (CAS_OUT_OPEN),a                                        ; d10b    32 8c bc     2 . .
     xor a                                                      ; d10e    af     .
-    ld (iy+01bh),a                                             ; d10f    fd 77 1b     . w .
-    ld (iy+01ch),a                                             ; d112    fd 77 1c     . w .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER),a                                             ; d10f    fd 77 1b     . w .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1),a                                             ; d112    fd 77 1c     . w .
     ret                                                        ; d115    c9     .
 ld116h:
     dec bc                                                     ; d116    0b     .
@@ -2803,7 +2810,7 @@ ld1cfh:
     ld a,(iy+WS_INPUT_BUFF_ADDR_SECTOR+1)                                             ; d1ef    fd 7e 1a     . ~ .
     ld (hl),a                                                  ; d1f2    77     w
     inc hl                                                     ; d1f3    23     #
-    ld a,(iy+01bh)                                             ; d1f4    fd 7e 1b     . ~ .
+    ld a,(iy+WS_OUTPUT_BUFF_ADDR_HEADER)                                             ; d1f4    fd 7e 1b     . ~ .
     ld (hl),a                                                  ; d1f7    77     w
     call sub_d1c4h                                             ; d1f8    cd c4 d1     . . .
     ld e,(iy+WS_PREVIOUS_DRIVE_LETTER)                                             ; d1fb    fd 5e 13     . ^ .
@@ -3096,10 +3103,13 @@ UPDATE_DRIVE_PARAM:
     ld a,(ix+000h)                                             ; d3fd    dd 7e 00     . ~ .
     ld (hl),a                                                  ; d400    77     w
     jp sub_cb6dh                                               ; d401    c3 6d cb     . m .
+
+;BUG: Note how OPT_10 does nothing here. See KNOWN_BUGS
 OPT_10:
 ;Head load delay in ms (default=1)
     cp 00ah                                                    ; d404    fe 0a     . .
     jr nz,OPT_11                                               ; d406    20 00       .
+;BUG: OPT_11 uses be48 - it should be be4b. See KNOWN_BUGS
 OPT_11:
 ;Head unload delay in ms (default=1)
     cp 00bh                                                    ; d408    fe 0b     . .
@@ -4820,8 +4830,8 @@ GENERATE_RST18_AT_HL:
     ret                                                        ; deaf    c9     .
 sub_deb0h:
     push af                                                    ; deb0    f5     .
-    ld l,(iy+046h)                                             ; deb1    fd 6e 46     . n F
-    ld h,(iy+047h)                                             ; deb4    fd 66 47     . f G
+    ld l,(iy+WS_KM_TEST_KEY_VALUE)                                             ; deb1    fd 6e 46     . n F
+    ld h,(iy+WS_KM_TEST_KEY_VALUE+1)                                             ; deb4    fd 66 47     . f G
 ldeb7h:
     ld a,(hl)                                                  ; deb7    7e     ~
     and 0a0h                                                   ; deb8    e6 a0     . .
@@ -5895,13 +5905,13 @@ le720h:
     ld (0bee4h),a                                              ; e738    32 e4 be     2 . .
     ld de,0000fh                                               ; e73b    11 0f 00     . . .
     add ix,de                                                  ; e73e    dd 19     . .
-    ld a,(iy+01bh)                                             ; e740    fd 7e 1b     . ~ .
-    or (iy+01ch)                                               ; e743    fd b6 1c     . . .
+    ld a,(iy+WS_OUTPUT_BUFF_ADDR_HEADER)                                             ; e740    fd 7e 1b     . ~ .
+    or (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1)                                               ; e743    fd b6 1c     . . .
     jp nz,lda0fh                                               ; e746    c2 0f da     . . .
     push ix                                                    ; e749    dd e5     . .
     pop de                                                     ; e74b    d1     .
-    ld (iy+01dh),e                                             ; e74c    fd 73 1d     . s .
-    ld (iy+01eh),d                                             ; e74f    fd 72 1e     . r .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_SECTOR),e                                             ; e74c    fd 73 1d     . s .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_SECTOR+1),d                                             ; e74f    fd 72 1e     . r .
     push iy                                                    ; e752    fd e5     . .
     pop ix                                                     ; e754    dd e1     . .
     ld de,001f8h                                               ; e756    11 f8 01     . . .
@@ -5967,8 +5977,8 @@ le7a6h:
     ld (iy+03ah),001h                                          ; e7f9    fd 36 3a 01     . 6 : .
     push ix                                                    ; e7fd    dd e5     . .
     pop hl                                                     ; e7ff    e1     .
-    ld (iy+01bh),l                                             ; e800    fd 75 1b     . u .
-    ld (iy+01ch),h                                             ; e803    fd 74 1c     . t .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER),l                                             ; e800    fd 75 1b     . u .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1),h                                             ; e803    fd 74 1c     . t .
     ld (ix-00fh),04fh                                          ; e806    dd 36 f1 4f     . 6 . O
     jp lda0ah                                                  ; e80a    c3 0a da     . . .
 le80dh:
@@ -6095,11 +6105,11 @@ IX_STORE_DISC:
     ret                                                        ; e91b    c9     .
 le91ch:
     xor a                                                      ; e91c    af     .
-    ld (iy+01dh),a                                             ; e91d    fd 77 1d     . w .
-    ld (iy+01eh),a                                             ; e920    fd 77 1e     . w .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_SECTOR),a                                             ; e91d    fd 77 1d     . w .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_SECTOR+1),a                                             ; e920    fd 77 1e     . w .
     xor a                                                      ; e923    af     .
-    ld (iy+01bh),a                                             ; e924    fd 77 1b     . w .
-    ld (iy+01ch),a                                             ; e927    fd 77 1c     . w .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER),a                                             ; e924    fd 77 1b     . w .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1),a                                             ; e927    fd 77 1c     . w .
     ld (iy+03ah),a                                             ; e92a    fd 77 3a     . w :
     res 2,(iy+WS_CASE_SENSITIVITY)                                            ; e92d    fd cb 41 96     . . A .
     res 4,(iy+WS_CASE_SENSITIVITY)                                            ; e931    fd cb 41 a6     . . A .
@@ -6108,16 +6118,16 @@ sub_e938h:
     ld (0bf03h),a                                              ; e938    32 03 bf     2 . .
     jr le953h                                                  ; e93b    18 16     . .
     ld (0bf03h),a                                              ; e93d    32 03 bf     2 . .
-    ld a,(iy+01ch)                                             ; e940    fd 7e 1c     . ~ .
-    or (iy+01bh)                                               ; e943    fd b6 1b     . . .
+    ld a,(iy+WS_OUTPUT_BUFF_ADDR_HEADER+1)                                             ; e940    fd 7e 1c     . ~ .
+    or (iy+WS_OUTPUT_BUFF_ADDR_HEADER)                                               ; e943    fd b6 1b     . . .
     jp z,lda0fh                                                ; e946    ca 0f da     . . .
     bit 4,(iy+WS_CASE_SENSITIVITY)                                            ; e949    fd cb 41 66     . . A f
     jr nz,le953h                                               ; e94d    20 04       .
     res 2,(iy+WS_CASE_SENSITIVITY)                                            ; e94f    fd cb 41 96     . . A .
 le953h:
     push hl                                                    ; e953    e5     .
-    ld l,(iy+01bh)                                             ; e954    fd 6e 1b     . n .
-    ld h,(iy+01ch)                                             ; e957    fd 66 1c     . f .
+    ld l,(iy+WS_OUTPUT_BUFF_ADDR_HEADER)                                             ; e954    fd 6e 1b     . n .
+    ld h,(iy+WS_OUTPUT_BUFF_ADDR_HEADER+1)                                             ; e957    fd 66 1c     . f .
     push hl                                                    ; e95a    e5     .
     pop ix                                                     ; e95b    dd e1     . .
     push de                                                    ; e95d    d5     .
@@ -6180,8 +6190,8 @@ sub_e97ah:
     pop bc                                                     ; e9cd    c1     .
     call sub_eff2h                                             ; e9ce    cd f2 ef     . . .
     ret nz                                                     ; e9d1    c0     .
-    ld l,(iy+01dh)                                             ; e9d2    fd 6e 1d     . n .
-    ld h,(iy+01eh)                                             ; e9d5    fd 66 1e     . f .
+    ld l,(iy+WS_OUTPUT_BUFF_ADDR_SECTOR)                                             ; e9d2    fd 6e 1d     . n .
+    ld h,(iy+WS_OUTPUT_BUFF_ADDR_SECTOR+1)                                             ; e9d5    fd 66 1e     . f .
     push hl                                                    ; e9d8    e5     .
     push hl                                                    ; e9d9    e5     .
     push iy                                                    ; e9da    fd e5     . .
@@ -6194,8 +6204,8 @@ sub_e97ah:
     pop hl                                                     ; e9e7    e1     .
     ld de,0000fh                                               ; e9e8    11 0f 00     . . .
     add hl,de                                                  ; e9eb    19     .
-    ld (iy+01bh),l                                             ; e9ec    fd 75 1b     . u .
-    ld (iy+01ch),h                                             ; e9ef    fd 74 1c     . t .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER),l                                             ; e9ec    fd 75 1b     . u .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1),h                                             ; e9ef    fd 74 1c     . t .
     push hl                                                    ; e9f2    e5     .
     pop ix                                                     ; e9f3    dd e1     . .
     ld a,(ix-00bh)                                             ; e9f5    dd 7e f5     . ~ .
@@ -6332,8 +6342,8 @@ leaceh:
     ret nz                                                     ; eb30    c0     .
     jp sub_ea38h                                               ; eb31    c3 38 ea     . 8 .
 sub_eb34h:
-    ld l,(iy+01bh)                                             ; eb34    fd 6e 1b     . n .
-    ld h,(iy+01ch)                                             ; eb37    fd 66 1c     . f .
+    ld l,(iy+WS_OUTPUT_BUFF_ADDR_HEADER)                                             ; eb34    fd 6e 1b     . n .
+    ld h,(iy+WS_OUTPUT_BUFF_ADDR_HEADER+1)                                             ; eb37    fd 66 1c     . f .
     ld a,l                                                     ; eb3a    7d     }
     or h                                                       ; eb3b    b4     .
     jp z,lda0fh                                                ; eb3c    ca 0f da     . . .
@@ -6366,18 +6376,18 @@ leb73h:
 sub_eb81h:
     ld (ix-00fh),049h                                          ; eb81    dd 36 f1 49     . 6 . I
     ret                                                        ; eb85    c9     .
-    ld e,(iy+01bh)                                             ; eb86    fd 5e 1b     . ^ .
-    ld d,(iy+01ch)                                             ; eb89    fd 56 1c     . V .
+    ld e,(iy+WS_OUTPUT_BUFF_ADDR_HEADER)                                             ; eb86    fd 5e 1b     . ^ .
+    ld d,(iy+WS_OUTPUT_BUFF_ADDR_HEADER+1)                                             ; eb89    fd 56 1c     . V .
     push de                                                    ; eb8c    d5     .
     call sub_eb34h                                             ; eb8d    cd 34 eb     . 4 .
     pop de                                                     ; eb90    d1     .
-    ld (iy+01bh),e                                             ; eb91    fd 73 1b     . s .
-    ld (iy+01ch),d                                             ; eb94    fd 72 1c     . r .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER),e                                             ; eb91    fd 73 1b     . s .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1),d                                             ; eb94    fd 72 1c     . r .
     ret                                                        ; eb97    c9     .
     ld (0bef0h),hl                                             ; eb98    22 f0 be     " . .
     ld (0bef2h),a                                              ; eb9b    32 f2 be     2 . .
-    ld l,(iy+01bh)                                             ; eb9e    fd 6e 1b     . n .
-    ld h,(iy+01ch)                                             ; eba1    fd 66 1c     . f .
+    ld l,(iy+WS_OUTPUT_BUFF_ADDR_HEADER)                                             ; eb9e    fd 6e 1b     . n .
+    ld h,(iy+WS_OUTPUT_BUFF_ADDR_HEADER+1)                                             ; eba1    fd 66 1c     . f .
     ld a,h                                                     ; eba4    7c     |
     or l                                                       ; eba5    b5     .
     jp z,lda0fh                                                ; eba6    ca 0f da     . . .
@@ -6397,8 +6407,8 @@ sub_eb81h:
     push iy                                                    ; ebce    fd e5     . .
     pop de                                                     ; ebd0    d1     .
     add hl,de                                                  ; ebd1    19     .
-    ld (iy+01dh),l                                             ; ebd2    fd 75 1d     . u .
-    ld (iy+01eh),h                                             ; ebd5    fd 74 1e     . t .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_SECTOR),l                                             ; ebd2    fd 75 1d     . u .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_SECTOR+1),h                                             ; ebd5    fd 74 1e     . t .
     ld l,(ix+015h)                                             ; ebd8    dd 6e 15     . n .
     ld h,(ix+016h)                                             ; ebdb    dd 66 16     . f .
     ld c,(ix+013h)                                             ; ebde    dd 4e 13     . N .
@@ -8202,8 +8212,8 @@ lf6feh:
     res 2,(iy+00dh)                                            ; f6fe    fd cb 0d 96     . . . .
     ret                                                        ; f702    c9     .
 sub_f703h:
-    ld l,(iy+046h)                                             ; f703    fd 6e 46     . n F
-    ld h,(iy+047h)                                             ; f706    fd 66 47     . f G
+    ld l,(iy+WS_KM_TEST_KEY_VALUE)                                             ; f703    fd 6e 46     . n F
+    ld h,(iy+WS_KM_TEST_KEY_VALUE+1)                                             ; f706    fd 66 47     . f G
     ld b,008h                                                  ; f709    06 08     . .
 lf70bh:
     ld a,(hl)                                                  ; f70b    7e     ~
