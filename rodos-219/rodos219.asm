@@ -151,7 +151,7 @@ ROM_VERSION:
 COMMAND_TABLE:
     ;This is a pointer to the address of where the RSX names are defined.
     ;defw 0c0c0h        ;c004    c0 c0     . .
-    defw RSX_COMMANDS_start
+    defw RSX_COMMANDS
     ;This is the location of the commands
 
 RSX_JUMPS:
@@ -220,17 +220,14 @@ RSX_JUMPS:
     jp RSX_HIDDEN_05                                           ; c0ba    c3 aa c7     . . .
     jp RSX_HIDDEN_06                                           ; c0bd    c3 06 c9     . . .
 RSX_COMMANDS:
-
-; BLOCK 'RSX_COMMANDS' (start 0xc0c0 end 0xc1ca)
-RSX_COMMANDS_start:
     ;Each RSX name must end with the last letter + 0x80h
     ;Therefore |CLS is defined here as defb 'CL','S'+0x80 and due to how this
     ;was disassembled becomes defb "CL",0d3h
 
-    defb "RODOS RO"
-lc0c8h:
-; I'm not sure why this label is pointed at the last byte of RODOS ROM, unless its the start of the command table-1
-    defb 0cdh                                                  ; RODOS ROM
+    ;First... This is the name of the ROM
+    defb "RODOS RO", 'M' + 0x80
+
+RSX_NAMES:
     ;RSX Command table definitions (Command name, with last letter+128)
     defb "CL", 'S' + 0x80                                      ; CLS
     defb "DIS", 'C' + 0x80                                     ; DISC
@@ -294,8 +291,7 @@ lc0c8h:
     defb 084h                                                  ; Hidden command 4 aka ^D
     defb 085h                                                  ; Hidden command 5 aka ^E
     defb 086h                                                  ; Hidden command 6 aka ^F
-RSX_COMMANDS_end:
-    ;The end of RSX definitions must end with zero.
+   ;The end of RSX definitions must end with zero.
     defb 0
 ;=======================================================================
 ROM_INIT:
@@ -359,7 +355,7 @@ sub_c1f9h:
     call ROM_SELECT_DESELECT_RELOCATED                         ; c208    cd c0 be     . . .
     cp 052h                                                    ; c20b    fe 52     . R
     jr nz,lc21dh                                               ; c20d    20 0e       .
-    ld hl,lc0c8h                                               ; c20f    21 c8 c0     ! . .
+    ld hl,RSX_NAMES-1                                               ; c20f    21 c8 c0     ! . .
     call ROM_SELECT_DESELECT_RELOCATED                         ; c212    cd c0 be     . . .
     cp 0cdh                                                    ; c215    fe cd     . .
     jr nz,lc21dh                                               ; c217    20 04       .
@@ -516,7 +512,8 @@ sub_c2cch:
     call nz,RESET_INTERNAL_VARIABLES_TO_DEFAULT                ; c2ee    c4 99 c3     . . .
 
     call sub_cb6dh                                             ; c2f1    cd 6d cb     . m .
-    call sub_c636h ;Configure a jump table and an RST &18 call ; c2f4    cd 36 c6     . 6 .
+    ;Now Configure a jump table and an RST &18 call
+    call sub_c636h  ; c2f4    cd 36 c6     . 6 .
 
     ;Check for SHIFT key
     ld a,015h                                                  ; c2f7    3e 15     > .
@@ -1096,7 +1093,7 @@ sub_c636h:
     inc hl                                                     ; c643    23     #
     ld b,008h                                                  ; c644    06 08     . .
     xor a                                                      ; c646    af     .
-lc647h:
+BUILD_JUMPTABLE_AND_RST18:
     ;Seems complex for unknown reasons.
     ; So it pokes (HL) to (HL+24), with JP &0000
     ld (hl),0c3h  ;(opcode for jp)                             ; c647    36 c3     6 .
@@ -1105,7 +1102,7 @@ lc647h:
     inc hl                                                     ; c64b    23     #
     ld (hl),a                                                  ; c64c    77     w
     inc hl                                                     ; c64d    23     #
-    djnz lc647h                                                ; c64e    10 f7     . .
+    djnz BUILD_JUMPTABLE_AND_RST18                                                ; c64e    10 f7     . .
     ld (hl),a                                                  ; c650    77     w
     call sub_c66eh ; hl=iy+0x13ah                              ; c651    cd 6e c6     . n .
     ld b,001h                                                  ; c654    06 01     . .
@@ -3252,7 +3249,7 @@ RSX_DIR:
     cp 081h                                                    ; d4ef    fe 81     . .
     jr z,ld51ch                                                ; d4f1    28 29     ( )
     ld hl,0bef8h                                               ; d4f3    21 f8 be     ! . .
-    ld a,(iy+001h)                                             ; d4f6    fd 7e 01     . ~ .
+    ld a,(iy+WS_CPM_ROM_NUMBER)                                             ; d4f6    fd 7e 01     . ~ .
     ld (hl),a                                                  ; d4f9    77     w
     inc hl                                                     ; d4fa    23     #
     ld (hl),044h                                               ; d4fb    36 44     6 D
@@ -3314,7 +3311,7 @@ ld558h:
     and 00fh                                                   ; d55f    e6 0f     . .
     ld (iy+WS_USER_NUMBER),a                                             ; d561    fd 77 36     . w 6
     ld ix,0bef0h                                               ; d564    dd 21 f0 be     . ! . .
-    ld a,(iy+001h)                                             ; d568    fd 7e 01     . ~ .
+    ld a,(iy+WS_CPM_ROM_NUMBER)                                             ; d568    fd 7e 01     . ~ .
     ld (ix+000h),a                                             ; d56b    dd 77 00     . w .
     ;load ix[1-4] for |USER, then do a RSX call
     ld (ix+001h),'U'                                           ; d56e    dd 36 01 55     . 6 . U
@@ -3340,7 +3337,7 @@ RSX_REN:
     cp 081h                                                    ; d59f    fe 81     . .
     jr z,ld5b8h                                                ; d5a1    28 15     ( .
     ld hl,0bef0h                                               ; d5a3    21 f0 be     ! . .
-    ld a,(iy+001h)                                             ; d5a6    fd 7e 01     . ~ .
+    ld a,(iy+WS_CPM_ROM_NUMBER)                                             ; d5a6    fd 7e 01     . ~ .
     ld (hl),a                                                  ; d5a9    77     w
     inc hl                                                     ; d5aa    23     #
     ld (hl),052h                                               ; d5ab    36 52     6 R
@@ -3451,7 +3448,7 @@ RSX_ERA:
     cp 081h                                                    ; d66d    fe 81     . .
     jr z,ld69ah                                                ; d66f    28 29     ( )
     ld hl,0bef0h                                               ; d671    21 f0 be     ! . .
-    ld a,(iy+001h)                                             ; d674    fd 7e 01     . ~ .
+    ld a,(iy+WS_CPM_ROM_NUMBER)                                             ; d674    fd 7e 01     . ~ .
     ld (hl),a                                                  ; d677    77     w
     inc hl                                                     ; d678    23     #
     ld (hl),045h                                               ; d679    36 45     6 E
@@ -3723,7 +3720,7 @@ ld827h:
     ret z                                                      ; d829    c8     .
     ld e,a                                                     ; d82a    5f     _
     call sub_c9dbh                                             ; d82b    cd db c9     . . .
-    ld a,(iy+001h)                                             ; d82e    fd 7e 01     . ~ .
+    ld a,(iy+WS_CPM_ROM_NUMBER)                                             ; d82e    fd 7e 01     . ~ .
     cp 03fh                                                    ; d831    fe 3f     . ?
     ret z                                                      ; d833    c8     .
     ld a,e                                                     ; d834    7b     {
@@ -3731,7 +3728,7 @@ ld827h:
     and 001h                                                   ; d838    e6 01     . .
     add a,0c1h                                                 ; d83a    c6 c1     . .
     ld e,a                                                     ; d83c    5f     _
-    ld a,(iy+001h)                                             ; d83d    fd 7e 01     . ~ .
+    ld a,(iy+WS_CPM_ROM_NUMBER)                                             ; d83d    fd 7e 01     . ~ .
     ld (hl),a                                                  ; d840    77     w
     inc hl                                                     ; d841    23     #
     ld (hl),e                                                  ; d842    73     s
@@ -6094,7 +6091,7 @@ le8f7h:
     pop ix                                                     ; e8fc    dd e1     . .
     jp le7a6h                                                  ; e8fe    c3 a6 e7     . . .
 IX_STORE_DISC:
-    ld a,(iy+001h)                                             ; e901    fd 7e 01     . ~ .
+    ld a,(iy+WS_CPM_ROM_NUMBER)                                             ; e901    fd 7e 01     . ~ .
     ld (ix+000h),a                                             ; e904    dd 77 00     . w .
     ;Next file stows "DISC."
     ld (ix+001h),'D'                                           ; e907    dd 36 01 44     . 6 . D
@@ -7730,7 +7727,7 @@ lf3f0h:
     djnz lf3f0h                                                ; f3f9    10 f5     . .
     jr lf454h                                                  ; f3fb    18 57     . W
 sub_f3fdh:
-    ld a,(iy+001h)                                             ; f3fd    fd 7e 01     . ~ .
+    ld a,(iy+WS_CPM_ROM_NUMBER)                                             ; f3fd    fd 7e 01     . ~ .
     sub 030h                                                   ; f400    d6 30     . 0
     ld ix,0bef2h                                               ; f402    dd 21 f2 be     . ! . .
     ld (ix+000h),a                                             ; f406    dd 77 00     . w .
