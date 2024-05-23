@@ -28,6 +28,7 @@ POST_BOOT_MSG: equ 0xbec1                                   ; This location is o
 ;This is v2.19 and maintains the bug.
 BOOT_CMD_AREA: equ 0bec0h                                   ; This is for forwards compatibility with the bugfix for V2.20
 ROM_SELECT_DESELECT_RELOCATED: equ 0xbec0
+DISC_NUMBERS:   equ 0xbe00 ;The drive numbers are held here, eg 0=A, etc
 ;---------------------------------------------------------------------------------------------------
 ;RODOS error message store
 DISK_ERROR_MESSAGE_FLAG: equ 0xbe78
@@ -493,7 +494,7 @@ sub_c2cch:
     call CALCULATE_RAM_BLOCKS                                  ; c2cc    cd 0b fb     . . .
     ld hl,VERSION_MSG                                          ; c2cf    21 95 ff     ! . .
     call DISPLAY_MSG                                           ; c2d2    cd 6a d9     . j .
-    call COPY_KL_FIND_COMAMAND_TO_WORKSPACE_0x33                                             ; c2d5    cd c3 c3     . . .
+    call COPY_KL_FIND_COMMAND_TO_WORKSPACE_0x33                                             ; c2d5    cd c3 c3     . . .
     call CHECK_FOR_CPM_ROM                                     ; c2d8    cd cc c4     . . .
     call SETUP_ENTER_KEY_STRINGS                               ; c2db    cd 91 c4     . . .
     call INITIALISE_VARIABLES                                  ; c2de    cd 29 c3     . ) .
@@ -602,7 +603,7 @@ lc382h:
     ld (hl),081h                                               ; c382    36 81     6 .
     inc hl                                                     ; c384    23     #
     djnz lc382h                                                ; c385    10 fb     . .
-  ;sets iy+0x2a to iy+0x33 to 0x81h
+    ;sets iy+0x2a to iy+0x33 to 0x81h
 
     call RSX_DISK                                              ; c387    cd 26 de     . & .
     push iy                                                    ; c38a    fd e5     . .
@@ -657,8 +658,8 @@ RESET_INTERNAL_VARIABLES_TO_DEFAULT:
 ; So.. copy 10 data from c3b2 to be00
 ; then copy 7 data from c3bc to 0be44
 ;
-    ld hl,lc3b2h                                               ; c399    21 b2 c3     ! . .
-    ld de,0be00h                                               ; c39c    11 00 be     . . .
+    ld hl,DISC_NUMBERS_AND_RESET_VARIABLES                                               ; c399    21 b2 c3     ! . .
+    ld de,DISC_NUMBERS                                               ; c39c    11 00 be     . . .
     ld bc,0000ah                                               ; c39f    01 0a 00     . . .
     ldir                                                       ; c3a2    ed b0     . .
     ;Repeats LDI (LD (DE),(HL), then increments DE, HL, and decrements BC) until BC=0.
@@ -668,7 +669,7 @@ RESET_INTERNAL_VARIABLES_TO_DEFAULT:
     ld bc,00007h                                               ; c3aa    01 07 00     . . .
     ldir                                                       ; c3ad    ed b0     . .
     jp MAKE_A_BEEP                                             ; c3af    c3 88 fb     . . .
-lc3b2h:
+DISC_NUMBERS_AND_RESET_VARIABLES:
 ;Initial values for be00 to be0a
 ; See Appendix B in the manual
 ;
@@ -700,7 +701,7 @@ DISK_SETUP_TIMING_BLOCK_DATA:
   db         0Fh                                            ; BE49 Head settle time - default=&F
   db         0Ch                                            ; BE4A Step rate period - default=&C
 
-COPY_KL_FIND_COMAMAND_TO_WORKSPACE_0x33:
+COPY_KL_FIND_COMMAND_TO_WORKSPACE_0x33:
     ;Takes the vector for KL_FIND_COMMAND and copies that to IY+0x33
     push iy                                                    ; c3c3    fd e5     . .
     pop hl                                                     ; c3c5    e1     .
@@ -719,7 +720,7 @@ COPY_KL_FIND_COMAMAND_TO_WORKSPACE_0x33:
     ld b,001h                                                  ; c3e1    06 01     . .
     jp MAKE_JP_AT_DE_USING_HL                                  ; c3e3    c3 74 de     . t .
 lc3e6h:
-    dw EXECUTE_RSX_COMMAND                                     ; Pointer to the sub below. Used in COPY_KL_FIND_COMAMAND_TO_WORKSPACE_0x33
+    dw EXECUTE_RSX_COMMAND                                     ; Pointer to the sub below. Used in COPY_KL_FIND_COMMAND_TO_WORKSPACE_0x33
 EXECUTE_RSX_COMMAND:
 ;This is a z80dasm fixup - theres a call to mid z80dasm instruction so it misses a label.
     RES        0x2,(IY+0xd)                                    ; ram:c3e8 fd cb 0d 96
@@ -841,7 +842,7 @@ RODOS_WORKSPACE_KL_FIND_COMMAND:
 SETUP_ENTER_KEY_STRINGS:
     ld de,0bf00h                                               ; c491    11 00 bf     . . .
     ld hl,STR_CLI_RUN_DISK_start                               ; c494    21 be c4     ! . .
-    ld bc,PCBC_INSTRUCTION                                     ; c497    01 0e 00     . . .
+    ld bc,000eh                                                ; c497    01 0e 00     . . .
     ldir                                                       ; c49a    ed b0     . .
     ld b,08dh                                                  ; c49c    06 8d     . .
     ld a,006h                                                  ; c49e    3e 06     > .
@@ -860,7 +861,8 @@ SETUP_ENTER_KEY_STRINGS:
 
 ; BLOCK 'STR_CLI_RUN_DISK' (start 0xc4be end 0xc4cb)
 STR_CLI_RUN_DISK_start:
-  defb '|CLI',13,'RUN"DISC',13                              ;  adding a ' to make my editor happy otherwise it thinks the string was left open (it was)
+  defb '|CLI',13
+  defb 'RUN',34,'DISC',13                              ;  aka RUN"DISC<cr>
 
 
 CHECK_FOR_CPM_ROM:
@@ -1085,7 +1087,7 @@ sub_c636h:
     add hl,de ;hl=hl+0x1a (aka 26) - HL is now iy+185          ; c63d    19     .
     ex de,hl  ;de=hl                                           ; c63e    eb     .
     pop hl    ;restore hl                                      ; c63f    e1     .
-;by now in real world, HL=&9870 and DE=&988A
+    ;by now in real world, HL=&9870 and DE=&988A
     ld (hl),e                                                  ; c640    73     s
     inc hl                                                     ; c641    23     #
     ld (hl),d ;address at hl=de                                ; c642    72     r
@@ -2610,17 +2612,17 @@ ld028h:
 ld070h:
     ld a,(iy+061h)                                             ; d070    fd 7e 61     . ~ a
     ld (CAS_OUT_OPEN),a                                        ; d073    32 8c bc     2 . .
-    ld hl,(0bc8dh)                                             ; d076    2a 8d bc     * . .
+    ld hl,(CAS_OUT_OPEN+1)                                             ; d076    2a 8d bc     * . .
     push hl                                                    ; d079    e5     .
     ld l,(iy+062h)                                             ; d07a    fd 6e 62     . n b
     ld h,(iy+063h)                                             ; d07d    fd 66 63     . f c
-    ld (0bc8dh),hl                                             ; d080    22 8d bc     " . .
+    ld (CAS_OUT_OPEN+1),hl                                             ; d080    22 8d bc     " . .
     ld hl,(0bee2h)                                             ; d083    2a e2 be     * . .
     call CAS_OUT_OPEN                                          ; d086    cd 8c bc     . . .
     ld (0bf00h),hl                                             ; d089    22 00 bf     " . .
     pop hl                                                     ; d08c    e1     .
     push af                                                    ; d08d    f5     .
-    ld (0bc8dh),hl                                             ; d08e    22 8d bc     " . .
+    ld (CAS_OUT_OPEN+1),hl                                             ; d08e    22 8d bc     " . .
     ld a,0c3h                                                  ; d091    3e c3     > .
     ld (CAS_OUT_OPEN),a                                        ; d093    32 8c bc     2 . .
     ld hl,(0bf00h)                                             ; d096    2a 00 bf     * . .
@@ -2660,7 +2662,7 @@ ld0bdh:
     ld (iy+WS_INPUT_BUFF_ADDR_FILE),a                                             ; d0dc    fd 77 17     . w .
     ld (iy+WS_INPUT_BUFF_ADDR_FILE+1),a                                             ; d0df    fd 77 18     . w .
 ld0e2h:
-    ld hl,(0bc8dh)                                             ; d0e2    2a 8d bc     * . .
+    ld hl,(CAS_OUT_OPEN+1)                                             ; d0e2    2a 8d bc     * . .
     ld a,(0bf0dh)                                              ; d0e5    3a 0d bf     : . .
     cp l                                                       ; d0e8    bd     .
     jr nz,ld0f0h                                               ; d0e9    20 05       .
@@ -2673,7 +2675,7 @@ ld0f0h:
     ld (iy+062h),l                                             ; d0f6    fd 75 62     . u b
     ld (iy+063h),h                                             ; d0f9    fd 74 63     . t c
     ld hl,(0bf0dh)                                             ; d0fc    2a 0d bf     * . .
-    ld (0bc8dh),hl                                             ; d0ff    22 8d bc     " . .
+    ld (CAS_OUT_OPEN+1),hl                                             ; d0ff    22 8d bc     " . .
     ld (iy+04ch),l                                             ; d102    fd 75 4c     . u L
     ld (iy+04dh),h                                             ; d105    fd 74 4d     . t M
     ld a,(0bf0ch)                                              ; d108    3a 0c bf     : . .
@@ -3193,12 +3195,18 @@ RSX_WRITESECT:
     pop de                                                     ; d488    d1     .
     jp sub_d48ch                                               ; d489    c3 8c d4     . . .
 sub_d48ch:
+    ;Calls an RSX from details at &BE83
     push af                                                    ; d48c    f5     .
     push de                                                    ; d48d    d5     .
     push hl                                                    ; d48e    e5     .
     push bc                                                    ; d48f    c5     .
     ld hl,(0be83h)                                             ; d490    2a 83 be     * . .
     call KL_FIND_COMMAND                                       ; d493    cd d4 bc     . . .
+    ;Entry:
+    ;HL=Address of the command name
+    ;Exit:
+    ;HL is the address of the command
+    ;C is the ROM select address
     ld (0be80h),hl                                             ; d496    22 80 be     " . .
     ld a,c                                                     ; d499    79     y
     ld (0be82h),a                                              ; d49a    32 82 be     2 . .
@@ -3208,8 +3216,7 @@ sub_d48ch:
     jr nc,ld4a7h                                               ; d4a0    30 05     0 .
     pop af                                                     ; d4a2    f1     .
     rst 18h                                                    ; d4a3    df     .
-    add a,b                                                    ; d4a4    80     .
-    cp (hl)                                                    ; d4a5    be     .
+    dw 0be80h                                                  ; d4a4    80 be
     ret                                                        ; d4a6    c9     .
 ld4a7h:
     pop af                                                     ; d4a7    f1     .
@@ -3252,11 +3259,11 @@ RSX_DIR:
     ld a,(iy+WS_CPM_ROM_NUMBER)                                             ; d4f6    fd 7e 01     . ~ .
     ld (hl),a                                                  ; d4f9    77     w
     inc hl                                                     ; d4fa    23     #
-    ld (hl),044h                                               ; d4fb    36 44     6 D
+    ld (hl),'D'                                               ; d4fb    36 44     6 D
     inc hl                                                     ; d4fd    23     #
-    ld (hl),049h                                               ; d4fe    36 49     6 I
+    ld (hl),'I'                                               ; d4fe    36 49     6 I
     inc hl                                                     ; d500    23     #
-    ld (hl),0d2h                                               ; d501    36 d2     6 .
+    ld (hl),'R' + 0x80                                               ; d501    36 d2     6 .
     ld hl,0bef8h                                               ; d503    21 f8 be     ! . .
     pop af                                                     ; d506    f1     .
     and a                                                      ; d507    a7     .
@@ -3619,19 +3626,19 @@ DO_LOGICAL_DRIVE:
 
     ;So this section loads (de) into A. If A>ascii(a) then uppercase it (ascii(a)-32) and look for a range between A and I
     ld a,(de)                                                  ; d798    1a     .
-    cp 061h                                                    ; d799    fe 61     . a
+    cp 'a'                                                    ; d799    fe 61     . a
     call nc,FUNC_SUBTRACT_32                                   ; d79b    d4 9d d9     . . .
-    cp 041h                                                    ; d79e    fe 41     . A
+    cp 'A'                                                    ; d79e    fe 41     . A
     jp c,MSG_BAD_DRIVE                                         ; d7a0    da c2 fb     . . .
-    cp 049h                                                    ; d7a3    fe 49     . I
+    cp 'I'                                                    ; d7a3    fe 49     . I
     jp nc,MSG_BAD_DRIVE                                        ; d7a5    d2 c2 fb     . . .
 
 
-    sub 041h                                                   ; d7a8    d6 41     . A
+    sub 'A'                                                   ; d7a8    d6 41     . A
     ;So take a range of letters starting at A and convert into numbers starting at 0
     ld e,a                                                     ; d7aa    5f     _
     ld d,000h                                                  ; d7ab    16 00     . .
-    ld hl,0be00h                                               ; d7ad    21 00 be     ! . .
+    ld hl,DISC_NUMBERS                                               ; d7ad    21 00 be     ! . .
     add hl,de                                                  ; d7b0    19     .
     ;HL=be00+drive number
     ld a,(ix+000h)                                             ; d7b1    dd 7e 00     . ~ .
@@ -3747,17 +3754,18 @@ RSX_EB:
     ld (ix+000h),e                                             ; d854    dd 73 00     . s .
     ld (ix+001h),d                                             ; d857    dd 72 01     . r .
     ld hl,ld86dh                                               ; d85a    21 6d d8     ! m .
-    ld bc,KL_LOW_PCHL                                          ; d85d    01 0b 00     . . .
+    ld bc,0000bh                                               ; d85d    01 0b 00     . . .
     ldir                                                       ; d860    ed b0     . .
+    ;So copy &b bytes from HL (ld86dh) to DE (&bed2)
     ld hl,0bedah                                               ; d862    21 da be     ! . .
     ld (0be83h),hl                                             ; d865    22 83 be     " . .
     ld a,001h                                                  ; d868    3e 01     > .
     jp sub_d48ch                                               ; d86a    c3 8c d4     . . .
 ld86dh:
-    defb 5                                                     ; d86d    05     .
-    defb 0d5h                                                  ; d86e    d5     .
-    defb 0beh                                                  ; d86f    be     .
-    defb '*.BAKER',0c1h                                        ; AKA "*.BAKERA"
+    defb 5                   ; &bed2 - length of '*.BAK'       ; d86d    05     .
+    defw 0bed5h              ; &bed3 - Where '*.BAK' lives                         ; d86e    d5     .
+    defb '*.BAK'             ; &bed5-&bed9
+    defb 'ER', 'A' + 0x80    ; &beda
 
 sub_d878h:
     push de                                                    ; d878    d5     .
@@ -3958,12 +3966,14 @@ PRINT_CR_ONLY:
     ret                                                        ; d98a    c9     .
 
 DELETE_CHAR:
+Backspace: equ 8
+Space: equ 32
     push af                                                    ; d98b    f5     .
-    ld a,008h                                                  ; Backspace ;d98c    3e 08     > .
+    ld a,Backspace                                             ; d98c    3e 08     > .
     call TXT_OUTPUT                                            ; d98e    cd 5a bb     . Z .
-    ld a,020h                                                  ; Space to erase the screen character ;d991    3e 20     >
+    ld a,Space                                                 ; d991    3e 20     >
     call TXT_OUTPUT                                            ; d993    cd 5a bb     . Z .
-    ld a,008h                                                  ; Backagain to reset the cursor ;d996    3e 08     > .
+    ld a,Backspace                                             ; d996    3e 08     > .
     call TXT_OUTPUT                                            ; d998    cd 5a bb     . Z .
     pop af                                                     ; d99b    f1     .
     ret                                                        ; d99c    c9     .
@@ -4297,6 +4307,7 @@ ldb97h:
     ld c,002h                                                  ; db9a    0e 02     . .
     and a                                                      ; db9c    a7     .
     jr z,ldba2h                                                ; db9d    28 03     ( .
+    ;ix+0 = format type
     ld c,(ix+000h)                                             ; db9f    dd 4e 00     . N .
 ldba2h:
     ld (iy+002h),c                                             ; dba2    fd 71 02     . q .
@@ -4378,7 +4389,7 @@ ldc22h:
 ldc29h:
     ld e,(iy+002h)                                             ; dc29    fd 5e 02     . ^ .
     ld d,000h                                                  ; dc2c    16 00     . .
-    ld hl,ldd8dh                                               ; dc2e    21 8d dd     ! . .
+    ld hl,FIRST_SECTOR                                               ; dc2e    21 8d dd     ! . .
     add hl,de                                                  ; dc31    19     .
     ld a,(hl)                                                  ; dc32    7e     ~
     ld (0bebfh),a                                              ; dc33    32 bf be     2 . .
@@ -4545,20 +4556,29 @@ ldd68h:
     ld a,0efh                                                  ; dd80    3e ef     > .
     ret                                                        ; dd82    c9     .
 ldd83h:
-    nop                                                        ; dd83    00     .
-    inc bc                                                     ; dd84    03     .
-    ld b,001h                                                  ; dd85    06 01     . .
-    inc b                                                      ; dd87    04     .
-    rlca                                                       ; dd88    07     .
-    ld (bc),a                                                  ; dd89    02     .
-    dec b                                                      ; dd8a    05     .
-    ex af,af'                                                  ; dd8b    08     . ;adding a ' to make my editor happy.
-    add hl,bc                                                  ; dd8c    09     .
-ldd8dh:
-;RODOS format definition?
-    ld bc,08141h                                               ; dd8d    01 41 81     . A .
-    pop bc                                                     ; dd90    c1     .
-    adc a,e                                                    ; dd91    8b     .
+    ;format definition?
+    defb 00h, 03h, 06h, 01h, 04h
+    defb 07h, 02h, 05h, 08h, 09h
+    ; nop                                                        ; dd83    00     .
+    ; inc bc                                                     ; dd84    03     .
+    ; ld b,001h                                                  ; dd85    06 01     . .
+    ; inc b                                                      ; dd87    04     .
+    ; rlca                                                       ; dd88    07     .
+    ; ld (bc),a                                                  ; dd89    02     .
+    ; dec b                                                      ; dd8a    05     .
+    ; ex af,af'                                                  ; dd8b    08     . ;adding a ' to make my editor happy.
+    ; add hl,bc                                                  ; dd8c    09     .
+FIRST_SECTOR:
+;Format first sector lookup
+    db 001h ; IBM Format
+    db 041h ; CPM Format
+    db 081h ; RODOS
+    db 0c1h ; Data Format
+    db 08bh ; RODOS Side 2
+
+    ; ld bc,08141h                                               ; dd8d    01 41 81     . A .
+    ; pop bc                                                     ; dd90    c1     .
+    ; adc a,e                                                    ; dd91    8b     .
 
 ;=======================================================================
 RSX_TDUMP:
@@ -4662,11 +4682,24 @@ RSX_DISK_IN:
     ld b,007h                                                  ; de29    06 07     . .
     ld ix,lde64h                                               ; de2b    dd 21 64 de     . ! d .
     ld de,00290h                                               ; de2f    11 90 02     . . .
+    ;The jp call down below takes these as parameters:
+    ;address to jump is in HL
+    ;address to patch is in DE
+    ;So this code makes (DE)=JP (HL)
     push iy                                                    ; de32    fd e5     . .
     pop hl                                                     ; de34    e1     .
     add hl,de                                                  ; de35    19     .
     ;So basically CALL CAS_IN_OPEN
     ld de,CAS_IN_OPEN                                          ; de36    11 77 bc     . w .
+    ; Action:   Opens an input buffer and reads the first block of the file
+    ; Entry:    B contains the length of the filename,
+    ;           HL contains the filename's address, and DE contains the address of the 2K buffer to use for reading the file
+    ; Exit: If the file was opened successfully, then Carry is true, Zero is false, HL holds the address of a buffer
+    ;       containing the file header data, DE holds the address of the destination for the file, BC holds the file
+    ;       length, and A holds the file type; if the read stream is already open then Carry and Zero are false, A
+    ;       contains an error nurnber (664/6128 only) and BC, DE and HL are corrupt; if ESC was pressed by the
+    ;       user, then Carry is false, Zero is true, A holds an error number (664/6128 only) and BC, DE and HL are
+    ;       corrupt; in all cases, IX and the other flags are corrupt, and the others are preserved
     call MAKE_JP_AT_DE_USING_HL                                ; de39    cd 74 de     . t .
     ld b,001h                                                  ; de3c    06 01     . .
     ;Call CAS_CATALOG
@@ -4688,8 +4721,7 @@ RSX_DISK_OUT:
 lde5ah:
     add hl,hl                                                  ; de5a    29     )
     rst 20h                                                    ; de5b    e7     .
-    inc (hl)                                                   ; de5c    34     4
-    ex de,hl                                                   ; de5d    eb     .
+    dw sub_eb34h
     inc e                                                      ; de5e    1c     .
     jp (hl)                                                    ; de5f    e9     .
     dec a                                                      ; de60    3d     =
@@ -4715,7 +4747,7 @@ MAKE_JP_AT_DE_USING_HL:
     ; ld b,002h
     ; call MAKE_JP_AT_DE_USING_HL
 
-    ;Generates/patches and address with a jump
+    ;Generates/patches an address with a jump
     ;address to jump is in HL
     ;address to patch is in DE
     ;So this code makes (DE)=JP (HL)
@@ -5032,7 +5064,7 @@ le010h:
     cp (iy+WS_CURRENT_DRIVE_LETTER)                            ; e026    fd be 03     . . .
     ret z                                                      ; e029    c8     .
     ld (iy+WS_CURRENT_DRIVE_LETTER),a                          ; e02a    fd 77 03     . w .
-    ld hl,0be00h                                               ; e02d    21 00 be     ! . .
+    ld hl,DISC_NUMBERS                                               ; e02d    21 00 be     ! . .
     ld e,a                                                     ; e030    5f     _
     ld d,000h                                                  ; e031    16 00     . .
     add hl,de                                                  ; e033    19     .
@@ -5055,7 +5087,7 @@ le04ah:
     ld (iy+006h),a                                             ; e05a    fd 77 06     . w .
     ld a,(iy+WS_CD_HOME_DRIVE_NUMBER)                          ; e05d    fd 7e 42     . ~ B
     ld (iy+WS_DRIVE_NUMBER),a                                  ; e060    fd 77 04     . w .
-    ld hl,0be00h                                               ; e063    21 00 be     ! . .
+    ld hl,DISC_NUMBERS                                               ; e063    21 00 be     ! . .
     ld d,000h                                                  ; e066    16 00     . .
     add hl,de                                                  ; e068    19     .
     ld (hl),a                                                  ; e069    77     w
@@ -5612,14 +5644,14 @@ le4b2h:
     ld a,0c3h                                                  ; e4e4    3e c3     > .
     ld (CAS_IN_OPEN),a                                         ; e4e6    32 77 bc     2 w .
     ld a,(iy+04ah)                                             ; e4e9    fd 7e 4a     . ~ J
-    ld (0bc78h),a                                              ; e4ec    32 78 bc     2 x .
+    ld (CAS_IN_OPEN+1),a                                              ; e4ec    32 78 bc     2 x .
     ld a,(iy+04bh)                                             ; e4ef    fd 7e 4b     . ~ K
-    ld (0bc79h),a                                              ; e4f2    32 79 bc     2 y .
+    ld (CAS_IN_OPEN+2),a                                              ; e4f2    32 79 bc     2 y .
     ld a,l                                                     ; e4f5    7d     }
     ld (CAS_CATALOG),a                                         ; e4f6    32 9b bc     2 . .
     pop af                                                     ; e4f9    f1     .
     pop hl                                                     ; e4fa    e1     .
-    ld (0bc9ch),hl                                             ; e4fb    22 9c bc     " . .
+    ld (CAS_CATALOG+1),hl                                             ; e4fb    22 9c bc     " . .
     ld hl,(0bf02h)                                             ; e4fe    2a 02 bf     * . .
     ret                                                        ; e501    c9     .
     ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; e502    fd 6e 17     . n .
@@ -5931,11 +5963,11 @@ le720h:
     cp 081h                                                    ; e784    fe 81     . .
     jp nz,le842h                                               ; e786    c2 42 e8     . B .
     push ix                                                    ; e789    dd e5     . .
-    ld hl,(0bc8dh)                                             ; e78b    2a 8d bc     * . .
+    ld hl,(CAS_OUT_OPEN+1)                                             ; e78b    2a 8d bc     * . .
     push hl                                                    ; e78e    e5     .
     call RSX_DISK_OUT                                          ; e78f    cd 47 de     . G .
     pop hl                                                     ; e792    e1     .
-    ld (0bc8dh),hl                                             ; e793    22 8d bc     " . .
+    ld (CAS_OUT_OPEN+1),hl                                             ; e793    22 8d bc     " . .
     pop ix                                                     ; e796    dd e1     . .
     call sub_ef8bh                                             ; e798    cd 8b ef     . . .
     ret nz                                                     ; e79b    c0     .
@@ -6029,7 +6061,7 @@ le855h:
     ld a,0c3h                                                  ; e875    3e c3     > .
     ld (CAS_OUT_OPEN),a                                        ; e877    32 8c bc     2 . .
     ld a,(iy+04ch)                                             ; e87a    fd 7e 4c     . ~ L
-    ld (0bc8dh),a                                              ; e87d    32 8d bc     2 . .
+    ld (CAS_OUT_OPEN+1),a                                              ; e87d    32 8d bc     2 . .
     ld a,(iy+04dh)                                             ; e880    fd 7e 4d     . ~ M
     ld (0bc8eh),a                                              ; e883    32 8e bc     2 . .
     pop af                                                     ; e886    f1     .
@@ -7179,54 +7211,26 @@ lf0b9h:
     xor a                                                      ; f0c5    af     .
     ret                                                        ; f0c6    c9     .
 lf0c7h:
-    nop                                                        ; f0c7    00     .
-    ld a,a                                                     ; f0c8    7f     
-    cp a                                                       ; f0c9    bf     .
-    rst 18h                                                    ; f0ca    df     .
-    dw  l0f7efh
-    ; z80dasm didn't understand this bit. So here is how this works
-    ;
+    ;Originally this was treated as code, but its bad.
+    ;I'm treating this as data instead.
+    db 00,07fh,0bfh,0dfh,0efh,0f7h,0fbh,0fdh,0feh
+    ; nop                                                        ; f0c7    00     .
+    ; ld a,a                                                     ; f0c8    7f     
+    ; cp a                                                       ; f0c9    bf     .
+    ; rst 18h                                                    ; f0ca    df     .
+    ; dw  l0f7efh
+    ; db 0fbh                                                    ; f0cd    fb     .
+    ; db 0fdh,0feh
 
-    ; 007   &0018   FAR CALL (RST 3)
-    ;     Action: Calls a routine anywhere in RAM or ROM
-    ;     Entry:  No entry conditions - all  the  registers apart from IY
-    ;             are passed to the destination routine unaltered
-    ;     Exit:   IY is preserved, and the other  registers are as set by
-    ;             the destination routine or are returned unchanged
-    ;     Notes:  The RST 3 instruction is followed by a two byte in-line
-    ;             address.  At this address,  there  is  a three byte far
-    ;             address, which is defined as follows:
-    ;               bytes 0 and 1 give the address of the routine to be
-    ;                 called
-    ;               byte 2 is the ROM select byte which has values as
-    ;                 follows:
-    ;                 &00 to &FB-- select the given upper ROM, enable the
-    ;                 upper ROM and disable the lower ROM
-    ;                 &FC - no change to the ROM selection, enable the
-    ;                 upper and lower ROMs
-    ;                 &FD - no change to the ROM selection, enable the
-    ;                 upper ROM and disable the lower ROM
-    ;                 &FE - no change to the ROM selection, disable the
-    ;                 upper ROM and enable the lower ROM
-    ;                 &FF - no change to the ROM selection, disable the
-    ;                 upper and lower ROMs
-    ;             When it is retumed  from,  the  ROM selection and state
-    ;             are restored to their settings before the RST 3 command
-
-    ;Notes here: TODO
-    ;These next bytes aren't instructions, but neither are they apparently used AFAIK
-    db 0fbh                                                    ; f0cd    fb     .
-    defb 0fdh,0feh
-
-    ;Here is what Ghidra thought of this section.
-; ram:f0c7 00              ??         00h = nop
-; ram:f0c8 7f              ??         7Fh = ld a,a   
-; ram:f0c9 bf              ??         BFh = cp a
-; ram:f0ca df              ??         DFh    = rst 18h (aka rst 3)
-; ram:f0cb ef              ??         EFh = rst l
-; ram:f0cc f7              ??         F7h  = rst h
-; ram:f0cd fb              ??         FBh  = ??
-; ram:f0ce fd              ??         FDh  = ??
+    ;Here is what Ghidra thought of this section:
+    ; ram:f0c7 00              ??         00h = nop
+    ; ram:f0c8 7f              ??         7Fh = ld a,a   
+    ; ram:f0c9 bf              ??         BFh = cp a
+    ; ram:f0ca df              ??         DFh    = rst 18h (aka rst 3)
+    ; ram:f0cb ef              ??         EFh = rst l
+    ; ram:f0cc f7              ??         F7h  = rst h
+    ; ram:f0cd fb              ??         FBh  = ??
+    ; ram:f0ce fd              ??         FDh  = ??
 
 sub_0f0d0h:
     call sub_ef8bh
@@ -7275,7 +7279,7 @@ sub_f11ah:
     push hl                                                    ; f11a    e5     .
     push de                                                    ; f11b    d5     .
     ld d,000h                                                  ; f11c    16 00     . .
-    ld hl,0be00h                                               ; f11e    21 00 be     ! . .
+    ld hl,DISC_NUMBERS                                               ; f11e    21 00 be     ! . .
     add hl,de                                                  ; f121    19     .
     ld a,(hl)                                                  ; f122    7e     ~
     pop de                                                     ; f123    d1     .
@@ -7598,13 +7602,13 @@ lf32bh:
     ld hl,RESET_ENTRY_RST_0                                    ; f32e    21 00 00     ! . .
 lf331h:
     ld a,(de)                                                  ; f331    1a     .
-    cp 061h                                                    ; f332    fe 61     . a
+    cp 'a'                                                    ; f332    fe 61     . a
     call nc,FUNC_SUBTRACT_32                                   ; f334    d4 9d d9     . . .
-    cp 030h                                                    ; f337    fe 30     . 0
+    cp '0'                                                    ; f337    fe 30     . 0
     jr c,lf35fh                                                ; f339    38 24     8 $
-    cp 047h                                                    ; f33b    fe 47     . G
+    cp 'G'                                                    ; f33b    fe 47     . G
     jr nc,lf35fh                                               ; f33d    30 20     0
-    cp 03ah                                                    ; f33f    fe 3a     . :
+    cp ':'                                                    ; f33f    fe 3a     . :
     jr c,lf345h                                                ; f341    38 02     8 .
     sub 007h                                                   ; f343    d6 07     . .
 lf345h:
@@ -7880,7 +7884,6 @@ lf4b5h:
   ;             When it is retumed  from,  the  ROM selection and state
   ;             are restored to their settings before the RST 3 command
   ;
-
 DETERMINE_BASIC_VERSION:
     ld C,0x0                                                   ; f4d8 ram:f4d8 0e 00
     ;ROM 0 is the basic rom
@@ -7960,8 +7963,7 @@ lf51bh:
     ld c,a                                                     ; f533    4f     O
     call KM_SET_EXPAND                                         ; f534    cd 0f bb     . . .
     rst 18h                                                    ; f537    df     .
-    cp h                                                       ; f538    bc     .
-    cp (hl)                                                    ; f539    be     .
+    dw 0bebch
     xor a                                                      ; f53a    af     .
     ld (0bf13h),a                                              ; f53b    32 13 bf     2 . .
 lf53eh:
@@ -8477,7 +8479,7 @@ sub_f8f9h:
 sub_f904h:
     inc hl                                                     ; f904    23     #
     push de                                                    ; f905    d5     .
-    ld bc,LOW_JUMP_RST_1                                       ; f906    01 08 00     . . .
+    ld bc,8                                       ; f906    01 08 00     . . .
     ldir                                                       ; f909    ed b0     . .
     ld a,02eh                                                  ; f90b    3e 2e     > .
     ld (de),a                                                  ; f90d    12     .
@@ -9024,7 +9026,7 @@ sub_fc59h:
     jr lfc67h                                                  ; fc5b    18 0a     . .
 sub_fc5dh:
     ld l,01fh                                                  ; fc5d    2e 1f     . .
-    jr ERROR_H_RELAY_PROCESS                                   ; fc5f    18 0e     . .
+    jr ERROR_HANDLER_RELAY_PROCESS                                   ; fc5f    18 0e     . .
 sub_fc61h:
     ld a,020h                                                  ; fc61    3e 20     >
     jr lfc67h                                                  ; fc63    18 02     . .
@@ -9035,7 +9037,7 @@ lfc67h:
     ld a,(DISK_ERROR_MESSAGE_FLAG)                             ; fc68    3a 78 be     : x .
     and a                                                      ; fc6b    a7     .
     jp nz,lda18h                                               ; fc6c    c2 18 da     . . .
-ERROR_H_RELAY_PROCESS:
+ERROR_HANDLER_RELAY_PROCESS:
     bit 0,(iy+00dh)                                            ; fc6f    fd cb 0d 46     . . . F
     jr nz,lfcb7h                                               ; fc73    20 42       B
     push hl                                                    ; fc75    e5     .
