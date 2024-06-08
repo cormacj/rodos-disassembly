@@ -86,7 +86,6 @@ MC_PRINT_CHAR:      equ 0xbd2b
 MC_BUSY_PRINTER:    equ 0xbd2e
 MC_SEND_PRINTER:    equ 0xbd31
 JUMP_RESTORE:       equ 0xbd37
-RSX_MKDIR:          equ 0xdf64
 
 ;Workspace offset definitions
 ;z80dasm typically shows this in code as something like "ld (iy+003h),a" or "ld a,(iy+003h)"
@@ -1118,7 +1117,7 @@ lc664h:
     ;ld e,b                                                     ; c664    58     X
     ;rst 0                                                      ; c665    c7     .
     ;not code - actually a pointer
-    dw lc758
+    dw lc758h
 sub_c666h:
 ;HL=iy+0x9f (aka 159)
     push iy                                                    ; c666    fd e5     . .
@@ -1302,7 +1301,7 @@ lc751h:
     inc hl                                                     ; c754    23     #
     ld (hl),000h                                               ; c755    36 00     6 .
     ret                                                        ; c757    c9     .
-lc758: ;Called from a pointer from RST &18
+lc758h: ;Called from a pointer from RST &18
     and a                                                      ; c758    a7     .
     call nz,sub_c76bh                                          ; c759    c4 6b c7     . k .
     push hl                                                    ; c75c    e5     .
@@ -4868,7 +4867,7 @@ GENERATE_RST18_AT_HL:
     ; 0x4006 dw 0xBB5D
     ; 0x4008 db 0x12
     ; So now: Let (hl)=RST 18,(hl+)
-    ld (hl),0dfh ;RST &18                                      ; rst &18    ;de7e    36 df     6 .
+    ld (hl),0dfh ;RST &18                                      ;de7e    36 df     6 .
     inc hl                                                     ; de80    23     #
     ld a,l                                                     ; de81    7d     }
     add a,003h                                                 ; de82    c6 03     . .
@@ -4893,6 +4892,7 @@ GENERATE_RST18_AT_HL:
     inc hl                                                     ; dea0    23     #
     djnz MAKE_JP_AT_DE_USING_HL                                ; dea1    10 d1     . .
     ret                                                        ; dea3    c9     .
+ldea4h:
     push ix                                                    ; dea4    dd e5     . .
     push hl                                                    ; dea6    e5     .
     push af                                                    ; dea7    f5     .
@@ -5008,9 +5008,11 @@ ldf4fh:
     ld de,TXT_OUTPUT                                           ; df5c    11 5a bb     . Z .
     jp MAKE_JP_AT_DE_USING_HL                                  ; df5f    c3 74 de     . t .
 ldf62h:
-    and h                                                      ; df62    a4     .
-    sbc a,0feh                                                 ; df63    de fe     . .
-    ld (bc),a                                                  ; df65    02     .
+    ;pointer for RST 18 generator
+    dw 0dea4h
+    ;and h                                                     ; df62    a4     .
+RSX_MKDIR:
+    cp 02h                                                     ; df64    fe 02
     jp nc,MSG_WRONG_PARAMETER_AMT                              ; df66    d2 97 fb     . . .
     and a                                                      ; df69    a7     .
     call z,PROMPT_ENTER_NAME                                   ; df6a    cc dc d8     . . .
@@ -9256,14 +9258,22 @@ VERSION_MSG:
 ; ; CALL_TESTER:
 ; ;     call lc234h
 ; ;     ret
-; DEBUG:
-; ;push af
-;     call DUMP_BUFFER
+;  DEBUG:
+;     push af
+;     push bc
+;     push de
+;     push hl
+; ;    call DUMP_BUFFER
 ; ;    ld a,(0xbc09)
 ; ;    call PrintNumInA
-;     ;call TXT_OUTPUT
-; ;    pop af
-;     call RESET_INTERNAL_VARIABLES_TO_DEFAULT
+;     ld a,'Q'
+;     call 0bb5dh
+;     pop hl
+;     pop de
+;     pop bc
+;     pop af
+; ;    call RESET_INTERNAL_VARIABLES_TO_DEFAULT
+;     call sub_deb0h
 ;     ret
 
 ;Now we pad with zeros to make the ROM the correct size
