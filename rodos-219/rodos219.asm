@@ -2564,6 +2564,7 @@ lcff7h:
     ld de,CAS_CATALOG                                          ; d005    11 9b bc     . . .
     ldir                                                       ; d008    ed b0     . .
     ret                                                        ; d00a    c9     .
+ld00bh:
     ld (0bee0h),de                                             ; d00b    ed 53 e0 be     . S . .
     ld (0bee2h),hl                                             ; d00f    22 e2 be     " . .
     ld a,b                                                     ; d012    78     x
@@ -2596,6 +2597,7 @@ ld028h:
     ld hl,(0bf00h)                                             ; d04e    2a 00 bf     * . .
     pop af                                                     ; d051    f1     .
     ret                                                        ; d052    c9     .
+ld053h:
     ld (0bee0h),de                                             ; d053    ed 53 e0 be     . S . .
     ld (0bee2h),hl                                             ; d057    22 e2 be     " . .
     ld a,b                                                     ; d05a    78     x
@@ -2640,7 +2642,7 @@ RSX_FS:
     ld de,0bf09h                                               ; d0a6    11 09 bf     . . .
     ld b,002h                                                  ; d0a9    06 02     . .
     call MAKE_JP_AT_DE_USING_HL                                ; d0ab    cd 74 de     . t .
-    ld hl,(0bc78h)                                             ; d0ae    2a 78 bc     * x .
+    ld hl,(CAS_IN_OPEN+1)                                             ; d0ae    2a 78 bc     * x .
     ld a,(0bf0ah)                                              ; d0b1    3a 0a bf     : . .
     cp l                                                       ; d0b4    bd     .
     jr nz,ld0bdh                                               ; d0b5    20 06       .
@@ -2653,7 +2655,7 @@ ld0bdh:
     ld a,(CAS_IN_OPEN)                                         ; d0c3    3a 77 bc     : w .
     ld (iy+05eh),a                                             ; d0c6    fd 77 5e     . w ^
     ld hl,(0bf0ah)                                             ; d0c9    2a 0a bf     * . .
-    ld (0bc78h),hl                                             ; d0cc    22 78 bc     " x .
+    ld (CAS_IN_OPEN+1),hl                                             ; d0cc    22 78 bc     " x .
     ld (iy+04ah),l                                             ; d0cf    fd 75 4a     . u J
     ld (iy+04bh),h                                             ; d0d2    fd 74 4b     . t K
     ld a,(0bf09h)                                              ; d0d5    3a 09 bf     : . .
@@ -2685,10 +2687,13 @@ ld0f0h:
     ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1),a                                             ; d112    fd 77 1c     . w .
     ret                                                        ; d115    c9     .
 ld116h:
-    dec bc                                                     ; d116    0b     .
-    ret nc                                                     ; d117    d0     .
-    ld d,e                                                     ; d118    53     S
-    ret nc                                                     ; d119    d0     .
+    ;Pointers for the RST 18 generator
+    dw ld00bh
+    dw ld053h
+;     dec bc                                                     ; d116    0b     .
+;     ret nc                                                     ; d117    d0     .
+;     ld d,e                                                     ; d118    53     S
+;     ret nc                                                     ; d119    d0     .
 sub_d11ah:
     ld hl,STR_SAVING                                           ; d11a    21 55 d1     ! U .
     jr ld122h                                                  ; d11d    18 03     . .
@@ -4589,7 +4594,7 @@ RSX_TDUMP:
     call SCR_GET_MODE                                          ; dd9a    cd 11 bc     . . .
     ld e,a                                                     ; dd9d    5f     _
     ld d,000h                                                  ; dd9e    16 00     . .
-    ld hl,lde23h                                               ; dda0    21 23 de     ! # .
+    ld hl,MODES_LOOKUP                                               ; dda0    21 23 de     ! # .
     add hl,de                                                  ; dda3    19     .
     ld a,(hl)                                                  ; dda4    7e     ~
     ld (0bef2h),a                                              ; dda5    32 f2 be     2 . .
@@ -4666,11 +4671,13 @@ lde12h:
     pop af                                                     ; de1f    f1     .
     jr nc,lde12h                                               ; de20    30 f0     0 .
     ret                                                        ; de22    c9     .
-lde23h:
-    dec d                                                      ; de23    15     .
-    add hl,hl                                                  ; de24    29     )
-    ld d,c                                                     ; de25    51     Q
-
+MODES_LOOKUP:
+    ; dec d                                                      ; de23    15     .
+    ; add hl,hl                                                  ; de24    29     )
+    ; ld d,c                                                     ; de25    51     Q
+    db 21 ;mode 0 columns+1
+    db 41 ;mode 1 columns+1
+    db 81 ;mode 2 columns+1
 ;=======================================================================
 RSX_DISK:
 ;=======================================================================
@@ -4729,28 +4736,64 @@ lde5ah:
     sbc a,b                                                    ; de62    98     .
     ex de,hl                                                   ; de63    eb     .
 lde64h:
-    add a,b                                                    ; de64    80     .
-    ex (sp),hl                                                 ; de65    e3     .
-    ld (bc),a                                                  ; de66    02     .
-    push hl                                                    ; de67    e5     .
-    jr $-25                                                    ; de68    18 e5     . .
-    jr c,$-25                                                  ; de6a    38 e5     8 .
-    pop bc                                                     ; de6c    c1     .
-    and 0c0h                                                   ; de6d    e6 c0     . .
-    and 09bh                                                   ; de6f    e6 9b     . .
-    and 0b9h                                                   ; de71    e6 b9     . .
-    pop hl                                                     ; de73    e1     .
+    ;Table of pointers from MAKE_JP_AT_DE_USING_HL
+    dw le380h
+    ; add a,b                                                    ; de64    80     .
+    ; ex (sp),hl                                                 ; de65    e3     .
+    dw le502h
+    ; ld (bc),a                                                  ; de66    02     .
+    ; push hl                                                    ; de67    e5     .
+    dw le518h
+    ;jr $-25                                                    ; de68    18 e5     . .
+    dw le538h
+    ;jr c,$-25                                                  ; de6a    38 e5     8 .
+    dw le6c1h
+    ;pop bc                                                     ; de6c    c1     .
+    ;and 0c0h                                                   ; de6d    e6 c0     . .
+    dw le6c0h
+    ;and 09bh                                                   ; de6f    e6 9b     . .
+    dw le69bh
+    ;and 0b9h                                                   ; de71    e6 b9     . .
+    ;pop hl                                                     ; de73    e1     .
+    dw le1b9h
+
 MAKE_JP_AT_DE_USING_HL:
+;
+; B=Number of jumps to generate
+; DE=Address for generated Jump command
+; HL=Address in rom work area
+; IY=Rom Number
+; IX=Pointer to routine to call from RST 18
+;
+; So If there is a routine at &1000 and IY=&4000,DE=&67 then there would be code made at &4067 that reads:
+; 4067: RST &18, &406B
+; 406A: RET
+; 406B: DB &1000
+; 4061: DB (IY)
+;
+;eg:
+; RSX_FS:
+;   ld ix,ld116h                                               ; d09b    dd 21 16 d1     . ! . .
+;   ld de,0008dh                                               ; d09f    11 8d 00     . . .
+;   push iy                                                    ; d0a2    fd e5     . .
+;   pop hl                                                     ; d0a4    e1     .
+;   add hl,de                                                  ; d0a5    19     .
+;   ld de,0bf09h                                               ; d0a6    11 09 bf     . . .
+;   ld b,002h                                                  ; d0a9    06 02     . .
+;   call MAKE_JP_AT_DE_USING_HL                                ; d0ab    cd 74 de     . t .
+
+;Generates/patches an address with a jump
+;Inputs:
+;   address to jump is in HL
+;   address to patch is in DE
+;So this code makes (DE)=JP (HL)
+
     ;This seems to generate some code.
     ;example use:
     ; ld de,0bf09h
     ; ld b,002h
     ; call MAKE_JP_AT_DE_USING_HL
 
-    ;Generates/patches an address with a jump
-    ;address to jump is in HL
-    ;address to patch is in DE
-    ;So this code makes (DE)=JP (HL)
     ld a,0c3h  ; opcode for "jp"                               ; de74    3e c3     > .
     ld (de),a  ; stow the jp                                   ; de76    12     .
     inc de                                                     ; de77    13     .
@@ -4820,10 +4863,11 @@ GENERATE_RST18_AT_HL:
     ;eg, HL=0x4000, and ix=0x5000, and iy=0x5100.
     ;if 0x5000 is a word contain &BB5D and 0x5100 is a byte with &12 then
     ;the generated code at 0x4000 is:
-    ; 0x4000 RST 0x18,0x4004
+    ; 0x4000 RST 0x18,0x4006
     ; 0x4005 RET
     ; 0x4006 dw 0xBB5D
     ; 0x4008 db 0x12
+    ; So now: Let (hl)=RST 18,(hl+)
     ld (hl),0dfh ;RST &18                                      ; rst &18    ;de7e    36 df     6 .
     inc hl                                                     ; de80    23     #
     ld a,l                                                     ; de81    7d     }
@@ -5270,6 +5314,7 @@ le1a7h:
     set 7,(hl)                                                 ; e1b5    cb fe     . .
     xor a                                                      ; e1b7    af     .
     ret                                                        ; e1b8    c9     .
+le1b9h:
     ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; e1b9    fd 6e 17     . n .
     ld a,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                                             ; e1bc    fd 7e 18     . ~ .
     or l                                                       ; e1bf    b5     .
@@ -5484,6 +5529,7 @@ sub_e374h:
     ret z                                                      ; e378    c8     .
     res 0,(iy+WS_SCREEN_OUTPUT_VALUE)                                            ; e379    fd cb 11 86     . . . .
     jp CAS_OUT_CLOSE                                           ; e37d    c3 8f bc     . . .
+le380h:
     push de                                                    ; e380    d5     .
     pop ix                                                     ; e381    dd e1     . .
     ld a,b                                                     ; e383    78     x
@@ -5654,6 +5700,7 @@ le4b2h:
     ld (CAS_CATALOG+1),hl                                             ; e4fb    22 9c bc     " . .
     ld hl,(0bf02h)                                             ; e4fe    2a 02 bf     * . .
     ret                                                        ; e501    c9     .
+le502h:
     ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; e502    fd 6e 17     . n .
     ld h,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                                             ; e505    fd 66 18     . f .
     ld a,l                                                     ; e508    7d     }
@@ -5664,6 +5711,7 @@ le4b2h:
     ld a,(ix-00fh)                                             ; e510    dd 7e f1     . ~ .
     cp 052h                                                    ; e513    fe 52     . R
     call z,sub_eb34h                                           ; e515    cc 34 eb     . 4 .
+le518h:
     ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; e518    fd 6e 17     . n .
     ld h,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                                             ; e51b    fd 66 18     . f .
     push hl                                                    ; e51e    e5     .
@@ -5677,6 +5725,7 @@ le4b2h:
     ld (iy+WS_INPUT_BUFF_ADDR_FILE+1),a                                             ; e52e    fd 77 18     . w .
     ld (iy+039h),000h                                          ; e531    fd 36 39 00     . 6 9 .
     jp lda0ah                                                  ; e535    c3 0a da     . . .
+le538h:
     ld a,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; e538    fd 7e 17     . ~ .
     or (iy+WS_INPUT_BUFF_ADDR_FILE+1)                                               ; e53b    fd b6 18     . . .
     jp z,le696h                                                ; e53e    ca 96 e6     . . .
@@ -5847,6 +5896,7 @@ le696h:
     ld a,00fh                                                  ; e696    3e 0f     > .
     cp 000h                                                    ; e698    fe 00     . .
     ret                                                        ; e69a    c9     .
+le69bh:
     ld a,(iy+039h)                                             ; e69b    fd 7e 39     . ~ 9
     and a                                                      ; e69e    a7     .
     jr z,le696h                                                ; e69f    28 f5     ( .
@@ -5866,7 +5916,9 @@ le696h:
     or (ix-003h)                                               ; e6b8    dd b6 fd     . . .
     jr z,le696h                                                ; e6bb    28 d9     ( .
     jp lda0ah                                                  ; e6bd    c3 0a da     . . .
+le6c0h:
     ret                                                        ; e6c0    c9     .
+le6c1h:
     ld a,(iy+039h)                                             ; e6c1    fd 7e 39     . ~ 9
     cp 001h                                                    ; e6c4    fe 01     . .
     jp nz,lda0fh                                               ; e6c6    c2 0f da     . . .
@@ -8097,8 +8149,12 @@ lf607h:
     out (c),c                                                  ; f640    ed 49     . I
     ret                                                        ; f642    c9     .
 lf643h:
-    ld b,l                                                     ; f643    45     E
-    or 0e5h                                                    ; f644    f6 e5     . .
+    ;Pointer for RST 18 generator
+    dw lf645h
+    ;ld b,l                                                     ; f643    45     E
+    ;or 0e5h                                                    ; f644    f6 e5     . .
+lf645h:
+    push hl                                                     ; f645   e5
     push de                                                    ; f646    d5     .
     push bc                                                    ; f647    c5     .
     push af                                                    ; f648    f5     .
