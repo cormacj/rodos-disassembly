@@ -4893,6 +4893,7 @@ GENERATE_RST18_AT_HL:
     djnz MAKE_JP_AT_DE_USING_HL                                ; dea1    10 d1     . .
     ret                                                        ; dea3    c9     .
 ldea4h:
+    ;Involved with the TXT_OUTPUT patch
     push ix                                                    ; dea4    dd e5     . .
     push hl                                                    ; dea6    e5     .
     push af                                                    ; dea7    f5     .
@@ -5009,7 +5010,7 @@ ldf4fh:
     jp MAKE_JP_AT_DE_USING_HL                                  ; df5f    c3 74 de     . t .
 ldf62h:
     ;pointer for RST 18 generator
-    dw 0dea4h
+    dw ldea4h
     ;and h                                                     ; df62    a4     .
 RSX_MKDIR:
     cp 02h                                                     ; df64    fe 02
