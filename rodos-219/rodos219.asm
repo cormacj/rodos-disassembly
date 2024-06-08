@@ -9,8 +9,6 @@
 ; z80dasm 1.1.6
 ; command line: z80dasm -b blockfile.txt -g 0xc000 -S Firmware_labels.txt -s syms.txt -r default -l -t -v RODOS219.ROM
 
-;Notes:
-; This is almost relocatable - code changes now allow a proper boot up, but saving eg save "test" or |save break
 
 org    0c000h
 
