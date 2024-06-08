@@ -9,6 +9,9 @@
 ; z80dasm 1.1.6
 ; command line: z80dasm -b blockfile.txt -g 0xc000 -S Firmware_labels.txt -s syms.txt -r default -l -t -v RODOS219.ROM
 
+;Notes:
+; This is almost relocatable - code changes now allow a proper boot up, but saving eg save "test" or |save break
+
 org    0c000h
 
 ;---------------------------------------------------------------------------------------------------
@@ -4725,15 +4728,19 @@ RSX_DISK_OUT:
     ld de,CAS_OUT_OPEN                                         ; de54    11 8c bc     . . .
     jp MAKE_JP_AT_DE_USING_HL                                  ; de57    c3 74 de     . t .
 lde5ah:
-    add hl,hl                                                  ; de5a    29     )
-    rst 20h                                                    ; de5b    e7     .
+    dw le729h
+    ;add hl,hl                                                  ; de5a    29     )
+    ;rst 20h                                                    ; de5b    e7     .
     dw sub_eb34h
-    inc e                                                      ; de5e    1c     .
-    jp (hl)                                                    ; de5f    e9     .
-    dec a                                                      ; de60    3d     =
-    jp (hl)                                                    ; de61    e9     .
-    sbc a,b                                                    ; de62    98     .
-    ex de,hl                                                   ; de63    eb     .
+    dw le91ch
+    ;inc e                                                      ; de5e    1c     .
+    ;jp (hl)                                                    ; de5f    e9     .
+    dw le93dh
+    ;dec a                                                      ; de60    3d     =
+    ;jp (hl)                                                    ; de61    e9     .
+    dw leb98h
+    ;sbc a,b                                                    ; de62    98     .
+    ;ex de,hl                                                   ; de63    eb     .
 lde64h:
     ;Table of pointers from MAKE_JP_AT_DE_USING_HL
     dw le380h
@@ -5979,6 +5986,7 @@ le720h:
     ld l,(ix+01ah)                                             ; e720    dd 6e 1a     . n .
     ld h,(ix+01bh)                                             ; e723    dd 66 1b     . f .
     jp lda0ah                                                  ; e726    c3 0a da     . . .
+le729h:
     push de                                                    ; e729    d5     .
     pop ix                                                     ; e72a    dd e1     . .
     ld (0bee0h),de                                             ; e72c    ed 53 e0 be     . S . .
@@ -6201,6 +6209,7 @@ le91ch:
 sub_e938h:
     ld (0bf03h),a                                              ; e938    32 03 bf     2 . .
     jr le953h                                                  ; e93b    18 16     . .
+le93dh:
     ld (0bf03h),a                                              ; e93d    32 03 bf     2 . .
     ld a,(iy+WS_OUTPUT_BUFF_ADDR_HEADER+1)                                             ; e940    fd 7e 1c     . ~ .
     or (iy+WS_OUTPUT_BUFF_ADDR_HEADER)                                               ; e943    fd b6 1b     . . .
@@ -6468,6 +6477,7 @@ sub_eb81h:
     ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER),e                                             ; eb91    fd 73 1b     . s .
     ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1),d                                             ; eb94    fd 72 1c     . r .
     ret                                                        ; eb97    c9     .
+leb98h:
     ld (0bef0h),hl                                             ; eb98    22 f0 be     " . .
     ld (0bef2h),a                                              ; eb9b    32 f2 be     2 . .
     ld l,(iy+WS_OUTPUT_BUFF_ADDR_HEADER)                                             ; eb9e    fd 6e 1b     . n .
