@@ -1,4 +1,7 @@
 AUTO
+|load,"workspace.bin"
+work%=0:call &4000,@work%
+REM requires rodos and maxam
 |opt,1,255
 |opt,2,255:|opt,2,0
 |opt,3,255

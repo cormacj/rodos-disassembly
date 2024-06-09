@@ -9,23 +9,23 @@ help:
 	$(info make release - generate a zip file suitable for uploading)
 
 validate:
-		z80asm -v rodos$(version).asm && ./validate-size.sh a.bin
+		./z80make -v rodos$(version).asm && ./validate-size.sh a.bin
 
 rom:
-		z80asm -v rodos$(version).asm -o rodos$(version).rom && ./validate-size.sh rodos$(version).rom
+		./z80make -v rodos$(version).asm -o rodos$(version).rom && ./validate-size.sh rodos$(version).rom
 
 fullcompare:
-		z80asm rodos$(version).asm && ./dum.py a.bin -o 0xc000 >new.txt && ./dum.py rodos$(version).rom -o 0c0000 >original.txt && diff -W165 -y original.txt new.txt |less
+		./z80make rodos$(version).asm && ./dum.py a.bin -o 0xc000 >new.txt && ./dum.py rodos$(version).rom -o 0c0000 >original.txt && diff -W165 -y original.txt new.txt |less
 
 diffs:
-		z80asm rodos$(version).asm && ./dum.py a.bin -o 0xc000 >new.txt && ./dum.py rodos$(version).rom -o 0xc000 >original.txt && diff -s original.txt new.txt
+		./z80make rodos$(version).asm && ./dum.py a.bin -o 0xc000 >new.txt && ./dum.py rodos$(version).rom -o 0xc000 >original.txt && diff -s original.txt new.txt
 
 run:
-		z80asm rodos$(version).asm && cp a.bin ~/Amstrad/ROM/ && cap32 ~/Amstrad/blankdisc.dsk
+		./z80make rodos$(version).asm && cp a.bin ~/Amstrad/ROM/ && cap32 ~/Amstrad/blankdisc.dsk ~/Amstrad/rodosval.dsk
 
 release:
 		#rm -v Release/* &&
-		z80asm -v -o Release/rodos$(version).rom rodos$(version).asm && ./validate-size.sh Release/rodos$(version).rom && zip -v -j Release/rodos$(version).zip CHANGELOG Release/rodos$(version).rom && echo "Release made!"
+		/.z80make -v -o Release/rodos$(version).rom rodos$(version).asm && ./validate-size.sh Release/rodos$(version).rom && zip -v -j Release/rodos$(version).zip CHANGELOG Release/rodos$(version).rom && echo "Release made!"
 
 clean:
-		rm a.bin new.txt original.txt
+		rm -f a.bin new.txt original.txt tmp*

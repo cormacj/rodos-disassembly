@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+do_error() {
+    echo "Error: ROM exceeded 0x4000 bytes"; rm $tmpfile; exit 255
+}
+
+show_space() {
+    grep "zz_END_OF_ROM_CODE" $tmpfile |awk -F "$" '{print "0x"$2}'|awk -n -F "$" '{print 0xffff-$1" bytes remaining in rom"}'
+}
+
+if [ -z "$1" ]; then
+    echo "Please supply a z80 assembly file"
+    exit 255
+else
+    tmpfile=`mktemp -p .`
+
+    z80asm -L $1 $2 $3 $4 $5 2>$tmpfile
+    if [ $? -gt 0 ]; then
+        echo "Oops"
+    fi
+
+    #|| err=$?;grep -v equ $tmpfile; exit $err
+
+    romend=`grep "zz_END_OF_ROM_CODE" $tmpfile |awk -F "$" '{print "0x"$2}'`
+
+    echo $msg
+    [[ $romend -lt 0xc000 ]] && do_error || show_space;echo "$1 Compiled successfully"
+    rm $tmpfile
+fi

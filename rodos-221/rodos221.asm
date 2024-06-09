@@ -221,6 +221,7 @@ RSX_JUMPS:
     jp RSX_HIDDEN_04                                           ; c0b7    c3 cb c7     . . .
     jp RSX_HIDDEN_05                                           ; c0ba    c3 aa c7     . . .
     jp RSX_HIDDEN_06                                           ; c0bd    c3 06 c9     . . .
+    jp RSX_R
 RSX_COMMANDS:
     ;Each RSX name must end with the last letter + 0x80h
     ;Therefore |CLS is defined here as defb 'CL','S'+0x80 and due to how this
@@ -293,6 +294,7 @@ RSX_NAMES:
     defb 084h                                                  ; Hidden command 4 aka ^D
     defb 085h                                                  ; Hidden command 5 aka ^E
     defb 086h                                                  ; Hidden command 6 aka ^F
+    defb 092h ;Hidden command ^R
    ;The end of RSX definitions must end with zero.
     defb 0
 ;=======================================================================
@@ -9143,7 +9145,19 @@ lfcb7h:
     call TXT_OUTPUT                                            ; fcb7    cd 5a bb     . Z .
     call PRINT_CR_LF                                           ; fcba    cd 7d d9     . } .
     jp lda0fh                                                  ; fcbd    c3 0f da     . . .
-
+RSX_R:
+    ;Return workspace address in HL
+    push iy
+    pop hl
+    ld a,(iy+WS_RODOS_ROM_NUMBER)
+;    call PrintNumInA
+;    call PRINT_CR_LF
+    ld a,h
+    call PrintNumInA
+    ld a,l
+    call PrintNumInA
+    call PRINT_CR_LF
+    ret
 ; BLOCK 'RODOS_MSGS' (start 0xfcc0 end 0xffc7)
 RODOS_MSGS_ARRAY:
     defb 05ch                                                  ; Starts with a slash for some reason (probably because this is error 0)
@@ -9240,30 +9254,30 @@ VERSION_MSG:
 ;
 ; ret
 ; ;
-; ; PrintNumInA:
-; ;     push af
-; ;     and 0F0h
-; ;     rrca
-; ;     rrca
-; ;     rrca
-; ;     rrca
-; ;     call PrintNibble
-; ;     pop af
-; ;     and 0Fh
-; ;     call PrintNibble
-; ;     ld a,' '
-; ;     call TXT_OUTPUT
-; ;   ret
-; PrintNibble:
-;     add a, '0' ; Convert to ASCII
-;     cp '9' + 1 ; Check if the result is greater than '9'
-;     jr c, PrintCharacter ; Jump to PrintCharacter if less than or equal to '9'
-;     add a, 'A' - '9' - 1 ; Adjust for characters 'A' to 'F'
-;
-; PrintCharacter:
-;     call TXT_OUTPUT
-; ;        call KM_WAIT_KEY
-;     ret ; Return from subroutine
+PrintNumInA:
+    push af
+    and 0F0h
+    rrca
+    rrca
+    rrca
+    rrca
+    call PrintNibble
+    pop af
+    and 0Fh
+    call PrintNibble
+    ;ld a,' '
+    ;call TXT_OUTPUT
+  ret
+PrintNibble:
+    add a, '0' ; Convert to ASCII
+    cp '9' + 1 ; Check if the result is greater than '9'
+    jr c, PrintCharacter ; Jump to PrintCharacter if less than or equal to '9'
+    add a, 'A' - '9' - 1 ; Adjust for characters 'A' to 'F'
+
+PrintCharacter:
+    call TXT_OUTPUT
+;        call KM_WAIT_KEY
+    ret ; Return from subroutine
 ;
 ; ; CALL_TESTER:
 ; ;     call lc234h
@@ -9287,7 +9301,11 @@ VERSION_MSG:
 ;     ret
 
 ;Now we pad with zeros to make the ROM the correct size
-l_END_OF_ROM_CODE:
+zz_END_OF_ROM_CODE:
 ;Notes: z80asm uses ds for "define space".
 ;I'm mathing this to calculate from here to 0xFFFF and define that space as zeroes
-    ds 0x10000 - l_END_OF_ROM_CODE,0
+if $ > 0xc000
+    ;We didn't overflow, pad out the rom.
+    ds 0x10000 - zz_END_OF_ROM_CODE,0
+endif
+zz_END_OF_ROM:
