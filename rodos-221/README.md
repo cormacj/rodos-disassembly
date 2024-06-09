@@ -1,9 +1,9 @@
-# rodos-2.20
-This is a work in progress of updates based on the disassembly of RODOS v2.19.
+# rodos-2.21
+This is a work in progress of bugfixes from RODOS v2.19.
 
 **Important Files**
 
-rodos220.asm: This is v2.19 with the zap buffer bug fixed.
+rodos221.asm: This is based on the relocatable v2.19 code.
 
 **Tools needed**
 
@@ -21,8 +21,9 @@ Usage:
 ./generate_string_locations.sh RODOS219.ROM  >blockfile.txt
 
 **COMPILING**
-- make validate  - check to see if the working asm file compiles to a binary match with RODOS219
+- make validate  - check to see if the working asm file compiles to a binary match with a known version of the rom
 - make diffs - If you have a binary difference this uses a brief diff so you can see where the drift happened
+- make rom - Makes a rom file and validates its size
 - make fullcompare - If you have a binary difference this puts up a side-by-side diff so you can see where the drift happened
 - make run - Build and run the rom in Caprice32
 - make release - generate a zip file suitable for uploading
