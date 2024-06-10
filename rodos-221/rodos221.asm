@@ -9,6 +9,10 @@
 ; z80dasm 1.1.6
 ; command line: z80dasm -b blockfile.txt -g 0xc000 -S Firmware_labels.txt -s syms.txt -r default -l -t -v RODOS219.ROM
 
+;Used to create an additonal command for workspace reporting
+;0=No debug
+;1=Debug
+DEBUG: equ 0
 
 org    0c000h
 
@@ -221,7 +225,9 @@ RSX_JUMPS:
     jp RSX_HIDDEN_04                                           ; c0b7    c3 cb c7     . . .
     jp RSX_HIDDEN_05                                           ; c0ba    c3 aa c7     . . .
     jp RSX_HIDDEN_06                                           ; c0bd    c3 06 c9     . . .
-    jp RSX_R
+    if DEBUG=1
+        jp RSX_R
+    endif
 RSX_COMMANDS:
     ;Each RSX name must end with the last letter + 0x80h
     ;Therefore |CLS is defined here as defb 'CL','S'+0x80 and due to how this
@@ -294,7 +300,9 @@ RSX_NAMES:
     defb 084h                                                  ; Hidden command 4 aka ^D
     defb 085h                                                  ; Hidden command 5 aka ^E
     defb 086h                                                  ; Hidden command 6 aka ^F
-    defb 092h ;Hidden command ^R
+    if DEBUG=1
+        defb 092h ;Hidden command ^R
+   endif
    ;The end of RSX definitions must end with zero.
     defb 0
 ;=======================================================================
@@ -3112,16 +3120,60 @@ UPDATE_DRIVE_PARAM:
     jp sub_cb6dh                                               ; d401    c3 6d cb     . m .
 
 ;BUG: Note how OPT_10 does nothing here. See KNOWN_BUGS
+;v2.13 code:
+; ld419h:
+;         cp 00ah         ;d419   fe 0a   . .
+;         jr nz,ld422h            ;d41b   20 05     .
+;         ld hl,0be48h            ;d41d   21 48 be        ! H .
+;         jr ld431h               ;d420   18 0f   . .
+; ld422h:
+;         cp 00bh         ;d422   fe 0b   . .
+;         jr nz,ld441h            ;d424   20 1b     .
+;         ld hl,0be4bh            ;d426   21 4b be        ! K .
+;         ld a,(ix+000h)          ;d429   dd 7e 00        . ~ .
+;         sla a           ;d42c   cb 27   . '
+;         or 001h         ;d42e   f6 01   . .
+;         ld (hl),a                       ;d430   77      w
+;v2.17:
+; LAB_ram_d403                                    XREF[1]:     ram:d3f8(j)
+; ram:d403 fe 0a           CP         0xa
+; ram:d405 20 05           JR         NZ,LAB_ram_d40c
+; ram:d407 21 48 be        LD         HL,0xbe48
+; ram:d40a 18 0f           JR         LAB_ram_d41b
+; LAB_ram_d40c                                    XREF[1]:     ram:d405(j)
+; ram:d40c fe 0b           CP         0xb
+; ram:d40e 20 1b           JR         NZ,LAB_ram_d42b
+; ram:d410 21 4b be        LD         HL,0xbe4b
+; ram:d413 dd 7e 00        LD         A,(IX+0x0)
+; ram:d416 cb 27           SLA        A
+; ram:d418 f6 01           OR         0x1
+; ram:d41a 77              LD         (HL=>DAT_ram_be4b),A
+; LAB_ram_d41b                                    XREF[3]:     ram:d3eb(j), ram:d401(j),
+;                                                              ram:d40a(j)
+; ram:d41b 21 44 be        LD         HL,0xbe44
+; ram:d41e e5              PUSH       HL=>DAT_ram_be44
+; ram:d41f 21 85 be        LD         HL,0xbe85
+; ram:d422 36 82           LD         (HL=>DAT_ram_be85),0x82
+; ram:d424 22 83 be        LD         (DAT_ram_be83),HL
+; ram:d427 e1              POP        HL
+; ram:d428 c3 bc d3        JP         LAB_ram_d3bc
+
 OPT_10:
 ;Head load delay in ms (default=1)
+;This is supposed to update &BE4C
     cp 00ah                                                    ; d404    fe 0a     . .
-    jr nz,OPT_11                                               ; d406    20 00       .
+    jr nz,OPT_11
+    ld hl,0be48h
+    jr UPDATE_DRIVE_PARAM                                               ; d406    20 00       .
 ;BUG: OPT_11 uses be48 - it should be be4b. See KNOWN_BUGS
 OPT_11:
+;BUG: also broken - see known bugs file
+;This should be 0be4b -
 ;Head unload delay in ms (default=1)
     cp 00bh                                                    ; d408    fe 0b     . .
     jr nz,OPT_12                                               ; d40a    20 05       .
-    ld hl,0be48h                                               ; d40c    21 48 be     ! H .
+    ;old ld hl,0be48h                                               ; d40c    21 48 be     ! H .
+    ld hl,0be4bh
     jr UPDATE_DRIVE_PARAM                                      ; d40f    18 ec     . .
 OPT_12:
 ;Extra external disk drives port number
@@ -3135,7 +3187,7 @@ OPT_12:
 OPT_13:
 ;Enable 40 track disk to be read in 80 track drive in double step (off/on)
     cp 00dh                                                    ; d422    fe 0d     . .
-    jr nz,OPT_ERROR                                               ; d424    20 12       .
+    jr nz,OPT_14                                               ; d424    20 12       .
     ld a,(ix+000h)                                             ; d426    dd 7e 00     . ~ .
     sla a                                                      ; d429    cb 27     . '
     and 002h                                                   ; d42b    e6 02     . .
@@ -3145,7 +3197,7 @@ OPT_13:
     or c                                                       ; d433    b1     .
     ld (iy+WS_CASE_SENSITIVITY),a                                             ; d434    fd 77 41     . w A
     ret                                                        ; d437    c9     .
-OPT_ERROR:
+OPT_14:
 ;Head settle time in ms (default 15)
     cp 00eh                                                    ; d438    fe 0e     . .
     jp nz,MSG_WRONG_PARAMETER_AMT                              ; d43a    c2 97 fb     . . .
@@ -4875,7 +4927,7 @@ GENERATE_RST18_AT_HL:
     ; 0x4006 dw 0xBB5D
     ; 0x4008 db 0x12
     ; So now: Let (hl)=RST 18,(hl+)
-    ld (hl),0dfh ;RST &18                                      ;de7e    36 df     6 .
+    ld (hl),0dfh ;RST &18                                      ; de7e    36 df     6 .
     inc hl                                                     ; de80    23     #
     ld a,l                                                     ; de81    7d     }
     add a,003h                                                 ; de82    c6 03     . .
@@ -7782,7 +7834,7 @@ RSX_ROMS:
     ld (0bebfh),a                                              ; f3db    32 bf be     2 . .
     ld a,(ix+001h)                                             ; f3de    dd 7e 01     . ~ .
     and a                                                      ; f3e1    a7     .
-    call nz,sub_f48bh                                          ; f3e2    c4 8b f4     . . .
+    call nz,STORE_BOOT_STRING                                          ; f3e2    c4 8b f4     . . .
     ld a,b                                                     ; f3e5    78     x
     and a                                                      ; f3e6    a7     .
     call z,sub_f3fdh                                           ; f3e7    cc fd f3     . . .
@@ -7822,7 +7874,7 @@ lf41bh:
     ld (0bebfh),a                                              ; f422    32 bf be     2 . .
     ld a,(ix+001h)                                             ; f425    dd 7e 01     . ~ .
     and a                                                      ; f428    a7     .
-    call nz,sub_f48bh                                          ; f429    c4 8b f4     . . .
+    call nz,STORE_BOOT_STRING                                          ; f429    c4 8b f4     . . .
     ld a,b                                                     ; f42c    78     x
     and a                                                      ; f42d    a7     .
     jr z,lf450h                                                ; f42e    28 20     (
@@ -7870,7 +7922,8 @@ lf479h:
     ld c,a                                                     ; f484    4f     O
     ld hl,04000h                                               ; f485    21 00 40     ! . @
     jp MC_START_PROGRAM                                        ; f488    c3 16 bd     . . .
-sub_f48bh:
+
+STORE_BOOT_STRING:
     ld a,b                                                     ; f48b    78     x
     and a                                                      ; f48c    a7     .
     ret z                                                      ; f48d    c8     .
@@ -8939,6 +8992,7 @@ lfb51h:
     ld (iy+WS_EXPANSION_RAM_COUNT),a                           ; fb66    fd 77 0b     . w .
     ret                                                        ; fb69    c9     .
 ERROR_HANDLER:
+    ;Error number in A
     ld b,a                                                     ; fb6a    47     G
     ld (0be6dh),a                                              ; fb6b    32 6d be     2 m .
     ld hl,RODOS_MSGS_ARRAY                                     ; fb6e    21 c0 fc     ! . .
@@ -9145,19 +9199,28 @@ lfcb7h:
     call TXT_OUTPUT                                            ; fcb7    cd 5a bb     . Z .
     call PRINT_CR_LF                                           ; fcba    cd 7d d9     . } .
     jp lda0fh                                                  ; fcbd    c3 0f da     . . .
-RSX_R:
-    ;Return workspace address in HL
-    push iy
-    pop hl
-    ld a,(iy+WS_RODOS_ROM_NUMBER)
-;    call PrintNumInA
-;    call PRINT_CR_LF
-    ld a,h
-    call PrintNumInA
-    ld a,l
-    call PrintNumInA
-    call PRINT_CR_LF
-    ret
+    if DEBUG=1
+    RSX_R:
+        ;WS_EXTRA_DRIVE_PORT_HIGH
+        ;Return workspace address in HL
+        ld a,(iy+WS_EXTRA_DRIVE_PORT_LOW)
+        ;ld a,h
+        call PrintNumInA
+        ld a,(iy+WS_EXTRA_DRIVE_PORT_HIGH)
+        call PrintNumInA
+        ;call PRINT_CR_LF
+        push iy
+        pop hl
+        ld a,(iy+WS_RODOS_ROM_NUMBER)
+    ;    call PrintNumInA
+    ;    call PRINT_CR_LF
+        ; ld a,h
+        ; call PrintNumInA
+        ; ld a,l
+        ; call PrintNumInA
+        ; call PRINT_CR_LF
+        ret
+    endif
 ; BLOCK 'RODOS_MSGS' (start 0xfcc0 end 0xffc7)
 RODOS_MSGS_ARRAY:
     defb 05ch                                                  ; Starts with a slash for some reason (probably because this is error 0)
@@ -9214,9 +9277,12 @@ VERSION_MSG:
     defb 00fh                                                  ; ff95    0f     .
     defb 002h                                                  ; ff96    02     .
     ;Saves having to update the version all over the place
+    if DEBUG=1
+        ;Throw a warning this is the debug version
+        defb '*debug*'
+    endif
     defb ' RODOS V',ROM_MAJOR+48,'.',ROM_MARK+48,ROM_MOD+48,' '
-
-    defb 0a4h                                                  ; ffa4    a4     .
+    defb 0a4h                                                      ; ffa4    a4     .
     defb ' Romantic Robot U.K. Ltd.{{'
     defb 00fh                                                  ; ffc0    0f     .
     defb 001h                                                  ; ffc1    01     .
@@ -9254,51 +9320,54 @@ VERSION_MSG:
 ;
 ; ret
 ; ;
-PrintNumInA:
-    push af
-    and 0F0h
-    rrca
-    rrca
-    rrca
-    rrca
-    call PrintNibble
-    pop af
-    and 0Fh
-    call PrintNibble
-    ;ld a,' '
-    ;call TXT_OUTPUT
-  ret
-PrintNibble:
-    add a, '0' ; Convert to ASCII
-    cp '9' + 1 ; Check if the result is greater than '9'
-    jr c, PrintCharacter ; Jump to PrintCharacter if less than or equal to '9'
-    add a, 'A' - '9' - 1 ; Adjust for characters 'A' to 'F'
+if DEBUG=1
+    PrintNumInA:
+        push af
+        and 0F0h
+        rrca
+        rrca
+        rrca
+        rrca
+        call PrintNibble
+        pop af
+        and 0Fh
+        call PrintNibble
+        ;ld a,' '
+        ;call TXT_OUTPUT
+        CALL KM_WAIT_KEY
+      ret
+    PrintNibble:
+        add a, '0' ; Convert to ASCII
+        cp '9' + 1 ; Check if the result is greater than '9'
+        jr c, PrintCharacter ; Jump to PrintCharacter if less than or equal to '9'
+        add a, 'A' - '9' - 1 ; Adjust for characters 'A' to 'F'
 
-PrintCharacter:
-    call TXT_OUTPUT
-;        call KM_WAIT_KEY
-    ret ; Return from subroutine
-;
-; ; CALL_TESTER:
-; ;     call lc234h
-; ;     ret
-;  DEBUG:
-;     push af
-;     push bc
-;     push de
-;     push hl
-; ;    call DUMP_BUFFER
-; ;    ld a,(0xbc09)
-; ;    call PrintNumInA
-;     ld a,'Q'
-;     call 0bb5dh
-;     pop hl
-;     pop de
-;     pop bc
-;     pop af
-; ;    call RESET_INTERNAL_VARIABLES_TO_DEFAULT
-;     call sub_deb0h
-;     ret
+    PrintCharacter:
+        call TXT_OUTPUT
+    ;        call KM_WAIT_KEY
+        ret ; Return from subroutine
+    ;
+    ; ; CALL_TESTER:
+    ; ;     call lc234h
+    ; ;     ret
+    ;  DEBUG:
+    ;     push af
+    ;     push bc
+    ;     push de
+    ;     push hl
+    ; ;    call DUMP_BUFFER
+    ; ;    ld a,(0xbc09)
+    ; ;    call PrintNumInA
+    ;     ld a,'Q'
+    ;     call 0bb5dh
+    ;     pop hl
+    ;     pop de
+    ;     pop bc
+    ;     pop af
+    ; ;    call RESET_INTERNAL_VARIABLES_TO_DEFAULT
+    ;     call sub_deb0h
+    ;     ret
+endif
 
 ;Now we pad with zeros to make the ROM the correct size
 zz_END_OF_ROM_CODE:

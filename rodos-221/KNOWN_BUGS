@@ -1,26 +1,8 @@
-RODOS v2.19 KNOWN BUGS
+RODOS v2.21 KNOWN BUGS
 ----------------------
 There are a few bugs I've discovered working through the code.
-
-|OPT,10 and |OPT,11
-    The manual documents these as:
-        10.n - head load delay in ms. (default=1)
-        11,n - head unload delay in ms. (default=1)
-
-    These options should update these locations:
-        Head load delay is at &be48
-        Head unload delay is at &be4b
-
-    In v2.19 |OPT,10 actually doesn't do anything. In fact if you try to use it, you get a "Wrong Number of Parameters" error.
-    |OPT,11 is supposed to update &be4b but the code actually uses &be48. &be4b is never referenced, ever, except for ROM initialision
-    but that just sets it to the default.
-
-    This has been broken in different ways for several versions. v2.13 broke |OPT,10 by loading the value correctly, but calling a function that
-    immediately overwrote that value.
 
 |ZAP,|ROMS
     The start up string functionality as documented in:
         |ZAP,rom_number,...,"startup" and |ROMS, rom_number [,rom_number]...,"start up string"
-    doesn't actually work.
-
-    There is a buffer collision with the area where the "start up string" is held, so the string is corrupt on start up.
+    errors after 100 characters.

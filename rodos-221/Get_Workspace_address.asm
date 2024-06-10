@@ -1,4 +1,5 @@
 nolist
+write "wspace.bin"
 
 ;Use the custom RSX to get the workspace address
 ;

@@ -17,7 +17,8 @@ There are a few bugs I've discovered working through the code.
 
     This has been broken in different ways for several versions. v2.13 broke |OPT,10 by loading the value correctly, but calling a function that
     immediately overwrote that value.
-
+|OPT,12
+    The documentation says to use a single byte, but the code actually uses a double byte. The default value is &FAFF
 |ZAP,|ROMS
     The start up string functionality as documented in:
         |ZAP,rom_number,...,"startup" and |ROMS, rom_number [,rom_number]...,"start up string"
