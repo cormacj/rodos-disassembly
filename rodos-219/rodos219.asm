@@ -9284,9 +9284,11 @@ VERSION_MSG:
 ; ;    call RESET_INTERNAL_VARIABLES_TO_DEFAULT
 ;     call sub_deb0h
 ;     ret
-
-;Now we pad with zeros to make the ROM the correct size
-l_END_OF_ROM_CODE:
+zz_END_OF_ROM_CODE:
 ;Notes: z80asm uses ds for "define space".
 ;I'm mathing this to calculate from here to 0xFFFF and define that space as zeroes
-    ds 0x10000 - l_END_OF_ROM_CODE,0
+if $ > 0xc000
+    ;We didn't overflow, pad out the rom.
+    ds 0x10000 - zz_END_OF_ROM_CODE,0
+endif
+zz_END_OF_ROM:

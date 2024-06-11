@@ -6,3 +6,7 @@ There are a few bugs I've discovered working through the code.
     The start up string functionality as documented in:
         |ZAP,rom_number,...,"startup" and |ROMS, rom_number [,rom_number]...,"start up string"
     errors after 100 characters.
+
+    Test command:
+    This will break if the string parameter exceeds 100 characters.
+    `|zap,12,"12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"`

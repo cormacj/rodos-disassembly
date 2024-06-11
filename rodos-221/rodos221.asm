@@ -9,11 +9,6 @@
 ; z80dasm 1.1.6
 ; command line: z80dasm -b blockfile.txt -g 0xc000 -S Firmware_labels.txt -s syms.txt -r default -l -t -v RODOS219.ROM
 
-;Used to create an additonal command for workspace reporting
-;0=No debug
-;1=Debug
-DEBUG: equ 0
-
 org    0c000h
 
 ;---------------------------------------------------------------------------------------------------
@@ -35,7 +30,7 @@ POST_BOOT_MSG: equ 0xbec1                                   ; This location is o
 BOOT_CMD_AREA: equ 0xbf30 ;v2.20 bugfix
 ROM_SELECT_DESELECT_RELOCATED: equ 0xbec0
 DISC_NUMBERS:   equ 0xbe00 ;The drive numbers are held here, eg 0=A, etc
-;---------------------------------------------------------------------------------------------------
+
 ;RODOS error message store
 DISK_ERROR_MESSAGE_FLAG: equ 0xbe78
 
@@ -277,7 +272,7 @@ RSX_NAMES:
     defb 'E', 'B' + 0x80                                       ; EB
     defb 'L', 'S' + 0x80                                       ; LS
     defb 'M', 'D' + 0x80                                       ; MD
-    defb 0xc3                                                  ; C - Z80asm bug - can't do a + 0x80 on a single character
+    defb ( 'C' + 0 ) + 0x80                                    ; C - Z80asm bug - can't do a + 0x80 on a single character
     defb 'INF', 'O' + 0x80                                     ; INFO
     defb 'LIS', 'T' + 0x80                                     ; LIST
     defb 'DUM', 'P' + 0x80                                     ; DUMP
@@ -297,12 +292,13 @@ RSX_NAMES:
     defb 'ACCES', 'S' + 0x80                                   ; ACCESS
     defb 'COP', 'Y' + 0x80                                     ; COPY
     ;See page 27 of the RODOS Manul for more details about how to use these next commands
-    defb 084h                                                  ; Hidden command 4 aka ^D
-    defb 085h                                                  ; Hidden command 5 aka ^E
-    defb 086h                                                  ; Hidden command 6 aka ^F
+    defb ('D' - '@') + 080h                                                  ; Hidden command 4 aka ^D
+    defb ('E' - '@') + 080h                                                  ; Hidden command 5 aka ^E
+    defb ('F' - '@') + 080h                                                  ; Hidden command 6 aka ^F
     if DEBUG=1
-        defb 092h ;Hidden command ^R
-   endif
+        ;defb ('R' - '@') + 080h ;Hidden command ^R
+        defb ( 'R' + 0 ) +0x80
+    endif
    ;The end of RSX definitions must end with zero.
     defb 0
 ;=======================================================================
@@ -903,6 +899,8 @@ RSX_HELP:
 ;=======================================================================
     cp 002h                                                    ; c4f5    fe 02     . .
     jp nc,MSG_TOO_MANY_PARAMETERS                              ; c4f7    d2 9f fb     . . .
+    ld a,081h
+    call Token_Handler
     and a                                                      ; c4fa    a7     .
     jr z,lc550h                                                ; c4fb    28 53     ( S
     call PRINT_CR_LF                                           ; c4fd    cd 7d d9     . } .
@@ -3999,10 +3997,39 @@ sub_RELOCATE_ROM_SELECT_DESELECT:
     ld de,ROM_SELECT_DESELECT_RELOCATED                        ; d964    11 c0 be     . . .
     ldir                                                       ; d967    ed b0     . .
     ret                                                        ; d969    c9     .
+
+Token_Handler:
+    cp 090h ;If our token is outside the range, just continue
+    jr nc,DISPLAY_NEXT
+
+    sub 080h ;Convert token into 1,2,3..etc
+    push hl
+    ld b,a
+    ld hl,Token_Array
+Token_Handler_loop:
+    ld a,(hl)
+    inc hl
+    cp 0
+    jr nz,Token_Handler_loop
+    djnz Token_Handler_loop
+    call DISPLAY_MSG
+    pop hl ;Return back to where we left off
+    inc hl
+    jr DISPLAY_MSG
+
 DISPLAY_MSG:
     ld a,(hl)                                                  ; d96a    7e     ~
     and a                                                      ; d96b    a7     .
     ret z                                                      ; d96c    c8     .
+    ; cp T_file
+    ; jr z,Print_File_Token
+    ; cp T_Disc
+    ; jr z,Print_Disc_Token
+    ; cp T_error
+    ; jr z,Print_Error_Token
+    cp 080h
+    jr nc,Token_Handler
+DISPLAY_NEXT:
     cp 05ch                                                    ; d96d    fe 5c     . \
     jr z,ld97ch                                                ; d96f    28 0b     ( .
     cp 07bh                                                    ; d971    fe 7b     . {
@@ -4017,6 +4044,7 @@ PRINT_CR_LF:
     call PRINT_CR_ONLY                                         ; d97d    cd 83 d9     . . .
     ;Now print the optional LF from the previous call
     jp TXT_OUTPUT                                              ; d980    c3 5a bb     . Z .
+
 PRINT_CR_ONLY:
 ;print CR, but LF is optional
 ;This exits with a=0xa (ascii 10)
@@ -9201,66 +9229,99 @@ lfcb7h:
     jp lda0fh                                                  ; fcbd    c3 0f da     . . .
     if DEBUG=1
     RSX_R:
-        ;WS_EXTRA_DRIVE_PORT_HIGH
-        ;Return workspace address in HL
-        ld a,(iy+WS_EXTRA_DRIVE_PORT_LOW)
-        ;ld a,h
-        call PrintNumInA
-        ld a,(iy+WS_EXTRA_DRIVE_PORT_HIGH)
-        call PrintNumInA
-        ;call PRINT_CR_LF
-        push iy
-        pop hl
-        ld a,(iy+WS_RODOS_ROM_NUMBER)
-    ;    call PrintNumInA
-    ;    call PRINT_CR_LF
-        ; ld a,h
-        ; call PrintNumInA
-        ; ld a,l
-        ; call PrintNumInA
-        ; call PRINT_CR_LF
+    ;     ;WS_EXTRA_DRIVE_PORT_HIGH
+    ;     ;Return workspace address in HL
+    ;     ld a,(iy+WS_EXTRA_DRIVE_PORT_LOW)
+    ;     ;ld a,h
+    ;     ;call PrintNumInA
+    ;     ld a,(iy+WS_EXTRA_DRIVE_PORT_HIGH)
+    ;     ;call PrintNumInA
+    ;     ;call PRINT_CR_LF
+    ;     push iy
+    ;     pop hl
+    ;     ld a,(iy+WS_RODOS_ROM_NUMBER)
+    ; ;    call PrintNumInA
+    ; ;    call PRINT_CR_LF
+    ;     ; ld a,h
+    ;     ; call PrintNumInA
+    ;     ; ld a,l
+    ;     ; call PrintNumInA
+    ;     ; call PRINT_CR_LF
+    ;     ret
+    ld b,33
+    r1:
+        ld a,b
+        push bc
+        call ERROR_HANDLER
+        pop bc
+        djnz r1
         ret
     endif
+;---------------------------------------------------------------------------------------------------
+;List of Tokens and what they equate to.
+;I tokenised the words to gain space. For readability I've made EQU so its still readable.
+
+T_Disc: equ 081h
+T_error: equ 082h
+T_file: equ 083h
+T_bad: equ 084h
+T_Too_many: equ 085h
+T_formatted: equ 086h
+T_not: equ 087h
+T_parameters: equ 088h
+
+Token_Array:
+    db 0
+    defb 'Disc ',0  ;&81
+    defb ' error',0 ;&82
+    defb ' file ',0 ;&83
+    defb 'Bad ',0 ;&84
+    defb 'Too many ',0 ;&85
+    defb ' formatted',0 ;&86
+    defb 'not ',0 ;&87
+    defb 'parameters',0 ;&88
+
 ; BLOCK 'RODOS_MSGS' (start 0xfcc0 end 0xffc7)
 RODOS_MSGS_ARRAY:
     defb 05ch                                                  ; Starts with a slash for some reason (probably because this is error 0)
-    defb 'Too many parameters',05ch                            ; Error 1
-    defb 'Bad file name',05ch                                  ; Error 2
-    defb 'Wrong number of parameters',05ch                     ; Error 3
-    defb 'Bad dir',05ch                                        ; Error 4
-    defb 'Bad character !',05ch                                ; Error 5
+    defb T_Too_many,T_parameters,05ch                            ; Error 1
+    defb  T_bad,8,T_file,'name',05ch                           ; Error 2 - Two tokens in a row lead to double spacing, delete one
+    defb 'Wrong number of',T_parameters,05ch                     ; Error 3
+    defb T_bad,'dir',05ch                                        ; Error 4
+    defb T_bad,'character !',05ch                                ; Error 5
     defb 'Unknown command',05ch                                ; Error 6
     defb 'Access denied',05ch                                  ; Error 7
-    defb ' not found',05ch                                     ; Error 8
+    defb ' ',T_not,'found',05ch                                     ; Error 8
     defb 'No match.',05ch                                      ; Error 9
-    defb 'Disc full !',05ch                                    ; Error 10
+    defb T_Disc,'full !',05ch                                    ; Error 10
     defb 'AMSDOS ?',05ch                                       ; Error 11
     defb 'Warning *** CPM ROM missing ***',05ch                ; Error 12
     defb 'Dir already exists !',05ch                           ; Error 13
-    defb 'Bad drive',05ch                                      ; Error 14
-    defb 'Unknown file-system !',05ch                          ; Error 15
-    defb 'Input file not open',05ch                            ; Error 16
-    defb 'Output file already open',05ch                       ; Error 17
+    defb T_bad,'drive',05ch                                      ; Error 14
+    defb 'Unknown ',T_file,'system !',05ch                          ; Error 15
+    defb 'Input',T_file,T_not,'open',05ch                            ; Error 16
+    defb 'Output',T_file,'already open',05ch                       ; Error 17
     defb ' reborn !',05ch                                      ; Error 18
     defb ' already exists !',05ch                              ; Error 19
-    defb 'Bad format specified',05ch                           ; Error 20
-    defb 'Corrupted disc error',05ch                           ; Error 21
-    defb 'Disc not formatted !',05ch                           ; Error 22
-    defb 'Bad file',05ch                                       ; Error 23
-    defb 'Directory not empty !',05ch                          ; Error 24
-    defb 'Cant link to a linked file !',05ch                   ; Error 25
-    defb 'Bad alias defined',05ch                              ; Error 26
-    defb 'To many aliases !',05ch                              ; Error 27
-    defb 'Disc read error',05ch                                ; Error 28
-    defb 'Disc write error',05ch                               ; Error 29
-    defb 'Disc tracking error',05ch                            ; Error 30
-    defb 'Disc Missing',05ch                                   ; Error 31
-    defb 'Disc fault',05ch                                     ; Error 32
-    defb 'Disc write protected',05ch                           ; Error 33 - Last error message of this table
+    defb  T_bad,'format specified',05ch                           ; Error 20
+    defb 'Corrupted disc',T_error,05ch                               ; Error 21
+    defb T_Disc,T_not,8,T_formatted,' !',05ch                           ; Error 22
+    defb T_bad,'file',05ch                                       ; Error 23
+    defb 'Directory ',T_not,'empty !',05ch                          ; Error 24
+    defb 'Cant link to a linked',T_file,'!',05ch                   ; Error 25
+    defb T_bad,'alias defined',05ch                              ; Error 26
+    defb T_Too_many,'aliases !',05ch                              ; Error 27
+    defb T_Disc,'read',T_error,05ch                                    ; Error 28
+    defb T_Disc,'write',T_error,05ch                                   ; Error 29
+    defb T_Disc,'tracking ',T_error,05ch                                ; Error 30
+    defb T_Disc,'Missing',05ch                                   ; Error 31
+    defb T_Disc,'fault',05ch                                     ; Error 32
+    defb T_Disc,'write protected',05ch                           ; Error 33 - Last error message of this table
+
 MSG_ESCAPE:
     defb 'Escape',05ch
 MSG_DISC_CHANGED:
-    defb 'Disc changed !',05ch
+    defb T_Disc,'changed !',05ch
 MSG_FILE_EXISTS_ASK:
     defb '{File exists. Erase, Backup, or Quit ?'
     defb 008h                                                  ; ff39    08     .
@@ -9270,7 +9331,7 @@ MSG_DRIVE:
 MSG_BYTES_FREE:
     defb '{Bytes free = ',0
 MSG_DISK_ALREADY_FORMATTED:
-    defb '{Disc already formatted, REFORMAT Y/N ?',8,0
+    defb '{',T_Disc,'already',T_formatted,', REFORMAT Y/N ?',8,0
 MSG_RETRY_IGNORE_CANCEL:
     defb 'Retry, Ignore or Cancel? ',0
 VERSION_MSG:
@@ -9282,7 +9343,7 @@ VERSION_MSG:
         defb '*debug*'
     endif
     defb ' RODOS V',ROM_MAJOR+48,'.',ROM_MARK+48,ROM_MOD+48,' '
-    defb 0a4h                                                      ; ffa4    a4     .
+    defb 0a4h ;copyright symbol                                ; ffa4    a4     .
     defb ' Romantic Robot U.K. Ltd.{{'
     defb 00fh                                                  ; ffc0    0f     .
     defb 001h                                                  ; ffc1    01     .
@@ -9334,7 +9395,7 @@ if DEBUG=1
         call PrintNibble
         ;ld a,' '
         ;call TXT_OUTPUT
-        CALL KM_WAIT_KEY
+        ;CALL KM_WAIT_KEY
       ret
     PrintNibble:
         add a, '0' ; Convert to ASCII
