@@ -216,13 +216,13 @@ RSX_JUMPS:
     jp RSX_CLI                                                 ; c0ae    c3 fc f1     . . .
     jp RSX_ACCESS                                              ; c0b1    c3 36 cd     . 6 .
     jp RSX_COPY                                                ; c0b4    c3 bd cd     . . .
-  ;See page 27 of the RODOS Manual for more details about how to use these hidden commands.
+    if DEBUG=1
+        jp RSX_WS
+    endif
+   ;See page 27 of the RODOS Manual for more details about how to use these hidden commands.
     jp RSX_HIDDEN_04                                           ; c0b7    c3 cb c7     . . .
     jp RSX_HIDDEN_05                                           ; c0ba    c3 aa c7     . . .
     jp RSX_HIDDEN_06                                           ; c0bd    c3 06 c9     . . .
-    if DEBUG=1
-        jp RSX_R
-    endif
 RSX_COMMANDS:
     ;Each RSX name must end with the last letter + 0x80h
     ;Therefore |CLS is defined here as defb 'CL','S'+0x80 and due to how this
@@ -291,14 +291,15 @@ RSX_NAMES:
     defb 'D', 'O' + 0x80                                       ; DO
     defb 'ACCES', 'S' + 0x80                                   ; ACCESS
     defb 'COP', 'Y' + 0x80                                     ; COPY
+
+if DEBUG=1
+    defb 'W', 'S' + 0x80
+endif
+
     ;See page 27 of the RODOS Manul for more details about how to use these next commands
-    defb ('D' - '@') + 080h                                                  ; Hidden command 4 aka ^D
-    defb ('E' - '@') + 080h                                                  ; Hidden command 5 aka ^E
-    defb ('F' - '@') + 080h                                                  ; Hidden command 6 aka ^F
-    if DEBUG=1
-        ;defb ('R' - '@') + 080h ;Hidden command ^R
-        defb ( 'R' + 0 ) +0x80
-    endif
+    defb ('D' - '@') + 0x80                                                  ; Hidden command 4 aka ^D
+    defb ('E' - '@') + 0x80                                                  ; Hidden command 5 aka ^E
+    defb ('F' - '@') + 0x80                                                  ; Hidden command 6 aka ^F
    ;The end of RSX definitions must end with zero.
     defb 0
 ;=======================================================================
@@ -3117,45 +3118,6 @@ UPDATE_DRIVE_PARAM:
     ld (hl),a                                                  ; d400    77     w
     jp sub_cb6dh                                               ; d401    c3 6d cb     . m .
 
-;BUG: Note how OPT_10 does nothing here. See KNOWN_BUGS
-;v2.13 code:
-; ld419h:
-;         cp 00ah         ;d419   fe 0a   . .
-;         jr nz,ld422h            ;d41b   20 05     .
-;         ld hl,0be48h            ;d41d   21 48 be        ! H .
-;         jr ld431h               ;d420   18 0f   . .
-; ld422h:
-;         cp 00bh         ;d422   fe 0b   . .
-;         jr nz,ld441h            ;d424   20 1b     .
-;         ld hl,0be4bh            ;d426   21 4b be        ! K .
-;         ld a,(ix+000h)          ;d429   dd 7e 00        . ~ .
-;         sla a           ;d42c   cb 27   . '
-;         or 001h         ;d42e   f6 01   . .
-;         ld (hl),a                       ;d430   77      w
-;v2.17:
-; LAB_ram_d403                                    XREF[1]:     ram:d3f8(j)
-; ram:d403 fe 0a           CP         0xa
-; ram:d405 20 05           JR         NZ,LAB_ram_d40c
-; ram:d407 21 48 be        LD         HL,0xbe48
-; ram:d40a 18 0f           JR         LAB_ram_d41b
-; LAB_ram_d40c                                    XREF[1]:     ram:d405(j)
-; ram:d40c fe 0b           CP         0xb
-; ram:d40e 20 1b           JR         NZ,LAB_ram_d42b
-; ram:d410 21 4b be        LD         HL,0xbe4b
-; ram:d413 dd 7e 00        LD         A,(IX+0x0)
-; ram:d416 cb 27           SLA        A
-; ram:d418 f6 01           OR         0x1
-; ram:d41a 77              LD         (HL=>DAT_ram_be4b),A
-; LAB_ram_d41b                                    XREF[3]:     ram:d3eb(j), ram:d401(j),
-;                                                              ram:d40a(j)
-; ram:d41b 21 44 be        LD         HL,0xbe44
-; ram:d41e e5              PUSH       HL=>DAT_ram_be44
-; ram:d41f 21 85 be        LD         HL,0xbe85
-; ram:d422 36 82           LD         (HL=>DAT_ram_be85),0x82
-; ram:d424 22 83 be        LD         (DAT_ram_be83),HL
-; ram:d427 e1              POP        HL
-; ram:d428 c3 bc d3        JP         LAB_ram_d3bc
-
 OPT_10:
 ;Head load delay in ms (default=1)
 ;This is supposed to update &BE4C
@@ -3163,11 +3125,7 @@ OPT_10:
     jr nz,OPT_11
     ld hl,0be48h
     jr UPDATE_DRIVE_PARAM                                               ; d406    20 00       .
-;BUG: OPT_11 uses be48 - it should be be4b. See KNOWN_BUGS
 OPT_11:
-;BUG: also broken - see known bugs file
-;This should be 0be4b -
-;Head unload delay in ms (default=1)
     cp 00bh                                                    ; d408    fe 0b     . .
     jr nz,OPT_12                                               ; d40a    20 05       .
     ;old ld hl,0be48h                                               ; d40c    21 48 be     ! H .
@@ -9227,36 +9185,34 @@ lfcb7h:
     call TXT_OUTPUT                                            ; fcb7    cd 5a bb     . Z .
     call PRINT_CR_LF                                           ; fcba    cd 7d d9     . } .
     jp lda0fh                                                  ; fcbd    c3 0f da     . . .
-    if DEBUG=1
-    RSX_R:
-    ;     ;WS_EXTRA_DRIVE_PORT_HIGH
-    ;     ;Return workspace address in HL
-    ;     ld a,(iy+WS_EXTRA_DRIVE_PORT_LOW)
-    ;     ;ld a,h
-    ;     ;call PrintNumInA
-    ;     ld a,(iy+WS_EXTRA_DRIVE_PORT_HIGH)
-    ;     ;call PrintNumInA
-    ;     ;call PRINT_CR_LF
-    ;     push iy
-    ;     pop hl
-    ;     ld a,(iy+WS_RODOS_ROM_NUMBER)
-    ; ;    call PrintNumInA
-    ; ;    call PRINT_CR_LF
-    ;     ; ld a,h
-    ;     ; call PrintNumInA
-    ;     ; ld a,l
-    ;     ; call PrintNumInA
-    ;     ; call PRINT_CR_LF
+
+if DEBUG=1
+    ;Extenstions turned on in debug mode
+RSX_WS:
+    ;Return Workspace address in HL
+    ;Usage: work%=0:|WS,work%
+    ld e,(ix+0)
+    ld d,(ix+1)
+    push de ;save it for later
+
+    push iy
+    pop de ;workspace in IY, transfer to DE
+
+    pop hl ;Now get variable addesss
+    ld (hl),e
+    inc hl
+    ld (hl),d ;pass workspace loc back to variable
+    ret
+    ; ;code to validate messages after tokenisation
+    ; ld b,33
+    ; r1:
+    ;     ld a,b
+    ;     push bc
+    ;     call ERROR_HANDLER
+    ;     pop bc
+    ;     djnz r1
     ;     ret
-    ld b,33
-    r1:
-        ld a,b
-        push bc
-        call ERROR_HANDLER
-        pop bc
-        djnz r1
-        ret
-    endif
+endif
 ;---------------------------------------------------------------------------------------------------
 ;List of Tokens and what they equate to.
 ;I tokenised the words to gain space. For readability I've made EQU so its still readable.
@@ -9281,7 +9237,6 @@ Token_Array:
     defb 'not ',0 ;&87
     defb 'parameters',0 ;&88
 
-; BLOCK 'RODOS_MSGS' (start 0xfcc0 end 0xffc7)
 RODOS_MSGS_ARRAY:
     defb 05ch                                                  ; Starts with a slash for some reason (probably because this is error 0)
     defb T_Too_many,T_parameters,05ch                            ; Error 1
@@ -9338,10 +9293,10 @@ VERSION_MSG:
     defb 00fh                                                  ; ff95    0f     .
     defb 002h                                                  ; ff96    02     .
     ;Saves having to update the version all over the place
-    if DEBUG=1
+if DEBUG=1
         ;Throw a warning this is the debug version
         defb '*debug*'
-    endif
+endif
     defb ' RODOS V',ROM_MAJOR+48,'.',ROM_MARK+48,ROM_MOD+48,' '
     defb 0a4h ;copyright symbol                                ; ffa4    a4     .
     defb ' Romantic Robot U.K. Ltd.{{'

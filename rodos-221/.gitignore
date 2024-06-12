@@ -1,5 +1,5 @@
 workfiles
 a.bin
-*.dsk
+#*.dsk
 new.txt
 original.txt
