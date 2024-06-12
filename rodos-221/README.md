@@ -1,8 +1,11 @@
  # rodos-2.21
 This is a work in progress of bugfixes from RODOS v2.19.
+Development work is tracked here: https://github.com/cormacj/rodos-disassembly
+
 **Fixes**
 Since V2.20:
-    Corrected |OPT,10 and |OPT,11
+    Reimplimented |OPT,10
+    Corrected |OPT,11
 
 **Important Files**
 
