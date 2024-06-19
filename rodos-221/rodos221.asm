@@ -3959,6 +3959,7 @@ sub_RELOCATE_ROM_SELECT_DESELECT:
     ret                                                        ; d969    c9     .
 
 Token_Handler:
+    ;If a token is found in a string, then look it up and print it.
     cp 090h ;If our token is outside the range, just continue
     jr nc,DISPLAY_NEXT
 
@@ -3981,12 +3982,7 @@ DISPLAY_MSG:
     ld a,(hl)                                                  ; d96a    7e     ~
     and a                                                      ; d96b    a7     .
     ret z                                                      ; d96c    c8     .
-    ; cp T_file
-    ; jr z,Print_File_Token
-    ; cp T_Disc
-    ; jr z,Print_Disc_Token
-    ; cp T_error
-    ; jr z,Print_Error_Token
+    ;If a character >0x80 is found then consider it a token and call the lookup routine
     cp 080h
     jr nc,Token_Handler
 DISPLAY_NEXT:
