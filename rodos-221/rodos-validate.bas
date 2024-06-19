@@ -2,9 +2,11 @@ AUTO
 |cls
 Print "Formatting C"
 |format,2,8
-|a:|CAT:|dir
-|b:|cat:|dir
-|c:|cat:|dir
+Print "Copying files from A: to C:"
+|copy,"C:","A:*.*"
+Print "Copying files from B: to C:"
+|c:|cat
+print "Hit any key...":call &bb18
 |cls
 print "Making a 'validate' folder on C:"
 |mkdir,"C:validate"
@@ -13,18 +15,26 @@ print "Making a 'validate' folder on C:"
 print "Copying files to C:"
 |copy,"C:","A:*.*"
 |c
+print "Writing files to testfile.dat using |BPUT..."
 openout "testfile.dat"
 for a=0 to 255
 |bput,a
 Next
+print "Done"
 closeout
+print "Checking testfile.dat..."
 openin "testfile.dat"
-for l=0 to 255
+for l=255 to 0 step -1
 |point,l
 a%=0:|bget,@a%
-print  "Byte ";l;" of the file is",a%
+print  "Byte ";
+print using "####";l;
+print " of the file is: ";
+print using "####";a%;
+print chr$(13);
 Next
 closein
+end
 |info,"testfile.dat"
 |dump,"testfile.dat"
 |copy,"testfile.dat.bak","testfile.dat"

@@ -19,6 +19,8 @@ else
     if [ $? -gt 0 ]; then
         grep -vi equ  $tmpfile
         echo "z80asm error $?"
+	rm $tmpfile
+        exit 1
     fi
 
     #|| err=$?;grep -v equ $tmpfile; exit $err

@@ -218,6 +218,7 @@ RSX_JUMPS:
     jp RSX_COPY                                                ; c0b4    c3 bd cd     . . .
     if DEBUG=1
         jp RSX_WS
+        jp RSX_MSG
     endif
    ;See page 27 of the RODOS Manual for more details about how to use these hidden commands.
     jp RSX_HIDDEN_04                                           ; c0b7    c3 cb c7     . . .
@@ -294,6 +295,7 @@ RSX_NAMES:
 
 if DEBUG=1
     defb 'W', 'S' + 0x80
+    defb 'MS', 'G' + 0x80
 endif
 
     ;See page 27 of the RODOS Manul for more details about how to use these next commands
@@ -9189,6 +9191,9 @@ lfcb7h:
 if DEBUG=1
     ;Extenstions turned on in debug mode
 RSX_WS:
+    cp 001h                                                    ; d54d    fe 02     . .
+    jp nz,MSG_WRONG_PARAMETER_AMT                              ; d54f    d2 9f fb     . . .
+
     ;Return Workspace address in HL
     ;Usage: work%=0:|WS,work%
     ld e,(ix+0)
@@ -9203,20 +9208,23 @@ RSX_WS:
     inc hl
     ld (hl),d ;pass workspace loc back to variable
     ret
-    ; ;code to validate messages after tokenisation
-    ; ld b,33
-    ; r1:
-    ;     ld a,b
-    ;     push bc
-    ;     call ERROR_HANDLER
-    ;     pop bc
-    ;     djnz r1
-    ;     ret
+RSX_MSG:
+    ;code to validate messages after tokenisation
+    ld b,33
+    r1:
+        ld a,b
+        push bc
+        call ERROR_HANDLER
+        call KM_WAIT_KEY
+        pop bc
+        djnz r1
+        ret
 endif
 ;---------------------------------------------------------------------------------------------------
 ;List of Tokens and what they equate to.
 ;I tokenised the words to gain space. For readability I've made EQU so its still readable.
-
+;V2.19 - 60 bytes available in ROM
+;V2.21 - 135 bytes available after tokenised (and opt 10 & 11 fixes)
 T_Disc: equ 081h
 T_error: equ 082h
 T_file: equ 083h
@@ -9225,6 +9233,8 @@ T_Too_many: equ 085h
 T_formatted: equ 086h
 T_not: equ 087h
 T_parameters: equ 088h
+T_Unknown: equ 089h
+T_alias: equ 08Ah
 
 Token_Array:
     db 0
@@ -9235,37 +9245,39 @@ Token_Array:
     defb 'Too many ',0 ;&85
     defb ' formatted',0 ;&86
     defb 'not ',0 ;&87
-    defb 'parameters',0 ;&88
+    defb ' parameters',0 ;&88
+    defb 'Unknown ',0 ;&89
+    defb 'alias',0 ;&8A
 
 RODOS_MSGS_ARRAY:
     defb 05ch                                                  ; Starts with a slash for some reason (probably because this is error 0)
     defb T_Too_many,T_parameters,05ch                            ; Error 1
-    defb  T_bad,8,T_file,'name',05ch                           ; Error 2 - Two tokens in a row lead to double spacing, delete one
+    defb T_bad,8,T_file,'name',05ch                           ; Error 2 - Two tokens in a row lead to double spacing, delete one
     defb 'Wrong number of',T_parameters,05ch                     ; Error 3
     defb T_bad,'dir',05ch                                        ; Error 4
-    defb T_bad,'character !',05ch                                ; Error 5
-    defb 'Unknown command',05ch                                ; Error 6
+    defb T_bad,'character!',05ch                                ; Error 5
+    defb T_Unknown,'command',05ch                                ; Error 6
     defb 'Access denied',05ch                                  ; Error 7
     defb ' ',T_not,'found',05ch                                     ; Error 8
     defb 'No match.',05ch                                      ; Error 9
-    defb T_Disc,'full !',05ch                                    ; Error 10
+    defb T_Disc,'full!',05ch                                    ; Error 10
     defb 'AMSDOS ?',05ch                                       ; Error 11
     defb 'Warning *** CPM ROM missing ***',05ch                ; Error 12
-    defb 'Dir already exists !',05ch                           ; Error 13
+    defb 'Dir already exists!',05ch                           ; Error 13
     defb T_bad,'drive',05ch                                      ; Error 14
-    defb 'Unknown ',T_file,'system !',05ch                          ; Error 15
+    defb T_Unknown,T_file,'system!',05ch                          ; Error 15
     defb 'Input',T_file,T_not,'open',05ch                            ; Error 16
     defb 'Output',T_file,'already open',05ch                       ; Error 17
-    defb ' reborn !',05ch                                      ; Error 18
-    defb ' already exists !',05ch                              ; Error 19
+    defb ' reborn!',05ch                                      ; Error 18
+    defb ' already exists!',05ch                              ; Error 19
     defb  T_bad,'format specified',05ch                           ; Error 20
     defb 'Corrupted disc',T_error,05ch                               ; Error 21
-    defb T_Disc,T_not,8,T_formatted,' !',05ch                           ; Error 22
+    defb T_Disc,T_not,8,T_formatted,'!',05ch                           ; Error 22
     defb T_bad,'file',05ch                                       ; Error 23
-    defb 'Directory ',T_not,'empty !',05ch                          ; Error 24
+    defb 'Directory ',T_not,'empty!',05ch                          ; Error 24
     defb 'Cant link to a linked',T_file,'!',05ch                   ; Error 25
-    defb T_bad,'alias defined',05ch                              ; Error 26
-    defb T_Too_many,'aliases !',05ch                              ; Error 27
+    defb T_bad,T_alias,' defined',05ch                              ; Error 26
+    defb T_Too_many,T_alias,'es!',05ch                              ; Error 27
     defb T_Disc,'read',T_error,05ch                                    ; Error 28
     defb T_Disc,'write',T_error,05ch                                   ; Error 29
     defb T_Disc,'tracking ',T_error,05ch                                ; Error 30
