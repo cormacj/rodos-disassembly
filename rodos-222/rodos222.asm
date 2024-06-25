@@ -1,5 +1,5 @@
 ;*****************************************************
-;*                    RODOS V2.21                    *
+;*                    RODOS V2.22                    *
 ;*****************************************************
 ;
 ; Reverse engineered by Cormac McGaughey 2023/2024
@@ -2490,14 +2490,24 @@ RSX_BGET:
     jp z,MSG_WRONG_PARAMETER_AMT                               ; cf57    ca 97 fb     . . .
     push ix                                                    ; cf5a    dd e5     . .
     call CAS_IN_CHAR                                           ; cf5c    cd 80 bc     . . .
+    ; &BC80	*CAS IN CHAR
+    ; Action	Reads in a single byte from a file
+    ; Entry	No entry conditions
+    ; Exit	If a byte was read, then Carry is true, Zero is false, and A contains the byte read from the file; if the end of file was reached, then Carry and Zero are false, A contains an error number (664/6128 only) or is corrupt (for the 464); if ESC was pressed, then Carry is false, Zero is true, and A holds an error number (664/6128 only) or is corrupt (for the 464); in all cases, IX and the other flags are corrupt, and all others are preserved
+    ; Disc	All the above applies for the disc routine
     pop ix                                                     ; cf5f    dd e1     . .
     ld l,(ix+000h)                                             ; cf61    dd 6e 00     . n .
     ld h,(ix+001h)                                             ; cf64    dd 66 01     . f .
     push hl                                                    ; cf67    e5     .
     pop ix                                                     ; cf68    dd e1     . .
     jr c,lcf78h                                                ; cf6a    38 0c     8 .
-;Error code? (was "cmp 01ah")
-    cp 01bh                                                    ; cf6c    fe 1a     . .
+
+    ;01ah here is an end of file marker - ref: SOFT968
+    ; Soft End Of File
+    ; Reading characters from the disc using CAS IN CHAR when it is redirected to
+    ; the AMSDOS routine can run into problems caused by the routine returning an
+    ; error when it reads the end of file character #1A.
+    cp 01ah                                                    ; cf6c    fe 1a     . .
     jr z,lcf78h                                                ; cf6e    28 08     ( .
     ld (ix+000h),a                                             ; cf70    dd 77 00     . w .
     ld (ix+001h),0ffh                                          ; cf73    dd 36 01 ff     . 6 . .
@@ -4736,18 +4746,13 @@ RSX_DISK_IN:
     push iy                                                    ; de32    fd e5     . .
     pop hl                                                     ; de34    e1     .
     add hl,de                                                  ; de35    19     .
-    ;So basically CALL CAS_IN_OPEN
     ld de,CAS_IN_OPEN                                          ; de36    11 77 bc     . w .
-    ; Action:   Opens an input buffer and reads the first block of the file
-    ; Entry:    B contains the length of the filename,
-    ;           HL contains the filename's address, and DE contains the address of the 2K buffer to use for reading the file
-    ; Exit: If the file was opened successfully, then Carry is true, Zero is false, HL holds the address of a buffer
-    ;       containing the file header data, DE holds the address of the destination for the file, BC holds the file
-    ;       length, and A holds the file type; if the read stream is already open then Carry and Zero are false, A
-    ;       contains an error nurnber (664/6128 only) and BC, DE and HL are corrupt; if ESC was pressed by the
-    ;       user, then Carry is false, Zero is true, A holds an error number (664/6128 only) and BC, DE and HL are
-    ;       corrupt; in all cases, IX and the other flags are corrupt, and the others are preserved
+    ;Ok. So.
+    ;This patches seven jumps starting at CAS_IN_OPEN (&BC77)
+    ;using lde64h as the replacements and stores the original
+    ;address at iy+&290
     call MAKE_JP_AT_DE_USING_HL                                ; de39    cd 74 de     . t .
+    ;Also patch CAS_CATALOG as above (only one patch)
     ld b,001h                                                  ; de3c    06 01     . .
     ;Call CAS_CATALOG
     ld de,CAS_CATALOG                                          ; de3e    11 9b bc     . . .
@@ -5774,6 +5779,7 @@ le518h:
     ld (iy+039h),000h                                          ; e531    fd 36 39 00     . 6 9 .
     jp lda0ah                                                  ; e535    c3 0a da     . . .
 le538h:
+    ;patch for CAS_IN_CHAR
     ld a,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; e538    fd 7e 17     . ~ .
     or (iy+WS_INPUT_BUFF_ADDR_FILE+1)                                               ; e53b    fd b6 18     . . .
     jp z,le696h                                                ; e53e    ca 96 e6     . . .
@@ -9348,6 +9354,7 @@ endif
 if DEBUG=1
     PrintNumInA:
         push af
+        push af
         and 0F0h
         rrca
         rrca
@@ -9360,7 +9367,8 @@ if DEBUG=1
         ;ld a,' '
         ;call TXT_OUTPUT
         ;CALL KM_WAIT_KEY
-      ret
+        pop af
+        ret
     PrintNibble:
         add a, '0' ; Convert to ASCII
         cp '9' + 1 ; Check if the result is greater than '9'

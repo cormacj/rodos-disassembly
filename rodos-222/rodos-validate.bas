@@ -4,19 +4,19 @@ AUTO
 Print "Formatting C"
 |format,2,8
 |dir,"C:"
-Print "Copying files from A: to C:"
-|copy,"C:","A:*.*"
-Print "Copying files from B: to C:"
-|copy,"C:","B:*.*"
-|c:|cat
-print "Hit any key...":call &bb18
-|cls
-print "Making a 'validate' folder on C:"
-|mkdir,"C:validate"
-|C
-|cd,"validate"
-print "Copying files to C:"
-|copy,"C:","A:*.*"
+rem Print "Copying files from A: to C:"
+rem |copy,"C:","A:*.*"
+rem Print "Copying files from B: to C:"
+rem |copy,"C:","B:*.*"
+rem |c:|cat
+rem print "Hit any key...":call &bb18
+rem |cls
+rem print "Making a 'validate' folder on C:"
+rem |mkdir,"C:validate"
+rem |C
+rem |cd,"validate"
+rem print "Copying files to C:"
+rem |copy,"C:","A:*.*"
 |c
 print "Writing files to testfile.dat using |BPUT..."
 openout "testfile.dat"
@@ -30,11 +30,11 @@ openin "testfile.dat"
 for l=255 to 0 step -1
 |point,l
 a%=0:|bget,@a%
-print  "Byte ";
-print using "####";l;
-print " of the file is: ";
-print using "####";a%;
-print chr$(13);
+rem print  "Byte ";
+rem print using "####";l;
+rem print " of the file is: ";
+rem print using "####";a%;
+rem print chr$(13);
 if a%<>l then print:print "Error: |BGET failed - I asked for data. I expected ";pnt;" but got ";a%
 Next
 closein
@@ -45,11 +45,11 @@ for l=0 to 255
 pnt=(rnd*256) mod 256
 |point,pnt
 a%=0:|bget,@a%
-print  "Byte ";
-print using "####";pnt;
-print " of the file is: ";
-print using "####";a%;
-print chr$(13);
+rem print  "Byte ";
+rem print using "####";pnt;
+rem print " of the file is: ";
+rem print using "####";a%;
+rem print chr$(13);
 if a%<>pnt then print:print "Error: |point failed - point ";pnt;" got ";a%
 rem t = TIME: WHILE TIME < t + (300 * 1):WEND
 Next
