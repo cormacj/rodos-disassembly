@@ -347,7 +347,7 @@ lc1dbh:
     pop ix                                                     ; c1f2    dd e1     . .
     pop bc                                                     ; c1f4    c1     .
     pop de                                                     ; c1f5    d1     .
-    jp lda0ah                                                  ; c1f6    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                                  ; c1f6    c3 0a da     . . .
 sub_c1f9h:
     push hl                                                    ; c1f9    e5     .
     push bc                                                    ; c1fa    c5     .
@@ -406,7 +406,7 @@ PRINT_RODOS_OFF:
     call DISPLAY_MSG                                           ; c243    cd 6a d9     . j .
     pop hl                                                     ; c246    e1     .
     pop af                                                     ; c247    f1     .
-    jp lda0fh                                                  ; c248    c3 0f da     . . .
+    jp SET_FLAG_TO_LESS_THAN                                                  ; c248    c3 0f da     . . .
 RODOS_OFF_MSG:
     defb '* RODOS OFF *',05ch
     ; Terminated with \ (but using the ascii code because not all assemblers are equal)
@@ -459,7 +459,7 @@ CHECK_FOR_KEY_PRESSED:
     ld a,0c9h                                                  ; c283    3e c9     > .
     ld (0bf07h),a                                              ; c285    32 07 bf     2 . .
     call 0bf05h                                                ; c288    cd 05 bf     . . .
-    jp z,lda0ah                                                ; c28b    ca 0a da     . . .
+    jp z,SET_FLAG_TO_GREATER_THAN                                                ; c28b    ca 0a da     . . .
     xor a                                                      ; c28e    af     .
     ret                                                        ; c28f    c9     .
 sub_c290h:
@@ -1057,11 +1057,11 @@ lc608h:
     jr c,lc608h                                                ; c60b    38 fb     8 .
     call KM_WAIT_CHAR                                          ; c60d    cd 06 bb     . . .
     cp 0fch                                                    ; c610    fe fc     . .
-    jp nz,lda14h                                               ; c612    c2 14 da     . . .
+    jp nz,SET_FLAG_TO_EQUAL                                               ; c612    c2 14 da     . . .
     push hl                                                    ; c615    e5     .
     call KM_BREAK_EVENT                                        ; c616    cd 4b bb     . K .
     pop hl                                                     ; c619    e1     .
-    jp lda0ah                                                  ; c61a    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                                  ; c61a    c3 0a da     . . .
 sub_c61dh:
     ;042h is the ESC Key
     ld a,042h                                                  ; c61d    3e 42     > B
@@ -1535,7 +1535,7 @@ lc89fh:
 lc8c2h:
     dec a                                                      ; c8c2    3d     =
     ld (iy+00ah),a                                             ; c8c3    fd 77 0a     . w .
-    call lda14h                                                ; c8c6    cd 14 da     . . .
+    call SET_FLAG_TO_EQUAL                                                ; c8c6    cd 14 da     . . .
     jr lc86fh                                                  ; c8c9    18 a4     . .
 lc8cbh:
     ld a,(iy+00ah)                                             ; c8cb    fd 7e 0a     . ~ .
@@ -1549,7 +1549,7 @@ lc8cbh:
     call sub_fc59h                                             ; c8dd    cd 59 fc     . Y .
     jr lc86fh                                                  ; c8e0    18 8d     . .
 lc8e2h:
-    call lda0ah                                                ; c8e2    cd 0a da     . . .
+    call SET_FLAG_TO_GREATER_THAN                                                ; c8e2    cd 0a da     . . .
     jr lc86fh                                                  ; c8e5    18 88     . .
 lc8e7h:
     dec a                                                      ; c8e7    3d     =
@@ -1745,7 +1745,7 @@ sub_ca14h:
     ret z                                                      ; ca26    c8     .
     ret c                                                      ; ca27    d8     .
     call sub_fc5dh                                             ; ca28    cd 5d fc     . ] .
-    jp nz,lda0fh                                               ; ca2b    c2 0f da     . . .
+    jp nz,SET_FLAG_TO_LESS_THAN                                               ; ca2b    c2 0f da     . . .
     jr sub_ca14h                                               ; ca2e    18 e4     . .
 sub_ca30h:
     call sub_ca63h                                             ; ca30    cd 63 ca     . c .
@@ -2396,7 +2396,7 @@ sub_ceach:
     call CAS_OUT_ABANDON                                       ; ceac    cd 92 bc     . . .
     call CAS_IN_ABANDON                                        ; ceaf    cd 7d bc     . } .
     res 4,(iy+WS_CASE_SENSITIVITY)                                            ; ceb2    fd cb 41 a6     . . A .
-    jp lda0ah                                                  ; ceb6    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                                  ; ceb6    c3 0a da     . . .
 lceb9h:
     cp 01ah                                                    ; ceb9    fe 1a     . .
     jr z,lcea7h                                                ; cebb    28 ea     ( .
@@ -2463,7 +2463,7 @@ lcf0eh:
     call sub_cec5h                                             ; cf2a    cd c5 ce     . . .
     pop bc                                                     ; cf2d    c1     .
     ld (iy+014h),000h                                          ; cf2e    fd 36 14 00     . 6 . .
-    jp nc,lda0fh                                               ; cf32    d2 0f da     . . .
+    jp nc,SET_FLAG_TO_LESS_THAN                                               ; cf32    d2 0f da     . . .
     call sub_d878h                                             ; cf35    cd 78 d8     . x .
     ld b,c                                                     ; cf38    41     A
     call sub_ce5ch                                             ; cf39    cd 5c ce     . \ .
@@ -2806,7 +2806,7 @@ sub_d1abh:
     pop ix                                                     ; d1b4    dd e1     . .
     pop hl                                                     ; d1b6    e1     .
     pop bc                                                     ; d1b7    c1     .
-    jp nc,lda0fh                                               ; d1b8    d2 0f da     . . .
+    jp nc,SET_FLAG_TO_LESS_THAN                                               ; d1b8    d2 0f da     . . .
     call sub_d13ch                                             ; d1bb    cd 3c d1     . < .
     call sub_d2c3h                                             ; d1be    cd c3 d2     . . .
     jp CAS_IN_CLOSE                                            ; d1c1    c3 7a bc     . z .
@@ -3465,7 +3465,7 @@ ld62ah:
     ldir                                                       ; d64e    ed b0     . .
     pop bc                                                     ; d650    c1     .
     call sub_efbch                                             ; d651    cd bc ef     . . .
-    jp nc,lda0ah                                               ; d654    d2 0a da     . . .
+    jp nc,SET_FLAG_TO_GREATER_THAN                                               ; d654    d2 0a da     . . .
     xor a                                                      ; d657    af     .
     ret                                                        ; d658    c9     .
 
@@ -4107,15 +4107,18 @@ sub_da04h:
     push hl                                                    ; da04    e5     .
     call sub_d9dah                                             ; da05    cd da d9     . . .
     jr lda01h                                                  ; da08    18 f7     . .
-lda0ah:
+SET_FLAG_TO_GREATER_THAN:
+    ;Set flags if greater than
     ld a,095h                                                  ; da0a    3e 95     > .
     cp 096h                                                    ; da0c    fe 96     . .
     ret                                                        ; da0e    c9     .
-lda0fh:
+SET_FLAG_TO_LESS_THAN:
+    ;Set flags if less than
     ld a,095h                                                  ; da0f    3e 95     > .
     cp 094h                                                    ; da11    fe 94     . .
     ret                                                        ; da13    c9     .
-lda14h:
+SET_FLAG_TO_EQUAL:
+    ;Set flag if equal
     ld a,095h                                                  ; da14    3e 95     > .
     cp a                                                       ; da16    bf     .
     ret                                                        ; da17    c9     .
@@ -4178,7 +4181,7 @@ sub_da6ah:
     ret nz                                                     ; da75    c0     .
     ex de,hl                                                   ; da76    eb     .
     cp 081h                                                    ; da77    fe 81     . .
-    jp nz,lda0ah                                               ; da79    c2 0a da     . . .
+    jp nz,SET_FLAG_TO_GREATER_THAN                                               ; da79    c2 0a da     . . .
     xor a                                                      ; da7c    af     .
     ld a,b                                                     ; da7d    78     x
     scf                                                        ; da7e    37     7
@@ -4462,13 +4465,13 @@ ldc40h:
     inc d                                                      ; dc49    14     .
     cp 0efh                                                    ; dc4a    fe ef     . .
 ldc4ch:
-    jp z,lda0ah                                                ; dc4c    ca 0a da     . . .
+    jp z,SET_FLAG_TO_GREATER_THAN                                                ; dc4c    ca 0a da     . . .
     ld a,d                                                     ; dc4f    7a     z
     cp (iy+00fh)                                               ; dc50    fd be 0f     . . .
     jr nz,ldc40h                                               ; dc53    20 eb       .
     ld a,(iy+002h)                                             ; dc55    fd 7e 02     . ~ .
     cp 002h                                                    ; dc58    fe 02     . .
-    jp nz,lda14h                                               ; dc5a    c2 14 da     . . .
+    jp nz,SET_FLAG_TO_EQUAL                                               ; dc5a    c2 14 da     . . .
     jr ldcb8h                                                  ; dc5d    18 59     . Y
 ldc5fh:
     ld a,(iy+002h)                                             ; dc5f    fd 7e 02     . ~ .
@@ -4490,7 +4493,7 @@ ldc75h:
     pop iy                                                     ; dc84    fd e1     . .
     pop de                                                     ; dc86    d1     .
     cp 0efh                                                    ; dc87    fe ef     . .
-    jp z,lda0ah                                                ; dc89    ca 0a da     . . .
+    jp z,SET_FLAG_TO_GREATER_THAN                                                ; dc89    ca 0a da     . . .
     ld a,(iy+012h)                                             ; dc8c    fd 7e 12     . ~ .
     xor 001h                                                   ; dc8f    ee 01     . .
     ld (iy+012h),a                                             ; dc91    fd 77 12     . w .
@@ -4502,7 +4505,7 @@ ldc75h:
     pop iy                                                     ; dc9f    fd e1     . .
     pop de                                                     ; dca1    d1     .
     cp 0efh                                                    ; dca2    fe ef     . .
-    jp z,lda0ah                                                ; dca4    ca 0a da     . . .
+    jp z,SET_FLAG_TO_GREATER_THAN                                                ; dca4    ca 0a da     . . .
     inc d                                                      ; dca7    14     .
     ld a,d                                                     ; dca8    7a     z
     cp (iy+00fh)                                               ; dca9    fd be 0f     . . .
@@ -4794,7 +4797,7 @@ lde64h:
     ; push hl                                                    ; de67    e5     .
     dw le518h
     ;jr $-25                                                    ; de68    18 e5     . .
-    dw le538h
+    dw  PATCH_CAS_IN_CHAR
     ;jr c,$-25                                                  ; de6a    38 e5     8 .
     dw le6c1h
     ;pop bc                                                     ; de6c    c1     .
@@ -4842,6 +4845,13 @@ MAKE_JP_AT_DE_USING_HL:
     ; ld de,0bf09h
     ; ld b,002h
     ; call MAKE_JP_AT_DE_USING_HL
+    ;
+    ; B=Number of jumps to generate
+    ; DE=Address for generated Jump command
+    ; HL=Address in rom work area
+    ; IY=Rom Number
+    ; IX=Pointer to routine to call from RST 18
+    ;
 
     ld a,0c3h  ; opcode for "jp"                               ; de74    3e c3     > .
     ld (de),a  ; stow the jp                                   ; de76    12     .
@@ -5371,7 +5381,7 @@ le1b9h:
     ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; e1b9    fd 6e 17     . n .
     ld a,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                                             ; e1bc    fd 7e 18     . ~ .
     or l                                                       ; e1bf    b5     .
-    jp nz,lda0fh                                               ; e1c0    c2 0f da     . . .
+    jp nz,SET_FLAG_TO_LESS_THAN                                               ; e1c0    c2 0f da     . . .
     push de                                                    ; e1c3    d5     .
     call sub_e374h                                             ; e1c4    cd 74 e3     . t .
     call sub_da62h                                             ; e1c7    cd 62 da     . b .
@@ -5393,7 +5403,7 @@ le1e0h:
     ld (iy+040h),0ffh                                          ; e1e5    fd 36 40 ff     . 6 @ .
 le1e9h:
     call sub_ef8bh                                             ; e1e9    cd 8b ef     . . .
-    jp nc,lda14h                                               ; e1ec    d2 14 da     . . .
+    jp nc,SET_FLAG_TO_EQUAL                                               ; e1ec    d2 14 da     . . .
     push hl                                                    ; e1ef    e5     .
     call sub_e32ch                                             ; e1f0    cd 2c e3     . , .
     pop hl                                                     ; e1f3    e1     .
@@ -5407,7 +5417,7 @@ le1e9h:
     call PRINT_STRING                                          ; e200    cd 92 d8     . . .
     call PRINT_CR_LF                                           ; e203    cd 7d d9     . } .
     call sub_e26fh                                             ; e206    cd 6f e2     . o .
-    jp nz,lda0ah                                               ; e209    c2 0a da     . . .
+    jp nz,SET_FLAG_TO_GREATER_THAN                                               ; e209    c2 0a da     . . .
     ld hl,MSG_BYTES_FREE                                       ; e20c    21 43 ff     ! C .
     call DISPLAY_MSG                                           ; e20f    cd 6a d9     . j .
     call sub_0f0d0h                                            ; e212    cd d0 f0     . . .
@@ -5431,7 +5441,7 @@ le232h:
     ld a,04bh                                                  ; e237    3e 4b     > K
     call TXT_OUTPUT                                            ; e239    cd 5a bb     . Z .
     call PRINT_CR_LF                                           ; e23c    cd 7d d9     . } .
-    jp lda0ah                                                  ; e23f    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                                  ; e23f    c3 0a da     . . .
 le242h:
     ld (0beeeh),de                                             ; e242    ed 53 ee be     . S . .
     ld ix,0bef0h                                               ; e246    dd 21 f0 be     . ! . .
@@ -5447,7 +5457,7 @@ le242h:
     ld de,(0beeeh)                                             ; e262    ed 5b ee be     . [ . .
     call CAS_CATALOG                                           ; e266    cd 9b bc     . . .
     call RSX_DISK_IN                                           ; e269    cd 29 de     . ) .
-    jp lda0ah                                                  ; e26c    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                                  ; e26c    c3 0a da     . . .
 sub_e26fh:
     ld b,(iy+005h)                                             ; e26f    fd 46 05     . F .
     ld c,(iy+006h)                                             ; e272    fd 4e 06     . N .
@@ -5477,7 +5487,7 @@ le28dh:
     inc hl                                                     ; e29c    23     #
 le29dh:
     call sub_ed38h                                             ; e29d    cd 38 ed     . 8 .
-    jp nz,lda14h                                               ; e2a0    c2 14 da     . . .
+    jp nz,SET_FLAG_TO_EQUAL                                               ; e2a0    c2 14 da     . . .
     ld a,(hl)                                                  ; e2a3    7e     ~
     and 0c0h                                                   ; e2a4    e6 c0     . .
     jr nz,le305h                                               ; e2a6    20 5d       ]
@@ -5532,7 +5542,7 @@ le305h:
     jr le29dh                                                  ; e309    18 92     . .
 le30bh:
     call sub_e311h                                             ; e30b    cd 11 e3     . . .
-    jp lda0ah                                                  ; e30e    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                                  ; e30e    c3 0a da     . . .
 sub_e311h:
     call sub_e32ch                                             ; e311    cd 2c e3     . , .
     ld hl,MSG_DISC_CHANGED                                     ; e314    21 04 ff     ! . .
@@ -5596,13 +5606,13 @@ le380h:
     add ix,de                                                  ; e398    dd 19     . .
     ld de,(0bee2h)                                             ; e39a    ed 5b e2 be     . [ . .
     call sub_da21h                                             ; e39e    cd 21 da     . ! .
-    jp nz,lda14h                                               ; e3a1    c2 14 da     . . .
+    jp nz,SET_FLAG_TO_EQUAL                                               ; e3a1    c2 14 da     . . .
     ex de,hl                                                   ; e3a4    eb     .
     call sub_edb6h                                             ; e3a5    cd b6 ed     . . .
     jp c,MSG_BAD_FILE_NAME                                     ; e3a8    da 8e fb     . . .
-    jp nz,lda14h                                               ; e3ab    c2 14 da     . . .
+    jp nz,SET_FLAG_TO_EQUAL                                               ; e3ab    c2 14 da     . . .
     call sub_d9a0h                                             ; e3ae    cd a0 d9     . . .
-    jp nc,lda14h                                               ; e3b1    d2 14 da     . . .
+    jp nc,SET_FLAG_TO_EQUAL                                               ; e3b1    d2 14 da     . . .
     jp nz,MSG_DISC_NOT_FORMATTED                               ; e3b4    c2 22 fc     . " .
     cp 081h                                                    ; e3b7    fe 81     . .
     jp nz,le4a3h                                               ; e3b9    c2 a3 e4     . . .
@@ -5614,7 +5624,7 @@ le380h:
     ld (0bc78h),hl                                             ; e3c6    22 78 bc     " x .
     pop ix                                                     ; e3c9    dd e1     . .
     call sub_ed01h                                             ; e3cb    cd 01 ed     . . .
-    jp nz,lda14h                                               ; e3ce    c2 14 da     . . .
+    jp nz,SET_FLAG_TO_EQUAL                                               ; e3ce    c2 14 da     . . .
     call sub_ed38h                                             ; e3d1    cd 38 ed     . 8 .
     jp nz,lfbf7h                                               ; e3d4    c2 f7 fb     . . .
     ld a,(hl)                                                  ; e3d7    7e     ~
@@ -5684,7 +5694,7 @@ le417h:
     xor a                                                      ; e464    af     .
     ld (iy+01fh),a                                             ; e465    fd 77 1f     . w .
     ld (iy+020h),a                                             ; e468    fd 77 20     . w
-    call lda0ah                                                ; e46b    cd 0a da     . . .
+    call SET_FLAG_TO_GREATER_THAN                                                ; e46b    cd 0a da     . . .
     ld a,(ix+012h)                                             ; e46e    dd 7e 12     . ~ .
     ret                                                        ; e471    c9     .
 le472h:
@@ -5758,7 +5768,7 @@ le502h:
     ld h,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                                             ; e505    fd 66 18     . f .
     ld a,l                                                     ; e508    7d     }
     or h                                                       ; e509    b4     .
-    jp z,lda0fh                                                ; e50a    ca 0f da     . . .
+    jp z,SET_FLAG_TO_LESS_THAN                                                ; e50a    ca 0f da     . . .
     push hl                                                    ; e50d    e5     .
     pop ix                                                     ; e50e    dd e1     . .
     ld a,(ix-00fh)                                             ; e510    dd 7e f1     . ~ .
@@ -5771,21 +5781,24 @@ le518h:
     pop ix                                                     ; e51f    dd e1     . .
     ld a,h                                                     ; e521    7c     |
     or l                                                       ; e522    b5     .
-    jp z,lda0ah                                                ; e523    ca 0a da     . . .
+    jp z,SET_FLAG_TO_GREATER_THAN                                                ; e523    ca 0a da     . . .
     ld (ix-00fh),043h                                          ; e526    dd 36 f1 43     . 6 . C
     xor a                                                      ; e52a    af     .
     ld (iy+WS_INPUT_BUFF_ADDR_FILE),a                                             ; e52b    fd 77 17     . w .
     ld (iy+WS_INPUT_BUFF_ADDR_FILE+1),a                                             ; e52e    fd 77 18     . w .
     ld (iy+039h),000h                                          ; e531    fd 36 39 00     . 6 9 .
-    jp lda0ah                                                  ; e535    c3 0a da     . . .
-le538h:
+    jp SET_FLAG_TO_GREATER_THAN                                                  ; e535    c3 0a da     . . .
+
+;=======================================================================
+ PATCH_CAS_IN_CHAR:
+;=======================================================================
     ;patch for CAS_IN_CHAR
     ld a,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; e538    fd 7e 17     . ~ .
     or (iy+WS_INPUT_BUFF_ADDR_FILE+1)                                               ; e53b    fd b6 18     . . .
-    jp z,le696h                                                ; e53e    ca 96 e6     . . .
+    jp z,DO_ERROR_0F                                                ; e53e    ca 96 e6     . . .
     ld a,(iy+039h)                                             ; e541    fd 7e 39     . ~ 9
     and a                                                      ; e544    a7     .
-    jp z,le696h                                                ; e545    ca 96 e6     . . .
+    jp z,DO_ERROR_0F                                                ; e545    ca 96 e6     . . .
     push hl                                                    ; e548    e5     .
     push de                                                    ; e549    d5     .
     push bc                                                    ; e54a    c5     .
@@ -5806,7 +5819,7 @@ le560h:
     pop bc                                                     ; e56c    c1     .
     pop de                                                     ; e56d    d1     .
     pop hl                                                     ; e56e    e1     .
-    jp lda14h                                                  ; e56f    c3 14 da     . . .
+    jp SET_FLAG_TO_EQUAL                                                  ; e56f    c3 14 da     . . .
 le572h:
     ld l,(ix-004h)                                             ; e572    dd 6e fc     . n .
     ld h,(ix-003h)                                             ; e575    dd 66 fd     . f .
@@ -5856,15 +5869,43 @@ le5b6h:
     call sub_e5f0h                                             ; e5d8    cd f0 e5     . . .
     pop bc                                                     ; e5db    c1     .
     ld d,a                                                     ; e5dc    57     W
-    cp 01ah                                                    ; e5dd    fe 1a     . .
-    jr z,le5e8h                                                ; e5df    28 07     ( .
-    call lda0ah                                                ; e5e1    cd 0a da     . . .
-    ld a,d                                                     ; e5e4    7a     z
-    pop de                                                     ; e5e5    d1     .
-    pop hl                                                     ; e5e6    e1     .
-    ret                                                        ; e5e7    c9     .
+    ;This is the code from v2.01
+    ;This replaces the code below to fix https://github.com/cormacj/rodos-disassembly/issues/1
+    ;tl;dr - The old code randomly returned 27 rather than the value from the open file/
+    ;I suspect this was down to the CP/M EOF handling.
+    INC        D
+    CP         D
+    SCF         ;Set Carry flag
+    POP        DE
+    POP        HL
+    RET
+    ;*see above*
+    ;BUG: somewhere about here is the cause of the 27/0x1b error return issue
+    ;This code causes errors.
+    ;Lets understand what its trying to do:
+    ; Coming in A contains the value from here:
+    ; ld l,(ix-006h)                                             ; e5bd    dd 6e fa     . n .
+    ; ld h,(ix-005h)                                             ; e5c0    dd 66 fb     . f .
+    ; ld a,(hl)                                                  ; e5c3    7e     ~
+    ; Checking its value, this is just reading through the file
+    ; This is also the same as 2.01, so its something about whats processed from here on...
+    ; cp 01ah                                                    ; e5dd    fe 1a     . .
+    ; ;So if the file contains 0x1a call that:
+    ; jr z,le5e8h ;This sets the flag to less than, a=01ah and exits.
+    ; ;else set flag to greater than and exit.
+    ; call SET_FLAG_TO_GREATER_THAN                                                ; e5e1    cd 0a da     . . .
+    ;
+    ; ld a,d                                                     ; e5e4    7a     z
+    ; if DEBUG=0
+    ;     call PrintNumInA
+    ; endif
+    ;
+    ; pop de                                                     ; e5e5    d1     .
+    ; pop hl                                                     ; e5e6    e1     .
+    ; ret                                                        ; e5e7    c9     .
+
 le5e8h:
-    call lda0fh                                                ; e5e8    cd 0f da     . . .
+    call SET_FLAG_TO_LESS_THAN                                                ; e5e8    cd 0f da     . . .
     ld a,01ah                                                  ; e5eb    3e 1a     > .
     pop de                                                     ; e5ed    d1     .
     pop hl                                                     ; e5ee    e1     .
@@ -5880,7 +5921,7 @@ le5feh:
     pop bc                                                     ; e5fe    c1     .
     pop de                                                     ; e5ff    d1     .
     pop hl                                                     ; e600    e1     .
-    jp le696h                                                  ; e601    c3 96 e6     . . .
+    jp DO_ERROR_0F                                                  ; e601    c3 96 e6     . . .
 sub_e604h:
     ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; e604    fd 6e 17     . n .
     ld h,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                                             ; e607    fd 66 18     . f .
@@ -5946,14 +5987,14 @@ le670h:
     ld (ix-00dh),h                                             ; e691    dd 74 f3     . t .
     xor a                                                      ; e694    af     .
     ret                                                        ; e695    c9     .
-le696h:
+DO_ERROR_0F:
     ld a,00fh                                                  ; e696    3e 0f     > .
     cp 000h                                                    ; e698    fe 00     . .
     ret                                                        ; e69a    c9     .
 le69bh:
     ld a,(iy+039h)                                             ; e69b    fd 7e 39     . ~ 9
     and a                                                      ; e69e    a7     .
-    jr z,le696h                                                ; e69f    28 f5     ( .
+    jr z,DO_ERROR_0F                                                ; e69f    28 f5     ( .
     push hl                                                    ; e6a1    e5     .
     push bc                                                    ; e6a2    c5     .
     push de                                                    ; e6a3    d5     .
@@ -5968,14 +6009,14 @@ le69bh:
     pop hl                                                     ; e6b4    e1     .
     ld a,(ix-004h)                                             ; e6b5    dd 7e fc     . ~ .
     or (ix-003h)                                               ; e6b8    dd b6 fd     . . .
-    jr z,le696h                                                ; e6bb    28 d9     ( .
-    jp lda0ah                                                  ; e6bd    c3 0a da     . . .
+    jr z,DO_ERROR_0F                                                ; e6bb    28 d9     ( .
+    jp SET_FLAG_TO_GREATER_THAN                                                  ; e6bd    c3 0a da     . . .
 le6c0h:
     ret                                                        ; e6c0    c9     .
 le6c1h:
     ld a,(iy+039h)                                             ; e6c1    fd 7e 39     . ~ 9
     cp 001h                                                    ; e6c4    fe 01     . .
-    jp nz,lda0fh                                               ; e6c6    c2 0f da     . . .
+    jp nz,SET_FLAG_TO_LESS_THAN                                               ; e6c6    c2 0f da     . . .
     call sub_e648h                                             ; e6c9    cd 48 e6     . H .
     ex de,hl                                                   ; e6cc    eb     .
     ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; e6cd    fd 6e 17     . n .
@@ -5988,7 +6029,7 @@ le6d6h:
     push de                                                    ; e6dc    d5     .
     call sub_ef39h                                             ; e6dd    cd 39 ef     . 9 .
     pop de                                                     ; e6e0    d1     .
-    jp nz,lda14h                                               ; e6e1    c2 14 da     . . .
+    jp nz,SET_FLAG_TO_EQUAL                                               ; e6e1    c2 14 da     . . .
     inc hl                                                     ; e6e4    23     #
 sub_e6e5h:
     inc hl                                                     ; e6e5    23     #
@@ -6029,7 +6070,7 @@ le720h:
 ;TODO: Changes between here and le7a6h break saving basic files
     ld l,(ix+01ah)                                             ; e720    dd 6e 1a     . n .
     ld h,(ix+01bh)                                             ; e723    dd 66 1b     . f .
-    jp lda0ah                                                  ; e726    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                                  ; e726    c3 0a da     . . .
 le729h:
     push de                                                    ; e729    d5     .
     pop ix                                                     ; e72a    dd e1     . .
@@ -6043,7 +6084,7 @@ le729h:
     add ix,de                                                  ; e73e    dd 19     . .
     ld a,(iy+WS_OUTPUT_BUFF_ADDR_HEADER)                                             ; e740    fd 7e 1b     . ~ .
     or (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1)                                               ; e743    fd b6 1c     . . .
-    jp nz,lda0fh                                               ; e746    c2 0f da     . . .
+    jp nz,SET_FLAG_TO_LESS_THAN                                               ; e746    c2 0f da     . . .
     push ix                                                    ; e749    dd e5     . .
     pop de                                                     ; e74b    d1     .
     ld (iy+WS_OUTPUT_BUFF_ADDR_SECTOR),e                                             ; e74c    fd 73 1d     . s .
@@ -6057,15 +6098,15 @@ le729h:
     ld a,(0bee4h)                                              ; e762    3a e4 be     : . .
     ld b,a                                                     ; e765    47     G
     call sub_da21h                                             ; e766    cd 21 da     . ! .
-    jp nz,lda14h                                               ; e769    c2 14 da     . . .
+    jp nz,SET_FLAG_TO_EQUAL                                               ; e769    c2 14 da     . . .
     ex de,hl                                                   ; e76c    eb     .
     call sub_edb6h                                             ; e76d    cd b6 ed     . . .
     jp c,MSG_BAD_FILE_NAME                                     ; e770    da 8e fb     . . .
-    jp nz,lda0ah                                               ; e773    c2 0a da     . . .
+    jp nz,SET_FLAG_TO_GREATER_THAN                                               ; e773    c2 0a da     . . .
     bit 7,e                                                    ; e776    cb 7b     . {
     jp nz,MSG_BAD_FILE_NAME                                    ; e778    c2 8e fb     . . .
     call sub_d9a0h                                             ; e77b    cd a0 d9     . . .
-    jp nc,lda14h                                               ; e77e    d2 14 da     . . .
+    jp nc,SET_FLAG_TO_EQUAL                                               ; e77e    d2 14 da     . . .
     jp nz,MSG_DISC_NOT_FORMATTED                               ; e781    c2 22 fc     . " .
     cp 081h                                                    ; e784    fe 81     . .
     jp nz,le842h                                               ; e786    c2 42 e8     . B .
@@ -6116,7 +6157,7 @@ le7a6h:
     ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER),l                                             ; e800    fd 75 1b     . u .
     ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1),h                                             ; e803    fd 74 1c     . t .
     ld (ix-00fh),04fh                                          ; e806    dd 36 f1 4f     . 6 . O
-    jp lda0ah                                                  ; e80a    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                                  ; e80a    c3 0a da     . . .
 le80dh:
     inc hl                                                     ; e80d    23     #
     dec b                                                      ; e80e    05     .
@@ -6196,7 +6237,7 @@ le888h:
     jr z,le8f7h                                                ; e8b0    28 45     ( E
     ;B key maybe/?
     cp 042h                                                    ; e8b2    fe 42     . B
-    jp nz,lda14h                                               ; e8b4    c2 14 da     . . .
+    jp nz,SET_FLAG_TO_EQUAL                                               ; e8b4    c2 14 da     . . .
 le8b7h:
     ld de,0bee0h                                               ; e8b7    11 e0 be     . . .
     push ix                                                    ; e8ba    dd e5     . .
@@ -6249,7 +6290,7 @@ le91ch:
     ld (iy+03ah),a                                             ; e92a    fd 77 3a     . w :
     res 2,(iy+WS_CASE_SENSITIVITY)                                            ; e92d    fd cb 41 96     . . A .
     res 4,(iy+WS_CASE_SENSITIVITY)                                            ; e931    fd cb 41 a6     . . A .
-    jp lda0ah                                                  ; e935    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                                  ; e935    c3 0a da     . . .
 sub_e938h:
     ld (0bf03h),a                                              ; e938    32 03 bf     2 . .
     jr le953h                                                  ; e93b    18 16     . .
@@ -6257,7 +6298,7 @@ le93dh:
     ld (0bf03h),a                                              ; e93d    32 03 bf     2 . .
     ld a,(iy+WS_OUTPUT_BUFF_ADDR_HEADER+1)                                             ; e940    fd 7e 1c     . ~ .
     or (iy+WS_OUTPUT_BUFF_ADDR_HEADER)                                               ; e943    fd b6 1b     . . .
-    jp z,lda0fh                                                ; e946    ca 0f da     . . .
+    jp z,SET_FLAG_TO_LESS_THAN                                                ; e946    ca 0f da     . . .
     bit 4,(iy+WS_CASE_SENSITIVITY)                                            ; e949    fd cb 41 66     . . A f
     jr nz,le953h                                               ; e94d    20 04       .
     res 2,(iy+WS_CASE_SENSITIVITY)                                            ; e94f    fd cb 41 96     . . A .
@@ -6363,7 +6404,7 @@ sub_e97ah:
     ld b,(ix-002h)                                             ; ea1a    dd 46 fe     . F .
     ld c,(ix-001h)                                             ; ea1d    dd 4e ff     . N .
     bit 2,(iy+WS_CASE_SENSITIVITY)                                            ; ea20    fd cb 41 56     . . A V
-    jp nz,lda14h                                               ; ea24    c2 14 da     . . .
+    jp nz,SET_FLAG_TO_EQUAL                                               ; ea24    c2 14 da     . . .
     call sub_efd5h                                             ; ea27    cd d5 ef     . . .
     ret                                                        ; ea2a    c9     .
 sub_ea2bh:
@@ -6415,7 +6456,7 @@ lea86h:
     pop hl                                                     ; ea90    e1     .
     call sub_efd5h                                             ; ea91    cd d5 ef     . . .
     call sub_f010h                                             ; ea94    cd 10 f0     . . .
-    jp lda0ah                                                  ; ea97    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                                  ; ea97    c3 0a da     . . .
 lea9ah:
     ld a,(ix-00ch)                                             ; ea9a    dd 7e f4     . ~ .
     ld (iy+WS_DRIVE_NUMBER),a                                  ; ea9d    fd 77 04     . w .
@@ -6483,7 +6524,7 @@ sub_eb34h:
     ld h,(iy+WS_OUTPUT_BUFF_ADDR_HEADER+1)                                             ; eb37    fd 66 1c     . f .
     ld a,l                                                     ; eb3a    7d     }
     or h                                                       ; eb3b    b4     .
-    jp z,lda0fh                                                ; eb3c    ca 0f da     . . .
+    jp z,SET_FLAG_TO_LESS_THAN                                                ; eb3c    ca 0f da     . . .
     ld a,(iy+03ah)                                             ; eb3f    fd 7e 3a     . ~ :
     cp 001h                                                    ; eb42    fe 01     . .
     jp z,le91ch                                                ; eb44    ca 1c e9     . . .
@@ -6508,8 +6549,8 @@ leb73h:
     push af                                                    ; eb76    f5     .
     call sub_f010h                                             ; eb77    cd 10 f0     . . .
     pop af                                                     ; eb7a    f1     .
-    jp nz,lda14h                                               ; eb7b    c2 14 da     . . .
-    jp lda0ah                                                  ; eb7e    c3 0a da     . . .
+    jp nz,SET_FLAG_TO_EQUAL                                               ; eb7b    c2 14 da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                                  ; eb7e    c3 0a da     . . .
 sub_eb81h:
     ld (ix-00fh),049h                                          ; eb81    dd 36 f1 49     . 6 . I
     ret                                                        ; eb85    c9     .
@@ -6528,7 +6569,7 @@ leb98h:
     ld h,(iy+WS_OUTPUT_BUFF_ADDR_HEADER+1)                                             ; eba1    fd 66 1c     . f .
     ld a,h                                                     ; eba4    7c     |
     or l                                                       ; eba5    b5     .
-    jp z,lda0fh                                                ; eba6    ca 0f da     . . .
+    jp z,SET_FLAG_TO_LESS_THAN                                                ; eba6    ca 0f da     . . .
     res 2,(iy+WS_CASE_SENSITIVITY)                                            ; eba9    fd cb 41 96     . . A .
     push hl                                                    ; ebad    e5     .
     pop ix                                                     ; ebae    dd e1     . .
@@ -6566,10 +6607,10 @@ lebfah:
     ld a,b                                                     ; ebfc    78     x
     or c                                                       ; ebfd    b1     .
     jr nz,lebf2h                                               ; ebfe    20 f2       .
-    jp lda0ah                                                  ; ec00    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                                  ; ec00    c3 0a da     . . .
 lec03h:
     call sub_eb34h                                             ; ec03    cd 34 eb     . 4 .
-    jp lda14h                                                  ; ec06    c3 14 da     . . .
+    jp SET_FLAG_TO_EQUAL                                                  ; ec06    c3 14 da     . . .
 sub_ec09h:
     call sub_ed01h                                             ; ec09    cd 01 ed     . . .
     ret nz                                                     ; ec0c    c0     .
@@ -6651,7 +6692,7 @@ lec7eh:
     jr lec1ch                                                  ; ec96    18 84     . .
 lec98h:
     call sub_e311h                                             ; ec98    cd 11 e3     . . .
-    jp lda0fh                                                  ; ec9b    c3 0f da     . . .
+    jp SET_FLAG_TO_LESS_THAN                                                  ; ec9b    c3 0f da     . . .
 lec9eh:
     ld d,(iy+037h)                                             ; ec9e    fd 56 37     . V 7
     ld e,(iy+038h)                                             ; eca1    fd 5e 38     . ^ 8
@@ -6709,7 +6750,7 @@ lecf8h:
     pop hl                                                     ; ecf9    e1     .
     pop de                                                     ; ecfa    d1     .
     call MSG_DISC_FULL                                         ; ecfb    cd af fb     . . .
-    jp lda0fh                                                  ; ecfe    c3 0f da     . . .
+    jp SET_FLAG_TO_LESS_THAN                                                  ; ecfe    c3 0f da     . . .
 sub_ed01h:
     ld b,(iy+005h)                                             ; ed01    fd 46 05     . F .
     ld c,(iy+006h)                                             ; ed04    fd 4e 06     . N .
@@ -6743,13 +6784,13 @@ led26h:
     jr led16h                                                  ; ed30    18 e4     . .
 led32h:
     call MSG_BAD_DIR                                           ; ed32    cd 9b fb     . . .
-    jp lda0fh                                                  ; ed35    c3 0f da     . . .
+    jp SET_FLAG_TO_LESS_THAN                                                  ; ed35    c3 0f da     . . .
 sub_ed38h:
     bit 7,(hl)                                                 ; ed38    cb 7e     . ~
     jr nz,led8dh                                               ; ed3a    20 51       Q
     ld a,(hl)                                                  ; ed3c    7e     ~
     cp 001h                                                    ; ed3d    fe 01     . .
-    jp z,lda0ah                                                ; ed3f    ca 0a da     . . .
+    jp z,SET_FLAG_TO_GREATER_THAN                                                ; ed3f    ca 0a da     . . .
     cp 002h                                                    ; ed42    fe 02     . .
     jr z,led93h                                                ; ed44    28 4d     ( M
     push hl                                                    ; ed46    e5     .
@@ -6825,12 +6866,12 @@ led93h:
     jr sub_ed38h                                               ; edad    18 89     . .
     pop hl                                                     ; edaf    e1     .
     call MSG_BAD_FILE_NAME                                     ; edb0    cd 8e fb     . . .
-    jp lda14h                                                  ; edb3    c3 14 da     . . .
+    jp SET_FLAG_TO_EQUAL                                                  ; edb3    c3 14 da     . . .
 sub_edb6h:
     res 7,e                                                    ; edb6    cb bb     . .
     ld a,b                                                     ; edb8    78     x
     and a                                                      ; edb9    a7     .
-    jp z,lda0ah                                                ; edba    ca 0a da     . . .
+    jp z,SET_FLAG_TO_GREATER_THAN                                                ; edba    ca 0a da     . . .
     cp 001h                                                    ; edbd    fe 01     . .
     jr z,lede7h                                                ; edbf    28 26     ( &
     inc hl                                                     ; edc1    23     #
@@ -6853,18 +6894,18 @@ sub_edb6h:
     inc hl                                                     ; ede1    23     #
     ld a,b                                                     ; ede2    78     x
     and a                                                      ; ede3    a7     .
-    jp z,lda0ah                                                ; ede4    ca 0a da     . . .
+    jp z,SET_FLAG_TO_GREATER_THAN                                                ; ede4    ca 0a da     . . .
 lede7h:
     call sub_ee7ch                                             ; ede7    cd 7c ee     . | .
     ret nz                                                     ; edea    c0     .
     ld a,b                                                     ; edeb    78     x
     and a                                                      ; edec    a7     .
-    jp z,lda0ah                                                ; eded    ca 0a da     . . .
+    jp z,SET_FLAG_TO_GREATER_THAN                                                ; eded    ca 0a da     . . .
     cp 002h                                                    ; edf0    fe 02     . .
     jr nz,ledfch                                               ; edf2    20 08       .
     call sub_ef01h                                             ; edf4    cd 01 ef     . . .
     jr nz,ledfch                                               ; edf7    20 03       .
-    jp lda0ah                                                  ; edf9    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                                  ; edf9    c3 0a da     . . .
 ledfch:
     ld c,010h                                                  ; edfc    0e 10     . .
     push ix                                                    ; edfe    dd e5     . .
@@ -7006,7 +7047,7 @@ leec5h:
 leecah:
     pop bc                                                     ; eeca    c1     .
     pop hl                                                     ; eecb    e1     .
-    jp lda0fh                                                  ; eecc    c3 0f da     . . .
+    jp SET_FLAG_TO_LESS_THAN                                                  ; eecc    c3 0f da     . . .
 sub_eecfh:
     ld de,00012h                                               ; eecf    11 12 00     . . .
     add hl,de                                                  ; eed2    19     .
@@ -7068,7 +7109,7 @@ lef27h:
     dec b                                                      ; ef28    05     .
     ld a,b                                                     ; ef29    78     x
     and a                                                      ; ef2a    a7     .
-    jp z,lda0ah                                                ; ef2b    ca 0a da     . . .
+    jp z,SET_FLAG_TO_GREATER_THAN                                                ; ef2b    ca 0a da     . . .
     jp sub_ee7ch                                               ; ef2e    c3 7c ee     . | .
 sub_ef31h:
     ld de,006ebh                                               ; ef31    11 eb 06     . . .
@@ -7206,7 +7247,7 @@ sub_f010h:
     jp lefdbh                                                  ; f025    c3 db ef     . . .
 lf028h:
     call sub_ef8bh                                             ; f028    cd 8b ef     . . .
-    jp nc,lda0ah                                               ; f02b    d2 0a da     . . .
+    jp nc,SET_FLAG_TO_GREATER_THAN                                               ; f02b    d2 0a da     . . .
     ld de,00012h                                               ; f02e    11 12 00     . . .
     add hl,de                                                  ; f031    19     .
     ld de,00081h                                               ; f032    11 81 00     . . .
@@ -7278,7 +7319,7 @@ lf07ch:
     ld (iy+038h),e                                             ; f085    fd 73 38     . s 8
 lf088h:
     bit 2,(iy+WS_CASE_SENSITIVITY)                                            ; f088    fd cb 41 56     . . A V
-    jp nz,lda14h                                               ; f08c    c2 14 da     . . .
+    jp nz,SET_FLAG_TO_EQUAL                                               ; f08c    c2 14 da     . . .
     call sub_f010h                                             ; f08f    cd 10 f0     . . .
     ret                                                        ; f092    c9     .
 sub_f093h:
@@ -7343,7 +7384,7 @@ lf0c7h:
 
 sub_0f0d0h:
     call sub_ef8bh
-    jp nc,lda0ah                                               ; f0d3    d2 0a da     . . .
+    jp nc,SET_FLAG_TO_GREATER_THAN                                               ; f0d3    d2 0a da     . . .
     ld ix,RESET_ENTRY_RST_0                                    ; f0d6    dd 21 00 00     . ! . .
     ld a,(hl)                                                  ; f0da    7e     ~
     ld (iy+00fh),a                                             ; f0db    fd 77 0f     . w .
@@ -7376,7 +7417,7 @@ lf103h:
     inc d                                                      ; f109    14     .
     ld a,d                                                     ; f10a    7a     z
     cp (iy+012h)                                               ; f10b    fd be 12     . . .
-    jp z,lda14h                                                ; f10e    ca 14 da     . . .
+    jp z,SET_FLAG_TO_EQUAL                                                ; f10e    ca 14 da     . . .
     ld e,081h                                                  ; f111    1e 81     . .
 lf113h:
     sra c                                                      ; f113    cb 29     . )
@@ -7408,7 +7449,7 @@ sub_f131h:
     ld a,c                                                     ; f135    79     y
     and 01fh                                                   ; f136    e6 1f     . .
     cp 00bh                                                    ; f138    fe 0b     . .
-    jp c,lda14h                                                ; f13a    da 14 da     . . .
+    jp c,SET_FLAG_TO_EQUAL                                                ; f13a    da 14 da     . . .
     ld (iy+012h),001h                                          ; f13d    fd 36 12 01     . 6 . .
     cp a                                                       ; f141    bf     .
     ret                                                        ; f142    c9     .
@@ -8371,7 +8412,7 @@ lf751h:
     push af                                                    ; f76b    f5     .
     res 0,(iy+00dh)                                            ; f76c    fd cb 0d 86     . . . .
     pop af                                                     ; f770    f1     .
-    jp nz,lda14h                                               ; f771    c2 14 da     . . .
+    jp nz,SET_FLAG_TO_EQUAL                                               ; f771    c2 14 da     . . .
     bit 3,(iy+WS_CASE_SENSITIVITY)                                            ; f774    fd cb 41 5e     . . A ^
     ret z                                                      ; f778    c8     .
 lf779h:
@@ -8392,7 +8433,7 @@ lf779h:
     inc hl                                                     ; f781    23     #
     inc hl                                                     ; f782    23     #
     ld (hl),07fh                                               ; f783    36 7f     6 
-    jp lda0ah                                                  ; f785    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                                  ; f785    c3 0a da     . . .
 lf788h:
     db "DISC"
     db "    "
@@ -8403,17 +8444,17 @@ sub_f798h:
     call sub_d9a0h                                             ; f79c    cd a0 d9     . . .
     ret nz                                                     ; f79f    c0     .
     and a                                                      ; f7a0    a7     .
-    jp z,lda0ah                                                ; f7a1    ca 0a da     . . .
+    jp z,SET_FLAG_TO_GREATER_THAN                                                ; f7a1    ca 0a da     . . .
     cp 081h                                                    ; f7a4    fe 81     . .
     jp nz,lf829h                                               ; f7a6    c2 29 f8     . ) .
     call sub_ed01h                                             ; f7a9    cd 01 ed     . . .
-    jp nz,lda0fh                                               ; f7ac    c2 0f da     . . .
+    jp nz,SET_FLAG_TO_LESS_THAN                                               ; f7ac    c2 0f da     . . .
 lf7afh:
     call sub_ed38h                                             ; f7af    cd 38 ed     . 8 .
 lf7b2h:
     jp nz,lda18h                                               ; f7b2    c2 18 da     . . .
     call sub_c5ffh                                             ; f7b5    cd ff c5     . . .
-    jp nz,lda0fh                                               ; f7b8    c2 0f da     . . .
+    jp nz,SET_FLAG_TO_LESS_THAN                                               ; f7b8    c2 0f da     . . .
     set 3,(iy+WS_CASE_SENSITIVITY)                                            ; f7bb    fd cb 41 de     . . A .
     ld a,(iy+014h)                                             ; f7bf    fd 7e 14     . ~ .
     and a                                                      ; f7c2    a7     .
@@ -8506,7 +8547,7 @@ sub_f858h:
 sub_f868h:
     call sub_f858h                                             ; f868    cd 58 f8     . X .
     call sub_ef6ch                                             ; f86b    cd 6c ef     . l .
-    jp nz,lda0fh                                               ; f86e    c2 0f da     . . .
+    jp nz,SET_FLAG_TO_LESS_THAN                                               ; f86e    c2 0f da     . . .
     ld b,010h                                                  ; f871    06 10     . .
 lf873h:
     push ix                                                    ; f873    dd e5     . .
@@ -8539,7 +8580,7 @@ lf893h:
     pop hl                                                     ; f89d    e1     .
     pop ix                                                     ; f89e    dd e1     . .
     call sub_c5ffh                                             ; f8a0    cd ff c5     . . .
-    jp nz,lda0fh                                               ; f8a3    c2 0f da     . . .
+    jp nz,SET_FLAG_TO_LESS_THAN                                               ; f8a3    c2 0f da     . . .
     set 3,(iy+WS_CASE_SENSITIVITY)                                            ; f8a6    fd cb 41 de     . . A .
     ld a,(iy+014h)                                             ; f8aa    fd 7e 14     . ~ .
     and a                                                      ; f8ad    a7     .
@@ -8568,7 +8609,7 @@ lf8d4h:
     ld de,RAM_LAM                                              ; f8d8    11 20 00     .   .
     add hl,de                                                  ; f8db    19     .
     djnz lf873h                                                ; f8dc    10 95     . .
-    jp lda0ah                                                  ; f8de    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                                  ; f8de    c3 0a da     . . .
 sub_f8e1h:
     inc b                                                      ; f8e1    04     .
     ret                                                        ; f8e2    c9     .
@@ -9091,7 +9132,7 @@ lfbfch:
     ld a,008h                                                  ; fc07    3e 08     > .
 ERROR_H_RELAY_1:
     call ERROR_HANDLER                                         ; fc09    cd 6a fb     . j .
-    jp lda14h                                                  ; fc0c    c3 14 da     . . .
+    jp SET_FLAG_TO_EQUAL                                                  ; fc0c    c3 14 da     . . .
 MSG_ALREADY_EXISTS:
     call sub_fc2ah                                             ; fc0f    cd 2a fc     . * .
     ld a,013h                                                  ; fc12    3e 13     > .
@@ -9103,7 +9144,7 @@ MSG_CORRUPTED_DISC:
     ld a,015h                                                  ; fc1a    3e 15     > .
 ERROR_H_RELAY_0:
     call ERROR_HANDLER                                         ; fc1c    cd 6a fb     . j .
-    jp lda0ah                                                  ; fc1f    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                                  ; fc1f    c3 0a da     . . .
 MSG_DISC_NOT_FORMATTED:
     ld a,016h                                                  ; fc22    3e 16     > .
     jr ERROR_H_RELAY_0                                         ; fc24    18 f6     . .
@@ -9181,7 +9222,7 @@ lfc87h:
 lfca5h:
     call TXT_OUTPUT                                            ; fca5    cd 5a bb     . Z .
     call PRINT_CR_LF                                           ; fca8    cd 7d d9     . } .
-    jp lda14h                                                  ; fcab    c3 14 da     . . .
+    jp SET_FLAG_TO_EQUAL                                                  ; fcab    c3 14 da     . . .
 lfcaeh:
     call TXT_OUTPUT                                            ; fcae    cd 5a bb     . Z .
     call PRINT_CR_LF                                           ; fcb1    cd 7d d9     . } .
@@ -9189,7 +9230,7 @@ lfcaeh:
 lfcb7h:
     call TXT_OUTPUT                                            ; fcb7    cd 5a bb     . Z .
     call PRINT_CR_LF                                           ; fcba    cd 7d d9     . } .
-    jp lda0fh                                                  ; fcbd    c3 0f da     . . .
+    jp SET_FLAG_TO_LESS_THAN                                                  ; fcbd    c3 0f da     . . .
 
 if DEBUG=1
     ;Extenstions turned on in debug mode
@@ -9364,8 +9405,8 @@ if DEBUG=1
         pop af
         and 0Fh
         call PrintNibble
-        ;ld a,' '
-        ;call TXT_OUTPUT
+        ld a,' '
+        call TXT_OUTPUT
         ;CALL KM_WAIT_KEY
         pop af
         ret

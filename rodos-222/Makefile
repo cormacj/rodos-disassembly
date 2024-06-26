@@ -31,6 +31,9 @@ diffs:
 run:
 		./z80make ${rodos} && cp a.bin ~/Amstrad/ROM/ && cap32 ~/Amstrad/blankdisc.dsk ~/Amstrad/rodosval.dsk
 
+runa:
+		./z80make ${rodos} && cp a.bin ~/Amstrad/ROM/ && arnold --diska ~/Amstrad/blankdisc.dsk --diskb ~/Amstrad/rodosval.dsk
+
 release:
 		#rm -v Release/* &&
 		./z80make -v -o Release/rodos$(version).rom ${rodos} && ./validate-size.sh Release/rodos$(version).rom && zip -v -j Release/rodos$(version).zip ${releasefiles} && echo "Release made!"

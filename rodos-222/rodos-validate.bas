@@ -25,16 +25,28 @@ for a=0 to 255
 Next
 print "Done"
 closeout
-print "Checking testfile.dat..."
+print "Checking testfile.dat forwards..."
+openin "testfile.dat"
+for l=0 to 300
+rem |point,l
+a%=0:|bget,@a%
+print  "Byte ";
+print using "####";l;
+print " of the file is: ";
+print using "####";a%;
+print chr$(13);
+if a%<>l then print:print "Error: |BGET failed - I asked for data. I expected ";pnt;" but got ";a%
+Next
+print "Checking testfile.dat backwards..."
 openin "testfile.dat"
 for l=255 to 0 step -1
 |point,l
 a%=0:|bget,@a%
-rem print  "Byte ";
-rem print using "####";l;
-rem print " of the file is: ";
-rem print using "####";a%;
-rem print chr$(13);
+print  "Byte ";
+print using "####";l;
+print " of the file is: ";
+print using "####";a%;
+print chr$(13);
 if a%<>l then print:print "Error: |BGET failed - I asked for data. I expected ";pnt;" but got ";a%
 Next
 closein

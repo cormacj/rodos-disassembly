@@ -1,3 +1,7 @@
+RODOS 2.22 -
+- Fixed: |BGET randomly returned a number of 27 instead of the actual data. The CAS IN CHAR patch code
+  was reverted to the v2.01 code at the end. See https://github.com/cormacj/rodos-disassembly/issues/1 
+
 RODOS 2.21 - June 2024 - Bugs fixes
 - Put the |OPT,10 code back in that was lost in v2.17.
 - Corrected |OPT,11 so that it uses the correct drive parameter
