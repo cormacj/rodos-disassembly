@@ -14,9 +14,11 @@ Unlike other similar DOSses (ParaDOS, MS800, S-DOS, ROMDOS), RODOS aimed to do s
 
 **Details about this project**
 
-There are two folders here:
+There are several folders here:
 * rodos-219 - This is a faithful disassembly and documentation of RODOS v2.19. This was the last known official release of RODOS
 * rodos-220 - This is a version that fixes a buffer collision bug that caused a couple of commands (|ZAP, |ROMS) to not fully work.
+* rodos-221 - This version fixed two bugs with |OPT (specifically |OPT 10 and |OPT 11)
+* rodos-222 - This is the current work-in-progress version. A bugfix for a |BGET bug has been applied.
 * disasm - This folder contains scripts and definitions to disassemble a ROM.
 * doc - This contains a text version of the manual and some documentation on internals.
 
