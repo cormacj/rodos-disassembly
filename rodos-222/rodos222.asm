@@ -4406,6 +4406,13 @@ ldbd7h:
     call sub_d9a0h                                             ; dbef    cd a0 d9     . . .
     ret nc                                                     ; dbf2    d0     .
     call z,sub_fc30h                                           ; dbf3    cc 30 fc     . 0 .
+
+    ;https://github.com/cormacj/rodos-disassembly/issues/4
+    ;Load the home sector
+    ld a,(iy+WS_CD_HOME_SECTOR)
+    ;+44 appears to be the current location of |CD
+    ld (iy+44),a
+
     ld a,(iy+010h)                                             ; dbf6    fd 7e 10     . ~ .
     and a                                                      ; dbf9    a7     .
     jp z,ldc29h                                                ; dbfa    ca 29 dc     . ) .
@@ -9233,7 +9240,7 @@ lfcb7h:
     jp SET_FLAG_TO_LESS_THAN                                                  ; fcbd    c3 0f da     . . .
 
 if DEBUG=1
-    ;Extenstions turned on in debug mode
+    ;Extensions turned on in debug mode
 RSX_WS:
     cp 001h                                                    ; d54d    fe 02     . .
     jp nz,MSG_WRONG_PARAMETER_AMT                              ; d54f    d2 9f fb     . . .
@@ -9328,7 +9335,9 @@ RODOS_MSGS_ARRAY:
     defb T_Disc,'Missing',05ch                                   ; Error 31
     defb T_Disc,'fault',05ch                                     ; Error 32
     defb T_Disc,'write protected',05ch                           ; Error 33 - Last error message of this table
-
+if DEBUG=1
+    defb 'Format Complete!',05ch
+endif
 MSG_ESCAPE:
     defb 'Escape',05ch
 MSG_DISC_CHANGED:
