@@ -3,16 +3,19 @@ This is a work in progress of bugfixes from RODOS v2.19.
 Development work is tracked here: https://github.com/cormacj/rodos-disassembly
 
 **Fixes**
+
 Since V2.21:
+
     Fixed an issue where |point or |bget would randomly return 27 rather than the expected data.
-    
+
 Since V2.20:
+
     Reimplimented |OPT,10
     Corrected |OPT,11
 
 **Important Files**
 
-rodos221.asm: This is based on the relocatable v2.19 code.
+rodos222.asm: This is based on the relocatable v2.19 code, with the incremental changes since then.
 
 **Tools needed**
 
