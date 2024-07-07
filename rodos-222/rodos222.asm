@@ -1245,7 +1245,7 @@ lc6e4h:
 lc6f8h:
     ld a,(de)                                                  ; c6f8    1a     .
     cp 05bh                                                    ; c6f9    fe 5b     . [
-    call nc,FUNC_SUBTRACT_32                                   ; c6fb    d4 9d d9     . . .
+    call nc,MAKE_UPPERCASE                                   ; c6fb    d4 9d d9     . . .
     ld (hl),a                                                  ; c6fe    77     w
     inc de                                                     ; c6ff    13     .
     inc hl                                                     ; c700    23     #
@@ -2548,7 +2548,7 @@ lcfa3h:
 lcfb4h:
     ld a,(hl)                                                  ; cfb4    7e     ~
     cp 061h                                                    ; cfb5    fe 61     . a
-    call nc,FUNC_SUBTRACT_32                                   ; cfb7    d4 9d d9     . . .
+    call nc,MAKE_UPPERCASE                                   ; cfb7    d4 9d d9     . . .
     ld (de),a                                                  ; cfba    12     .
     inc hl                                                     ; cfbb    23     #
     inc de                                                     ; cfbc    13     .
@@ -3656,7 +3656,7 @@ DO_LOGICAL_DRIVE:
     ;So this section loads (de) into A. If A>ascii(a) then uppercase it (ascii(a)-32) and look for a range between A and I
     ld a,(de)                                                  ; d798    1a     .
     cp 'a'                                                    ; d799    fe 61     . a
-    call nc,FUNC_SUBTRACT_32                                   ; d79b    d4 9d d9     . . .
+    call nc,MAKE_UPPERCASE                                   ; d79b    d4 9d d9     . . .
     cp 'A'                                                    ; d79e    fe 41     . A
     jp c,MSG_BAD_DRIVE                                         ; d7a0    da c2 fb     . . .
     cp 'I'                                                    ; d7a3    fe 49     . I
@@ -3727,7 +3727,7 @@ RSX_DRIVE:
     jp nz,MSG_BAD_DRIVE                                        ; d7e2    c2 c2 fb     . . .
     ld a,(de)                                                  ; d7e5    1a     .
     cp 061h                                                    ; d7e6    fe 61     . a
-    call nc,FUNC_SUBTRACT_32                                   ; d7e8    d4 9d d9     . . .
+    call nc,MAKE_UPPERCASE                                   ; d7e8    d4 9d d9     . . .
     cp 049h                                                    ; d7eb    fe 49     . I
     jp nc,MSG_BAD_DRIVE                                        ; d7ed    d2 c2 fb     . . .
     sub 041h                                                   ; d7f0    d6 41     . A
@@ -4032,7 +4032,7 @@ Space: equ 32
     call TXT_OUTPUT                                            ; d998    cd 5a bb     . Z .
     pop af                                                     ; d99b    f1     .
     ret                                                        ; d99c    c9     .
-FUNC_SUBTRACT_32:
+MAKE_UPPERCASE:
     sub 020h                                                   ;d99d    d6 20     .
     ; A=A-32 (aka A=A-0x20)
     ret                                                        ; d99f    c9     .
@@ -4140,7 +4140,7 @@ sub_da21h:
     jr nz,lda44h                                               ; da2b    20 17       .
     ld a,(de)                                                  ; da2d    1a     .
     cp 061h                                                    ; da2e    fe 61     . a
-    call nc,FUNC_SUBTRACT_32                                   ; da30    d4 9d d9     . . .
+    call nc,MAKE_UPPERCASE                                   ; da30    d4 9d d9     . . .
     cp 049h                                                    ; da33    fe 49     . I
     jp nc,MSG_BAD_DRIVE                                        ; da35    d2 c2 fb     . . .
     sub 041h                                                   ; da38    d6 41     . A
@@ -4248,7 +4248,7 @@ sub_dabah:
     jp nz,ldb17h                                               ; dacd    c2 17 db     . . .
     ld a,(hl)                                                  ; dad0    7e     ~
     cp 05bh                                                    ; dad1    fe 5b     . [
-    call nc,FUNC_SUBTRACT_32                                   ; dad3    d4 9d d9     . . .
+    call nc,MAKE_UPPERCASE                                   ; dad3    d4 9d d9     . . .
     cp 049h                                                    ; dad6    fe 49     . I
     jp nc,MSG_BAD_DRIVE                                        ; dad8    d2 c2 fb     . . .
     sub 041h                                                   ; dadb    d6 41     . A
@@ -5714,7 +5714,7 @@ le478h:
     jp z,MSG_UNKNOWN_FILE_SYSTEM                               ; e47a    ca c6 fb     . . .
     ld a,(hl)                                                  ; e47d    7e     ~
     cp 061h                                                    ; e47e    fe 61     . a
-    call nc,FUNC_SUBTRACT_32                                   ; e480    d4 9d d9     . . .
+    call nc,MAKE_UPPERCASE                                   ; e480    d4 9d d9     . . .
     ld (ix+000h),a                                             ; e483    dd 77 00     . w .
     inc ix                                                     ; e486    dd 23     . #
     inc hl                                                     ; e488    23     #
@@ -6174,8 +6174,8 @@ le813h:
     and a                                                      ; e814    a7     .
     jp z,MSG_UNKNOWN_FILE_SYSTEM                               ; e815    ca c6 fb     . . .
     ld a,(hl)                                                  ; e818    7e     ~
-    cp 061h                                                    ; e819    fe 61     . a
-    call nc,FUNC_SUBTRACT_32                                   ; e81b    d4 9d d9     . . .
+    cp 'a'                                                    ; e819    fe 61     . a
+    call nc,MAKE_UPPERCASE                                   ; e81b    d4 9d d9     . . .
     ld (ix+000h),a                                             ; e81e    dd 77 00     . w .
     inc hl                                                     ; e821    23     #
     dec b                                                      ; e822    05     .
@@ -6233,8 +6233,8 @@ le888h:
     call DISPLAY_MSG                                           ; e89b    cd 6a d9     . j .
     call KM_WAIT_KEY                                           ; e89e    cd 18 bb     . . .
     ;Was A pressed?
-    cp 061h                                                    ; e8a1    fe 61     . a
-    call nc,FUNC_SUBTRACT_32                                   ; e8a3    d4 9d d9     . . .
+    cp 'a'                                                    ; e8a1    fe 61     . a
+    call nc,MAKE_UPPERCASE                                   ; e8a3    d4 9d d9     . . .
     call TXT_OUTPUT                                            ; e8a6    cd 5a bb     . Z .
     push af                                                    ; e8a9    f5     .
     call PRINT_CR_LF                                           ; e8aa    cd 7d d9     . } .
@@ -6827,11 +6827,11 @@ led68h:
     cp 03fh                                                    ; ed6b    fe 3f     . ?
     jr z,led7eh                                                ; ed6d    28 0f     ( .
     cp 05bh                                                    ; ed6f    fe 5b     . [
-    call nc,FUNC_SUBTRACT_32                                   ; ed71    d4 9d d9     . . .
+    call nc,MAKE_UPPERCASE                                   ; ed71    d4 9d d9     . . .
     ld c,a                                                     ; ed74    4f     O
     ld a,(hl)                                                  ; ed75    7e     ~
     cp 05bh                                                    ; ed76    fe 5b     . [
-    call nc,FUNC_SUBTRACT_32                                   ; ed78    d4 9d d9     . . .
+    call nc,MAKE_UPPERCASE                                   ; ed78    d4 9d d9     . . .
     cp c                                                       ; ed7b    b9     .
     jr nz,led89h                                               ; ed7c    20 0b       .
 led7eh:
@@ -6887,11 +6887,13 @@ sub_edb6h:
     cp 03ah                                                    ; edc4    fe 3a     . :
     jr nz,lede7h                                               ; edc6    20 1f       .
     ld a,(hl)                                                  ; edc8    7e     ~
-    cp 061h                                                    ; edc9    fe 61     . a
-    call nc,FUNC_SUBTRACT_32                                   ; edcb    d4 9d d9     . . .
-    sub 041h                                                   ; edce    d6 41     . A
+    ;if its lowercase, then uppercase it.
+    cp 'a'                                                     ; edc9    fe 61     . a
+    call nc,MAKE_UPPERCASE                                     ; edcb    d4 9d d9     . . .
+    ;convert to a number
+    sub 'A'                                                    ; edce    d6 41     . A
     jp c,MSG_BAD_DRIVE                                         ; edd0    da c2 fb     . . .
-    cp 049h                                                    ; edd3    fe 49     . I
+    cp 'I'                                                     ; edd3    fe 49     . I
     jp nc,MSG_BAD_DRIVE                                        ; edd5    d2 c2 fb     . . .
     ld (iy+WS_CURRENT_DRIVE_LETTER),a                          ; edd8    fd 77 03     . w .
     call lda47h                                                ; eddb    cd 47 da     . G .
@@ -7632,16 +7634,22 @@ lf249h:
     inc hl                                                     ; f25a    23     #
 lf25bh:
     ld a,(hl)                                                  ; f25b    7e     ~
+    ;Is it CR?
     cp 00dh                                                    ; f25c    fe 0d     . .
     jr z,lf27ch                                                ; f25e    28 1c     ( .
+    ;Is it a space?
     cp 020h                                                    ; f260    fe 20     .
     jp c,MSG_BAD_CHAR                                          ; f262    da 93 fb     . . .
+    ;Is it an 'a'?
     cp 061h                                                    ; f265    fe 61     . a
-    call nc,FUNC_SUBTRACT_32                                   ; f267    d4 9d d9     . . .
+    call nc,MAKE_UPPERCASE                                     ; f267    d4 9d d9     . . .
+    ;is it greater than 'Z'?
     cp 05bh                                                    ; f26a    fe 5b     . [
     jp nc,MSG_BAD_CHAR                                         ; f26c    d2 93 fb     . . .
+    ;is it a ','?
     cp 02ch                                                    ; f26f    fe 2c     . ,
     jr z,lf27ch                                                ; f271    28 09     ( .
+    ;Is it a space again?
     cp 020h                                                    ; f273    fe 20     .
     jr z,lf27ch                                                ; f275    28 05     ( .
     inc hl                                                     ; f277    23     #
@@ -7759,13 +7767,13 @@ lf32bh:
     ld hl,RESET_ENTRY_RST_0                                    ; f32e    21 00 00     ! . .
 lf331h:
     ld a,(de)                                                  ; f331    1a     .
-    cp 'a'                                                    ; f332    fe 61     . a
-    call nc,FUNC_SUBTRACT_32                                   ; f334    d4 9d d9     . . .
-    cp '0'                                                    ; f337    fe 30     . 0
+    cp 'a'                                                     ; f332    fe 61     . a
+    call nc,MAKE_UPPERCASE                                     ; f334    d4 9d d9     . . .
+    cp '0'                                                     ; f337    fe 30     . 0
     jr c,lf35fh                                                ; f339    38 24     8 $
-    cp 'G'                                                    ; f33b    fe 47     . G
+    cp 'G'                                                     ; f33b    fe 47     . G
     jr nc,lf35fh                                               ; f33d    30 20     0
-    cp ':'                                                    ; f33f    fe 3a     . :
+    cp ':'                                                     ; f33f    fe 3a     . :
     jr c,lf345h                                                ; f341    38 02     8 .
     sub 007h                                                   ; f343    d6 07     . .
 lf345h:
@@ -7888,7 +7896,8 @@ lf3f0h:
     djnz lf3f0h                                                ; f3f9    10 f5     . .
     jr lf454h                                                  ; f3fb    18 57     . W
 sub_f3fdh:
-    ld a,(iy+WS_CPM_ROM_NUMBER)                                             ; f3fd    fd 7e 01     . ~ .
+    ld a,(iy+WS_CPM_ROM_NUMBER)                                ; f3fd    fd 7e 01     . ~ .
+    ;ROM number is rom id+&30, so drop this back to a usable slot
     sub 030h                                                   ; f400    d6 30     . 0
     ld ix,0bef2h                                               ; f402    dd 21 f2 be     . ! . .
     ld (ix+000h),a                                             ; f406    dd 77 00     . w .
@@ -8488,7 +8497,7 @@ sub_f7e8h:
     ld de,0becfh                                               ; f7e8    11 cf be     . . .
     inc hl                                                     ; f7eb    23     #
     ld bc,0000ch                                               ; f7ec    01 0c 00     . . .
-l0f7efh:                                                    ; Called from an RST 18 (maybe?)
+l0f7efh:            ; Called from an RST 18 (maybe?)
     ldir                                                       ; f7ef    ed b0     . .
     ld a,02eh                                                  ; f7f1    3e 2e     > .
     ld (de),a                                                  ; f7f3    12     .
@@ -8568,7 +8577,7 @@ lf873h:
 lf880h:
     ld a,(ix+000h)                                             ; f880    dd 7e 00     . ~ .
     cp 061h                                                    ; f883    fe 61     . a
-    call nc,FUNC_SUBTRACT_32                                   ; f885    d4 9d d9     . . .
+    call nc,MAKE_UPPERCASE                                   ; f885    d4 9d d9     . . .
     cp 03fh                                                    ; f888    fe 3f     . ?
     jr z,lf893h                                                ; f88a    28 07     ( .
     ld c,a                                                     ; f88c    4f     O
@@ -8641,7 +8650,7 @@ sub_f8f9h:
 sub_f904h:
     inc hl                                                     ; f904    23     #
     push de                                                    ; f905    d5     .
-    ld bc,8                                       ; f906    01 08 00     . . .
+    ld bc,8                                                    ; f906    01 08 00     . . .
     ldir                                                       ; f909    ed b0     . .
     ld a,02eh                                                  ; f90b    3e 2e     > .
     ld (de),a                                                  ; f90d    12     .
@@ -9170,7 +9179,7 @@ sub_fc30h:
     call PRINT_CR_LF                                           ; fc3d    cd 7d d9     . } .
     pop af                                                     ; fc40    f1     .
     cp 061h                                                    ; fc41    fe 61     . a
-    call nc,FUNC_SUBTRACT_32                                   ; fc43    d4 9d d9     . . .
+    call nc,MAKE_UPPERCASE                                   ; fc43    d4 9d d9     . . .
     cp 059h                                                    ; fc46    fe 59     . Y
     ret z                                                      ; fc48    c8     .
     pop hl                                                     ; fc49    e1     .
@@ -9218,7 +9227,7 @@ lfc87h:
     call sub_f143h                                             ; fc8e    cd 43 f1     . C .
     pop af                                                     ; fc91    f1     .
     cp 05bh                                                    ; fc92    fe 5b     . [
-    call nc,FUNC_SUBTRACT_32                                   ; fc94    d4 9d d9     . . .
+    call nc,MAKE_UPPERCASE                                   ; fc94    d4 9d d9     . . .
     cp 052h                                                    ; fc97    fe 52     . R
     jr z,lfca5h                                                ; fc99    28 0a     ( .
     cp 049h                                                    ; fc9b    fe 49     . I
