@@ -241,8 +241,8 @@ RSX_NAMES:
     defb 'DIS', 'K' + 0x80                                     ; DISK
     defb 'DISK.I', 'N' + 0x80                                  ; DISK.IN
     defb 'DISK.OU', 'T' + 0x80                                 ; DISK.OUT
-    defb  0xc1                                                 ; A - Z80asm has a bug where 'A' + 0x80 won't work
-    defb  0xc2                                                 ; B
+    defb  ('A' + 0x80 ) ;0xc1                                  ; A - Z80asm has a bug where 'A' + 0x80 won't work
+    defb  ('B' + 0x80 )                                        ; B
     defb 'DRIV', 'E' + 0x80                                    ; DRIVE
     defb 'USE', 'R' + 0x80                                     ; USER
     defb 'DI', 'R' + 0x80                                      ; DIR
@@ -273,7 +273,7 @@ RSX_NAMES:
     defb 'E', 'B' + 0x80                                       ; EB
     defb 'L', 'S' + 0x80                                       ; LS
     defb 'M', 'D' + 0x80                                       ; MD
-    defb ( 'C' + 0 ) + 0x80                                    ; C - Z80asm bug - can't do a + 0x80 on a single character
+    defb ( 'C' + 0x80 )                                        ; C - Z80asm bug - can't do a + 0x80 on a single character
     defb 'INF', 'O' + 0x80                                     ; INFO
     defb 'LIS', 'T' + 0x80                                     ; LIST
     defb 'DUM', 'P' + 0x80                                     ; DUMP
