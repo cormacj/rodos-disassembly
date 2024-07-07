@@ -26,7 +26,7 @@ POST_BOOT_MSG: equ 0xbec1                                   ; This location is o
 ;This is where the |zap and |rom store the command data.
 ;The first 10 characters are stomped on by what looks like call code. The v2.20 fix moves the area to somewhere safer.
 ;This is v2.19 and maintains the bug.
-;BOOT_CMD_AREA: equ 0bec0h   ;v2.19 setting                                ; This is for forwards compatibility with the bugfix for V2.20
+;BOOT_CMD_AREA: equ 0bec0h   ;v2.19 setting                 ; This is for forwards compatibility with the bugfix for V2.20
 BOOT_CMD_AREA: equ 0xbf30 ;v2.20 bugfix
 ROM_SELECT_DESELECT_RELOCATED: equ 0xbec0
 DISC_NUMBERS:   equ 0xbe00 ;The drive numbers are held here, eg 0=A, etc
@@ -94,19 +94,19 @@ JUMP_RESTORE:       equ 0xbd37
 ;I'm also converting these offsets to decimal to match with the workspace area definitions as
 ;documented in the manual.
 
-WS_RODOS_ROM_NUMBER:         equ 0  ; The rom slot number of the RODOS rom
-WS_CPM_ROM_NUMBER:           equ 1  ; The rom slot number of the CPM (aka AMSDOS) rom (normally slot 7) plus &30.
-                                      ; If the rom is missing or non standard this value is &3F
-WS_CURRENT_DRIVE_LETTER:     equ 3  ; Current Drive Letter
-WS_DRIVE_NUMBER:             equ 4  ; Current Drive Number (mostly used when patching (See Appendix F))
-WS_LOADING_MESSAGES:         equ 8  ; Loading messages (|OPT,1,x)
-WS_DISK_ERROR_RETRY_COUNT:   equ 9  ; Disk read error retry count (|OPT,5,x)
+WS_RODOS_ROM_NUMBER:         equ 0   ; The rom slot number of the RODOS rom
+WS_CPM_ROM_NUMBER:           equ 1   ; The rom slot number of the CPM (aka AMSDOS) rom (normally slot 7) plus &30.
+                                     ; If the rom is missing or non standard this value is &3F
+WS_CURRENT_DRIVE_LETTER:     equ 3   ; Current Drive Letter
+WS_DRIVE_NUMBER:             equ 4   ; Current Drive Number (mostly used when patching (See Appendix F))
+WS_LOADING_MESSAGES:         equ 8   ; Loading messages (|OPT,1,x)
+WS_DISK_ERROR_RETRY_COUNT:   equ 9   ; Disk read error retry count (|OPT,5,x)
 WS_EXPANSION_RAM_COUNT:      equ 11  ; Expansion ram count (in 16k blocks)
 WS_START_PRBUFF_BANK:        equ 12  ; Printer Buffer Bank
 WS_SCREEN_OUTPUT_VALUE:      equ 17  ; Sets normal screen output according to n, where n is the sum of the following:
-                                      ;     +1 - screen output to current open file.
-                                      ;     +2 - screen output to printer.
-                                      ;     +4 - screen echo disabled.
+                                     ;     +1 - screen output to current open file.
+                                     ;     +2 - screen output to printer.
+                                     ;     +4 - screen echo disabled.
 WS_PREVIOUS_DRIVE_LETTER:    equ 19  ; Previous value of WS_CURRENT_DRIVE_LETTER
 WS_OVERWRITE_FILE:           equ 22  ; Overwrite file: 0=ask 1=overwrite 2=create backup
 WS_INPUT_BUFF_ADDR_FILE:     equ 23  ; Address of input buffer (file header)
@@ -309,7 +309,6 @@ ROM_INIT:
 ;=======================================================================
 ;This is the start of the ROM initialise routines.
     call sub_c1f9h                                             ; c1cb    cd f9 c1     . . .
-
     call KL_CURR_SELECTION                                     ; c1ce    cd 12 b9     . . .
 
     ; 006   &B912   KL CURR SELECTION
@@ -341,13 +340,13 @@ lc1dbh:
     inc hl                                                     ; c1e7    23     #
     push hl                                                    ; c1e8    e5     .
     pop iy                                                     ; c1e9    fd e1     . .
-    ld (iy+WS_RODOS_ROM_NUMBER),a                                             ; c1eb    fd 77 00     . w .
+    ld (iy+WS_RODOS_ROM_NUMBER),a                              ; c1eb    fd 77 00     . w .
     call sub_c2cch                                             ; c1ee    cd cc c2     . . .
     pop hl                                                     ; c1f1    e1     .
     pop ix                                                     ; c1f2    dd e1     . .
     pop bc                                                     ; c1f4    c1     .
     pop de                                                     ; c1f5    d1     .
-    jp SET_FLAG_TO_GREATER_THAN                                                  ; c1f6    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                ; c1f6    c3 0a da     . . .
 sub_c1f9h:
     push hl                                                    ; c1f9    e5     .
     push bc                                                    ; c1fa    c5     .
@@ -366,7 +365,7 @@ sub_c1f9h:
     call ROM_SELECT_DESELECT_RELOCATED                         ; c208    cd c0 be     . . .
     cp 052h                                                    ; c20b    fe 52     . R
     jr nz,lc21dh                                               ; c20d    20 0e       .
-    ld hl,RSX_NAMES-1                                               ; c20f    21 c8 c0     ! . .
+    ld hl,RSX_NAMES-1                                          ; c20f    21 c8 c0     ! . .
     call ROM_SELECT_DESELECT_RELOCATED                         ; c212    cd c0 be     . . .
     cp 0cdh                                                    ; c215    fe cd     . .
     jr nz,lc21dh                                               ; c217    20 04       .
@@ -406,7 +405,7 @@ PRINT_RODOS_OFF:
     call DISPLAY_MSG                                           ; c243    cd 6a d9     . j .
     pop hl                                                     ; c246    e1     .
     pop af                                                     ; c247    f1     .
-    jp SET_FLAG_TO_LESS_THAN                                                  ; c248    c3 0f da     . . .
+    jp SET_FLAG_TO_LESS_THAN                                   ; c248    c3 0f da     . . .
 RODOS_OFF_MSG:
     defb '* RODOS OFF *',05ch
     ; Terminated with \ (but using the ascii code because not all assemblers are equal)
@@ -459,7 +458,7 @@ CHECK_FOR_KEY_PRESSED:
     ld a,0c9h                                                  ; c283    3e c9     > .
     ld (0bf07h),a                                              ; c285    32 07 bf     2 . .
     call 0bf05h                                                ; c288    cd 05 bf     . . .
-    jp z,SET_FLAG_TO_GREATER_THAN                                                ; c28b    ca 0a da     . . .
+    jp z,SET_FLAG_TO_GREATER_THAN                              ; c28b    ca 0a da     . . .
     xor a                                                      ; c28e    af     .
     ret                                                        ; c28f    c9     .
 sub_c290h:
@@ -504,7 +503,7 @@ sub_c2cch:
     call CALCULATE_RAM_BLOCKS                                  ; c2cc    cd 0b fb     . . .
     ld hl,VERSION_MSG                                          ; c2cf    21 95 ff     ! . .
     call DISPLAY_MSG                                           ; c2d2    cd 6a d9     . j .
-    call COPY_KL_FIND_COMMAND_TO_WORKSPACE_0x33                                             ; c2d5    cd c3 c3     . . .
+    call COPY_KL_FIND_COMMAND_TO_WORKSPACE_0x33                ; c2d5    cd c3 c3     . . .
     call CHECK_FOR_CPM_ROM                                     ; c2d8    cd cc c4     . . .
     call SETUP_ENTER_KEY_STRINGS                               ; c2db    cd 91 c4     . . .
     call INITIALISE_VARIABLES                                  ; c2de    cd 29 c3     . ) .
@@ -535,15 +534,15 @@ sub_c2cch:
     ;           HL are corrupt. C holds the Sbift and Control status and others are preserved
     ;Notes:     After calling this, C will hold the state of shift and control - if bit 7 is set then Control was pressed, and if
     ;           bit 5 is set then Shift was pressed
-    ld (iy+WS_CD_HOME_SECTOR+1),l                                             ; c2fc    fd 75 46     . u F
-    ld (iy+WS_CD_HOME_SECTOR+2),h                                             ; c2ff    fd 74 47     . t G
+    ld (iy+WS_CD_HOME_SECTOR+1),l                              ; c2fc    fd 75 46     . u F
+    ld (iy+WS_CD_HOME_SECTOR+2),h                              ; c2ff    fd 74 47     . t G
     ;It's odd that HL is stored, because its corrupt coming out of KM_TEST_KEY, unless its patched.
     xor a                                                      ; c302    af     .
-    ld (iy+WS_SCREEN_OUTPUT_VALUE),a                                             ; c303    fd 77 11     . w .
+    ld (iy+WS_SCREEN_OUTPUT_VALUE),a                           ; c303    fd 77 11     . w .
     dec a                                                      ; c306    3d     =
     ld (iy+WS_START_PRBUFF_BANK),a                             ; c307    fd 77 0c     . w .
     ld a,001h                                                  ; c30a    3e 01     > .
-    ld (iy+WS_CASE_SENSITIVITY),a                                             ; c30c    fd 77 41     . w A
+    ld (iy+WS_CASE_SENSITIVITY),a                              ; c30c    fd 77 41     . w A
     call sub_f541h                                             ; c30f    cd 41 f5     . A .
     ld a,004h                                                  ; c312    3e 04     > .
     ld (iy+00dh),a                                             ; c314    fd 77 0d     . w .
@@ -551,41 +550,41 @@ sub_c2cch:
     ;at iy+5a to iy+5c
     ld hl,(0bb5bh)                                             ; c317    2a 5b bb     * [ .
     ld a,(TXT_OUTPUT)                                          ; c31a    3a 5a bb     : Z .
-    ld (iy+WS_ORIGINAL_TXT_OUTPUT),a                                             ; c31d    fd 77 5a     . w Z
-    ld (iy+WS_ORIGINAL_TXT_OUTPUT+1),l                                             ; c320    fd 75 5b     . u [
-    ld (iy+WS_ORIGINAL_TXT_OUTPUT+2),h                                             ; c323    fd 74 5c     . t \
+    ld (iy+WS_ORIGINAL_TXT_OUTPUT),a                           ; c31d    fd 77 5a     . w Z
+    ld (iy+WS_ORIGINAL_TXT_OUTPUT+1),l                         ; c320    fd 75 5b     . u [
+    ld (iy+WS_ORIGINAL_TXT_OUTPUT+2),h                         ; c323    fd 74 5c     . t \
     jp ldf4fh                                                  ; c326    c3 4f df     . O .
 INITIALISE_VARIABLES:
     xor a                                                      ; c329    af     .
     ;A=0
     ;Now set the working space variables to initial values
     ;TODO find out what these actually relate to
-    ld (iy+WS_PREVIOUS_DRIVE_LETTER),a                                             ; c32a    fd 77 13     . w .
-    ld (iy+WS_USER_NUMBER),a                                             ; c32d    fd 77 36     . w 6
-    ld (iy+WS_LOADING_MESSAGES),a                                             ; c330    fd 77 08     . w .
+    ld (iy+WS_PREVIOUS_DRIVE_LETTER),a                         ; c32a    fd 77 13     . w .
+    ld (iy+WS_USER_NUMBER),a                                   ; c32d    fd 77 36     . w 6
+    ld (iy+WS_LOADING_MESSAGES),a                              ; c330    fd 77 08     . w .
 
     ;iy+-15 is only ever used one at location d20c
     ld (iy+015h),a                                              ; c333    fd 77 15     . w .
 
-    ld (iy+WS_OVERWRITE_FILE),a                                             ; c336    fd 77 16     . w .
+    ld (iy+WS_OVERWRITE_FILE),a                                ; c336    fd 77 16     . w .
     ld (iy+03bh),a                                             ; c339    fd 77 3b     . w ;
-    ld (iy+WS_RODOS_USER_NUMBER_LOW),a                                             ; c33c    fd 77 4e     . w N
+    ld (iy+WS_RODOS_USER_NUMBER_LOW),a                         ; c33c    fd 77 4e     . w N
     ld (iy+WS_CD_HOME_DRIVE_NUMBER),a                          ; c33f    fd 77 42     . w B
     ld (iy+WS_CD_HOME_DRIVE_LETTER),a                          ; c342    fd 77 43     . w C
     ld (iy+WS_CD_HOME_TRACK),a                                 ; c345    fd 77 44     . w D
     ld (DISK_ERROR_MESSAGE_FLAG),a                             ; c348    32 78 be     2 x .
-    dec a ;Set A=255                                                     ; c34b    3d     =
-    ld (iy+WS_RODOS_USER_NUMBER_HIGH),a                                             ; c34c    fd 77 4f     . w O
+    dec a ;Set A=255                                           ; c34b    3d     =
+    ld (iy+WS_RODOS_USER_NUMBER_HIGH),a                        ; c34c    fd 77 4f     . w O
     ld (iy+03fh),a                                             ; c34f    fd 77 3f     . w ?
     ld (iy+040h),a                                             ; c352    fd 77 40     . w @
     ld hl,0faffh                                               ; c355    21 ff fa     ! . .
-    ld (iy+WS_EXTRA_DRIVE_PORT_LOW),l                                             ; c358    fd 75 58     . u X
-    ld (iy+WS_EXTRA_DRIVE_PORT_HIGH),h                                             ; c35b    fd 74 59     . t Y
+    ld (iy+WS_EXTRA_DRIVE_PORT_LOW),l                          ; c358    fd 75 58     . u X
+    ld (iy+WS_EXTRA_DRIVE_PORT_HIGH),h                         ; c35b    fd 74 59     . t Y
     call sub_f174h                                             ; c35e    cd 74 f1     . t .
     ld a,081h                                                  ; c361    3e 81     > .
-    ld (iy+WS_CD_HOME_SECTOR),a                                             ; Home sector for |CD         ;c363    fd 77 45     . w E
+    ld (iy+WS_CD_HOME_SECTOR),a  ; Home sector for |CD         ;c363    fd 77 45     . w E
     ld a,010h                                                  ; c366    3e 10     > .
-    ld (iy+WS_DISK_ERROR_RETRY_COUNT),a                                             ; c368    fd 77 09     . w .
+    ld (iy+WS_DISK_ERROR_RETRY_COUNT),a                        ; c368    fd 77 09     . w .
 
     ld de,00021h                                               ; c36b    11 21 00     . ! .
     push iy                                                    ; c36e    fd e5     . .
@@ -668,8 +667,8 @@ RESET_INTERNAL_VARIABLES_TO_DEFAULT:
 ; So.. copy 10 data from c3b2 to be00
 ; then copy 7 data from c3bc to 0be44
 ;
-    ld hl,DISC_NUMBERS_AND_RESET_VARIABLES                                               ; c399    21 b2 c3     ! . .
-    ld de,DISC_NUMBERS                                               ; c39c    11 00 be     . . .
+    ld hl,DISC_NUMBERS_AND_RESET_VARIABLES                     ; c399    21 b2 c3     ! . .
+    ld de,DISC_NUMBERS                                         ; c39c    11 00 be     . . .
     ld bc,0000ah                                               ; c39f    01 0a 00     . . .
     ldir                                                       ; c3a2    ed b0     . .
     ;Repeats LDI (LD (DE),(HL), then increments DE, HL, and decrements BC) until BC=0.
@@ -741,9 +740,9 @@ EXECUTE_RSX_COMMAND:
     ; sub (hl)          ;c3eb    96        .
     ld a,(hl)                                                  ; c3ec    7e     ~
     cp 03ah                                                    ; c3ed    fe 3a     . :
-    jp nc,RODOS_WORKSPACE_KL_FIND_COMMAND                                               ; c3ef    d2 7d c4     . } .
+    jp nc,RODOS_WORKSPACE_KL_FIND_COMMAND                      ; c3ef    d2 7d c4     . } .
     sub 030h                                                   ; c3f2    d6 30     . 0
-    jp c,RODOS_WORKSPACE_KL_FIND_COMMAND                                                ; c3f4    da 7d c4     . } .
+    jp c,RODOS_WORKSPACE_KL_FIND_COMMAND                       ; c3f4    da 7d c4     . } .
     push ix                                                    ; c3f7    dd e5     . .
     ld c,a                                                     ; c3f9    4f     O
     inc hl                                                     ; c3fa    23     #
@@ -775,7 +774,7 @@ lc41eh:
     jr z,lc41eh                                                ; c426    28 f6     ( .
     ld hl,0beb0h                                               ; c428    21 b0 be     ! . .
     push bc                                                    ; c42b    c5     .
-    call RODOS_WORKSPACE_KL_FIND_COMMAND                                                ; c42c    cd 7d c4     . } .
+    call RODOS_WORKSPACE_KL_FIND_COMMAND                       ; c42c    cd 7d c4     . } .
     pop bc                                                     ; c42f    c1     .
     pop hl                                                     ; c430    e1     .
     jr nc,lc460h                                               ; c431    30 2d     0 -
@@ -842,7 +841,7 @@ RODOS_WORKSPACE_KL_FIND_COMMAND:
     ;So... iy+0x33
     ld (0bf01h),hl                                             ; c485    22 01 bf     " . .
     ld a,0c3h                                                  ; c488    3e c3     > .
-    ; JP opocde here (&C3)
+    ; JP opcode here (&C3)
     ld (0bf00h),a                                              ; c48a    32 00 bf     2 . .
     ; So bf00 is the size of the stack, with &BF01... being what is stored.
     pop hl                                                     ; c48d    e1     .
@@ -872,29 +871,29 @@ SETUP_ENTER_KEY_STRINGS:
 ; BLOCK 'STR_CLI_RUN_DISK' (start 0xc4be end 0xc4cb)
 STR_CLI_RUN_DISK_start:
   defb '|CLI',13
-  defb 'RUN',34,'DISC',13                              ;  aka RUN"DISC<cr>
+  defb 'RUN',34,'DISC',13                                      ;  aka RUN"DISC<cr>
 
 
 CHECK_FOR_CPM_ROM:
-;Apparently RODOS searches for |DIR to see if the AMSDOS rom exists.
+;RODOS searches for |DIR to see if the AMSDOS rom exists.
 ;I patched AMSDOS.ROM and changed DIR to FIR and RODOS threw the
 ;"CPM ROM Missing" error message
     ld ix,0bee0h                                               ; c4cc    dd 21 e0 be     . ! . .
     ld (ix+000h),'D'                                           ; c4d0    dd 36 00 44     . 6 . D
     ld (ix+001h),'I'                                           ; c4d4    dd 36 01 49     . 6 . I
-    ld (ix+002h),'R' + 0x80                                    ; 0d2h        ;c4d8    dd 36 02 d2     . 6 . .
+    ld (ix+002h),'R' + 0x80                                    ; c4d8    dd 36 02 d2     . 6 . .
     ld hl,0bee0h                                               ; c4dc    21 e0 be     ! . .
     xor a                                                      ; c4df    af     .
-    call RODOS_WORKSPACE_KL_FIND_COMMAND                                                ; c4e0    cd 7d c4     . } .
+    call RODOS_WORKSPACE_KL_FIND_COMMAND                       ; c4e0    cd 7d c4     . } .
     ld a,c                                                     ; c4e3    79     y
     jr c,lc4efh                                                ; c4e4    38 09     8 .
     call MSG_CPM_ROM_MISSING                                   ; c4e6    cd ba fb     . . .
     ld a,03fh                                                  ; c4e9    3e 3f     > ?
-    ld (iy+WS_CPM_ROM_NUMBER),a                                             ; c4eb    fd 77 01     . w .
+    ld (iy+WS_CPM_ROM_NUMBER),a                                ; c4eb    fd 77 01     . w .
     ret                                                        ; c4ee    c9     .
 lc4efh:
     add a,030h                                                 ; c4ef    c6 30     . 0
-    ld (iy+WS_CPM_ROM_NUMBER),a                                             ; c4f1    fd 77 01     . w .
+    ld (iy+WS_CPM_ROM_NUMBER),a                                ; c4f1    fd 77 01     . w .
     ret                                                        ; c4f4    c9     .
 
 ;=======================================================================
@@ -1057,11 +1056,11 @@ lc608h:
     jr c,lc608h                                                ; c60b    38 fb     8 .
     call KM_WAIT_CHAR                                          ; c60d    cd 06 bb     . . .
     cp 0fch                                                    ; c610    fe fc     . .
-    jp nz,SET_FLAG_TO_EQUAL                                               ; c612    c2 14 da     . . .
+    jp nz,SET_FLAG_TO_EQUAL                                    ; c612    c2 14 da     . . .
     push hl                                                    ; c615    e5     .
     call KM_BREAK_EVENT                                        ; c616    cd 4b bb     . K .
     pop hl                                                     ; c619    e1     .
-    jp SET_FLAG_TO_GREATER_THAN                                                  ; c61a    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                ; c61a    c3 0a da     . . .
 sub_c61dh:
     ;042h is the ESC Key
     ld a,042h                                                  ; c61d    3e 42     > B
@@ -1116,7 +1115,7 @@ BUILD_JUMPTABLE_AND_RST18:
     inc hl                                                     ; c64b    23     #
     ld (hl),a                                                  ; c64c    77     w
     inc hl                                                     ; c64d    23     #
-    djnz BUILD_JUMPTABLE_AND_RST18                                                ; c64e    10 f7     . .
+    djnz BUILD_JUMPTABLE_AND_RST18                             ; c64e    10 f7     . .
     ld (hl),a                                                  ; c650    77     w
     call sub_c66eh ; hl=iy+0x13ah                              ; c651    cd 6e c6     . n .
     ld b,001h                                                  ; c654    06 01     . .
@@ -1245,7 +1244,7 @@ lc6e4h:
 lc6f8h:
     ld a,(de)                                                  ; c6f8    1a     .
     cp 05bh                                                    ; c6f9    fe 5b     . [
-    call nc,MAKE_UPPERCASE                                   ; c6fb    d4 9d d9     . . .
+    call nc,MAKE_UPPERCASE                                     ; c6fb    d4 9d d9     . . .
     ld (hl),a                                                  ; c6fe    77     w
     inc de                                                     ; c6ff    13     .
     inc hl                                                     ; c700    23     #
@@ -1535,7 +1534,7 @@ lc89fh:
 lc8c2h:
     dec a                                                      ; c8c2    3d     =
     ld (iy+00ah),a                                             ; c8c3    fd 77 0a     . w .
-    call SET_FLAG_TO_EQUAL                                                ; c8c6    cd 14 da     . . .
+    call SET_FLAG_TO_EQUAL                                     ; c8c6    cd 14 da     . . .
     jr lc86fh                                                  ; c8c9    18 a4     . .
 lc8cbh:
     ld a,(iy+00ah)                                             ; c8cb    fd 7e 0a     . ~ .
@@ -1549,7 +1548,7 @@ lc8cbh:
     call sub_fc59h                                             ; c8dd    cd 59 fc     . Y .
     jr lc86fh                                                  ; c8e0    18 8d     . .
 lc8e2h:
-    call SET_FLAG_TO_GREATER_THAN                                                ; c8e2    cd 0a da     . . .
+    call SET_FLAG_TO_GREATER_THAN                              ; c8e2    cd 0a da     . . .
     jr lc86fh                                                  ; c8e5    18 88     . .
 lc8e7h:
     dec a                                                      ; c8e7    3d     =
@@ -1671,7 +1670,7 @@ lc996h:
     and 003h                                                   ; c99c    e6 03     . .
     call sub_cad5h                                             ; c99e    cd d5 ca     . . .
     ld a,d                                                     ; c9a1    7a     z
-    bit 1,(iy+WS_CASE_SENSITIVITY)                                            ; c9a2    fd cb 41 4e     . . A N
+    bit 1,(iy+WS_CASE_SENSITIVITY)                             ; c9a2    fd cb 41 4e     . . A N
     jr z,lc9a9h                                                ; c9a6    28 01     ( .
     add a,a                                                    ; c9a8    87     .
 lc9a9h:
@@ -1745,7 +1744,7 @@ sub_ca14h:
     ret z                                                      ; ca26    c8     .
     ret c                                                      ; ca27    d8     .
     call sub_fc5dh                                             ; ca28    cd 5d fc     . ] .
-    jp nz,SET_FLAG_TO_LESS_THAN                                               ; ca2b    c2 0f da     . . .
+    jp nz,SET_FLAG_TO_LESS_THAN                                ; ca2b    c2 0f da     . . .
     jr sub_ca14h                                               ; ca2e    18 e4     . .
 sub_ca30h:
     call sub_ca63h                                             ; ca30    cd 63 ca     . c .
@@ -1946,7 +1945,7 @@ lcb40h:
     jr nz,lcb3ah                                               ; cb47    20 f1       .
     ret                                                        ; cb49    c9     .
 sub_cb4ah:
-    ld a,(iy+WS_DISK_ERROR_RETRY_COUNT)                                             ; cb4a    fd 7e 09     . ~ .
+    ld a,(iy+WS_DISK_ERROR_RETRY_COUNT)                        ; cb4a    fd 7e 09     . ~ .
     ld (iy+00ah),a                                             ; cb4d    fd 77 0a     . w .
     ret                                                        ; cb50    c9     .
 sub_cb51h:
@@ -1991,13 +1990,13 @@ RSX_RANDOM:
     jp nz,MSG_TOO_MANY_PARAMETERS                              ; cb8a    c2 9f fb     . . .
 
     ;Check output buffer (header)
-    ld a,(iy+WS_OUTPUT_BUFF_ADDR_HEADER)                                             ; cb8d    fd 7e 1b     . ~ .
-    or (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1)                                               ; cb90    fd b6 1c     . . .
+    ld a,(iy+WS_OUTPUT_BUFF_ADDR_HEADER)                       ; cb8d    fd 7e 1b     . ~ .
+    or (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1)                       ; cb90    fd b6 1c     . . .
     jp nz,MSG_OUTPUT_FILE_ALEADY_OPEN                          ; cb93    c2 ce fb     . . .
 
     ;Check input buffer (file header)
-    ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; cb96    fd 6e 17     . n .
-    ld h,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                                             ; cb99    fd 66 18     . f .
+    ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                          ; cb96    fd 6e 17     . n .
+    ld h,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                        ; cb99    fd 66 18     . f .
     ld a,h                                                     ; cb9c    7c     |
     or l                                                       ; cb9d    b5     .
     jp z,MSG_INPUT_FILE_NOT_OPEN                               ; cb9e    ca ca fb     . . .
@@ -2013,9 +2012,9 @@ RSX_RANDOM:
     jp nz,MSG_INPUT_FILE_NOT_OPEN                              ; cbb1    c2 ca fb     . . .
     push ix                                                    ; cbb4    dd e5     . .
     pop hl                                                     ; cbb6    e1     .
-    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER),l                                             ; cbb7    fd 75 1b     . u .
-    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1),h                                             ; cbba    fd 74 1c     . t .
-    ld (ix-00fh),052h                                          ; Buffer type - Random (R/052h) ;cbbd    dd 36 f1 52     . 6 . R
+    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER),l                       ; cbb7    fd 75 1b     . u .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1),h                     ; cbba    fd 74 1c     . t .
+    ld (ix-00fh),052h ; Buffer type - Random (R/052h)          ; cbbd    dd 36 f1 52     . 6 . R
     ld (iy+03ah),002h                                          ; cbc1    fd 36 3a 02     . 6 : .
     ret                                                        ; cbc5    c9     .
 lcbc6h:
@@ -2036,8 +2035,8 @@ RSX_POINT:
     jp nc,MSG_TOO_MANY_PARAMETERS                              ; cbda    d2 9f fb     . . .
     and a                                                      ; cbdd    a7     .
     jp z,MSG_WRONG_PARAMETER_AMT                               ; cbde    ca 97 fb     . . .
-    ld a,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; cbe1    fd 7e 17     . ~ .
-    or (iy+WS_INPUT_BUFF_ADDR_FILE+1)                                               ; cbe4    fd b6 18     . . .
+    ld a,(iy+WS_INPUT_BUFF_ADDR_FILE)                          ; cbe1    fd 7e 17     . ~ .
+    or (iy+WS_INPUT_BUFF_ADDR_FILE+1)                          ; cbe4    fd b6 18     . . .
     jp z,MSG_INPUT_FILE_NOT_OPEN                               ; cbe7    ca ca fb     . . .
     ld c,(iy+01fh)                                             ; cbea    fd 4e 1f     . N .
     ld b,(iy+020h)                                             ; cbed    fd 46 20     . F
@@ -2062,8 +2061,8 @@ lcc06h:
     ld b,(ix+001h)                                             ; cc0f    dd 46 01     . F .
     and a                                                      ; cc12    a7     .
     sbc hl,bc                                                  ; cc13    ed 42     . B
-    ld c,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; cc15    fd 4e 17     . N .
-    ld b,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                                             ; cc18    fd 46 18     . F .
+    ld c,(iy+WS_INPUT_BUFF_ADDR_FILE)                          ; cc15    fd 4e 17     . N .
+    ld b,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                        ; cc18    fd 46 18     . F .
     push bc                                                    ; cc1b    c5     .
     pop ix                                                     ; cc1c    dd e1     . .
 lcc1eh:
@@ -2231,16 +2230,16 @@ RSX_ACCESS:
     ld (iy+014h),002h                                          ; cd5e    fd 36 14 02     . 6 . .
     call sub_f798h                                             ; cd62    cd 98 f7     . . .
     ret nc                                                     ; cd65    d0     .
-    bit 3,(iy+WS_CASE_SENSITIVITY)                                            ; cd66    fd cb 41 5e     . . A ^
+    bit 3,(iy+WS_CASE_SENSITIVITY)                             ; cd66    fd cb 41 5e     . . A ^
     jp z,MSG_NO_MATCH                                          ; cd6a    ca ab fb     . . .
     ret                                                        ; cd6d    c9     .
 sub_cd6eh:
     push hl                                                    ; cd6e    e5     .
     pop ix                                                     ; cd6f    dd e1     . .
-    ld a,(iy+WS_RODOS_USER_NUMBER_LOW)                                             ; cd71    fd 7e 4e     . ~ N
+    ld a,(iy+WS_RODOS_USER_NUMBER_LOW)                         ; cd71    fd 7e 4e     . ~ N
     cp (ix+01bh)                                               ; cd74    dd be 1b     . . .
     jp nz,MSG_ACCESS_DENIED                                    ; cd77    c2 a7 fb     . . .
-    ld a,(iy+WS_RODOS_USER_NUMBER_HIGH)                                             ; cd7a    fd 7e 4f     . ~ O
+    ld a,(iy+WS_RODOS_USER_NUMBER_HIGH)                        ; cd7a    fd 7e 4f     . ~ O
     cp (ix+01ch)                                               ; cd7d    dd be 1c     . . .
     jp nz,MSG_ACCESS_DENIED                                    ; cd80    c2 a7 fb     . . .
     ld a,(iy+002h)                                             ; cd83    fd 7e 02     . ~ .
@@ -2304,7 +2303,7 @@ RSX_COPY:
     bit 7,e                                                    ; cdfc    cb 7b     . {
     jr z,lce4ah                                                ; cdfe    28 4a     ( J
     ld (iy+014h),003h                                          ; ce00    fd 36 14 03     . 6 . .
-    ld a,(iy+WS_PREVIOUS_DRIVE_LETTER)                                             ; ce04    fd 7e 13     . ~ .
+    ld a,(iy+WS_PREVIOUS_DRIVE_LETTER)                         ; ce04    fd 7e 13     . ~ .
     push af                                                    ; ce07    f5     .
     call sub_da04h                                             ; ce08    cd 04 da     . . .
     push af                                                    ; ce0b    f5     .
@@ -2384,8 +2383,8 @@ sub_ce5ch:
     jr nc,sub_ceach                                            ; ce93    30 17     0 .
     call CAS_OUT_CHAR                                          ; ce95    cd 95 bc     . . .
     jr nc,sub_ceach                                            ; ce98    30 12     0 .
-    set 2,(iy+WS_CASE_SENSITIVITY)                                            ; ce9a    fd cb 41 d6     . . A .
-    set 4,(iy+WS_CASE_SENSITIVITY)                                            ; ce9e    fd cb 41 e6     . . A .
+    set 2,(iy+WS_CASE_SENSITIVITY)                             ; ce9a    fd cb 41 d6     . . A .
+    set 4,(iy+WS_CASE_SENSITIVITY)                             ; ce9e    fd cb 41 e6     . . A .
 lcea2h:
     call CAS_IN_CHAR                                           ; cea2    cd 80 bc     . . .
     jr nc,lceb9h                                               ; cea5    30 12     0 .
@@ -2395,8 +2394,8 @@ lcea7h:
 sub_ceach:
     call CAS_OUT_ABANDON                                       ; ceac    cd 92 bc     . . .
     call CAS_IN_ABANDON                                        ; ceaf    cd 7d bc     . } .
-    res 4,(iy+WS_CASE_SENSITIVITY)                                            ; ceb2    fd cb 41 a6     . . A .
-    jp SET_FLAG_TO_GREATER_THAN                                                  ; ceb6    c3 0a da     . . .
+    res 4,(iy+WS_CASE_SENSITIVITY)                             ; ceb2    fd cb 41 a6     . . A .
+    jp SET_FLAG_TO_GREATER_THAN                                ; ceb6    c3 0a da     . . .
 lceb9h:
     cp 01ah                                                    ; ceb9    fe 1a     . .
     jr z,lcea7h                                                ; cebb    28 ea     ( .
@@ -2463,7 +2462,7 @@ lcf0eh:
     call sub_cec5h                                             ; cf2a    cd c5 ce     . . .
     pop bc                                                     ; cf2d    c1     .
     ld (iy+014h),000h                                          ; cf2e    fd 36 14 00     . 6 . .
-    jp nc,SET_FLAG_TO_LESS_THAN                                               ; cf32    d2 0f da     . . .
+    jp nc,SET_FLAG_TO_LESS_THAN                                ; cf32    d2 0f da     . . .
     call sub_d878h                                             ; cf35    cd 78 d8     . x .
     ld b,c                                                     ; cf38    41     A
     call sub_ce5ch                                             ; cf39    cd 5c ce     . \ .
@@ -2548,7 +2547,7 @@ lcfa3h:
 lcfb4h:
     ld a,(hl)                                                  ; cfb4    7e     ~
     cp 061h                                                    ; cfb5    fe 61     . a
-    call nc,MAKE_UPPERCASE                                   ; cfb7    d4 9d d9     . . .
+    call nc,MAKE_UPPERCASE                                     ; cfb7    d4 9d d9     . . .
     ld (de),a                                                  ; cfba    12     .
     inc hl                                                     ; cfbb    23     #
     inc de                                                     ; cfbc    13     .
@@ -2592,7 +2591,7 @@ ld00bh:
     ld (0bee2h),hl                                             ; d00f    22 e2 be     " . .
     ld a,b                                                     ; d012    78     x
     ld (0bee4h),a                                              ; d013    32 e4 be     2 . .
-    ld a,(iy+WS_LOADING_MESSAGES)                                             ; d016    fd 7e 08     . ~ .
+    ld a,(iy+WS_LOADING_MESSAGES)                              ; d016    fd 7e 08     . ~ .
     and a                                                      ; d019    a7     .
     call nz,sub_d11fh                                          ; d01a    c4 1f d1     . . .
     ld a,b                                                     ; d01d    78     x
@@ -2625,7 +2624,7 @@ ld053h:
     ld (0bee2h),hl                                             ; d057    22 e2 be     " . .
     ld a,b                                                     ; d05a    78     x
     ld (0bee4h),a                                              ; d05b    32 e4 be     2 . .
-    ld a,(iy+WS_LOADING_MESSAGES)                                             ; d05e    fd 7e 08     . ~ .
+    ld a,(iy+WS_LOADING_MESSAGES)                              ; d05e    fd 7e 08     . ~ .
     and a                                                      ; d061    a7     .
     call nz,sub_d11ah                                          ; d062    c4 1a d1     . . .
     ld a,b                                                     ; d065    78     x
@@ -2637,17 +2636,17 @@ ld053h:
 ld070h:
     ld a,(iy+061h)                                             ; d070    fd 7e 61     . ~ a
     ld (CAS_OUT_OPEN),a                                        ; d073    32 8c bc     2 . .
-    ld hl,(CAS_OUT_OPEN+1)                                             ; d076    2a 8d bc     * . .
+    ld hl,(CAS_OUT_OPEN+1)                                     ; d076    2a 8d bc     * . .
     push hl                                                    ; d079    e5     .
     ld l,(iy+062h)                                             ; d07a    fd 6e 62     . n b
     ld h,(iy+063h)                                             ; d07d    fd 66 63     . f c
-    ld (CAS_OUT_OPEN+1),hl                                             ; d080    22 8d bc     " . .
+    ld (CAS_OUT_OPEN+1),hl                                     ; d080    22 8d bc     " . .
     ld hl,(0bee2h)                                             ; d083    2a e2 be     * . .
     call CAS_OUT_OPEN                                          ; d086    cd 8c bc     . . .
     ld (0bf00h),hl                                             ; d089    22 00 bf     " . .
     pop hl                                                     ; d08c    e1     .
     push af                                                    ; d08d    f5     .
-    ld (CAS_OUT_OPEN+1),hl                                             ; d08e    22 8d bc     " . .
+    ld (CAS_OUT_OPEN+1),hl                                     ; d08e    22 8d bc     " . .
     ld a,0c3h                                                  ; d091    3e c3     > .
     ld (CAS_OUT_OPEN),a                                        ; d093    32 8c bc     2 . .
     ld hl,(0bf00h)                                             ; d096    2a 00 bf     * . .
@@ -2665,7 +2664,7 @@ RSX_FS:
     ld de,0bf09h                                               ; d0a6    11 09 bf     . . .
     ld b,002h                                                  ; d0a9    06 02     . .
     call MAKE_JP_AT_DE_USING_HL                                ; d0ab    cd 74 de     . t .
-    ld hl,(CAS_IN_OPEN+1)                                             ; d0ae    2a 78 bc     * x .
+    ld hl,(CAS_IN_OPEN+1)                                      ; d0ae    2a 78 bc     * x .
     ld a,(0bf0ah)                                              ; d0b1    3a 0a bf     : . .
     cp l                                                       ; d0b4    bd     .
     jr nz,ld0bdh                                               ; d0b5    20 06       .
@@ -2678,16 +2677,16 @@ ld0bdh:
     ld a,(CAS_IN_OPEN)                                         ; d0c3    3a 77 bc     : w .
     ld (iy+05eh),a                                             ; d0c6    fd 77 5e     . w ^
     ld hl,(0bf0ah)                                             ; d0c9    2a 0a bf     * . .
-    ld (CAS_IN_OPEN+1),hl                                             ; d0cc    22 78 bc     " x .
+    ld (CAS_IN_OPEN+1),hl                                      ; d0cc    22 78 bc     " x .
     ld (iy+04ah),l                                             ; d0cf    fd 75 4a     . u J
     ld (iy+04bh),h                                             ; d0d2    fd 74 4b     . t K
     ld a,(0bf09h)                                              ; d0d5    3a 09 bf     : . .
     ld (CAS_IN_OPEN),a                                         ; d0d8    32 77 bc     2 w .
     xor a                                                      ; d0db    af     .
-    ld (iy+WS_INPUT_BUFF_ADDR_FILE),a                                             ; d0dc    fd 77 17     . w .
-    ld (iy+WS_INPUT_BUFF_ADDR_FILE+1),a                                             ; d0df    fd 77 18     . w .
+    ld (iy+WS_INPUT_BUFF_ADDR_FILE),a                          ; d0dc    fd 77 17     . w .
+    ld (iy+WS_INPUT_BUFF_ADDR_FILE+1),a                        ; d0df    fd 77 18     . w .
 ld0e2h:
-    ld hl,(CAS_OUT_OPEN+1)                                             ; d0e2    2a 8d bc     * . .
+    ld hl,(CAS_OUT_OPEN+1)                                     ; d0e2    2a 8d bc     * . .
     ld a,(0bf0dh)                                              ; d0e5    3a 0d bf     : . .
     cp l                                                       ; d0e8    bd     .
     jr nz,ld0f0h                                               ; d0e9    20 05       .
@@ -2700,23 +2699,19 @@ ld0f0h:
     ld (iy+062h),l                                             ; d0f6    fd 75 62     . u b
     ld (iy+063h),h                                             ; d0f9    fd 74 63     . t c
     ld hl,(0bf0dh)                                             ; d0fc    2a 0d bf     * . .
-    ld (CAS_OUT_OPEN+1),hl                                             ; d0ff    22 8d bc     " . .
+    ld (CAS_OUT_OPEN+1),hl                                     ; d0ff    22 8d bc     " . .
     ld (iy+04ch),l                                             ; d102    fd 75 4c     . u L
     ld (iy+04dh),h                                             ; d105    fd 74 4d     . t M
     ld a,(0bf0ch)                                              ; d108    3a 0c bf     : . .
     ld (CAS_OUT_OPEN),a                                        ; d10b    32 8c bc     2 . .
     xor a                                                      ; d10e    af     .
-    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER),a                                             ; d10f    fd 77 1b     . w .
-    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1),a                                             ; d112    fd 77 1c     . w .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER),a                       ; d10f    fd 77 1b     . w .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1),a                     ; d112    fd 77 1c     . w .
     ret                                                        ; d115    c9     .
 ld116h:
     ;Pointers for the RST 18 generator
     dw ld00bh
     dw ld053h
-;     dec bc                                                     ; d116    0b     .
-;     ret nc                                                     ; d117    d0     .
-;     ld d,e                                                     ; d118    53     S
-;     ret nc                                                     ; d119    d0     .
 sub_d11ah:
     ld hl,STR_SAVING                                           ; d11a    21 55 d1     ! U .
     jr ld122h                                                  ; d11d    18 03     . .
@@ -2784,7 +2779,7 @@ ld17ch:
     ld (iy+014h),001h                                          ; d188    fd 36 14 01     . 6 . .
     call sub_f798h                                             ; d18c    cd 98 f7     . . .
     ret nc                                                     ; d18f    d0     .
-    bit 3,(iy+WS_CASE_SENSITIVITY)                                            ; d190    fd cb 41 5e     . . A ^
+    bit 3,(iy+WS_CASE_SENSITIVITY)                             ; d190    fd cb 41 5e     . . A ^
     jp z,MSG_NO_MATCH                                          ; d194    ca ab fb     . . .
     ret                                                        ; d197    c9     .
 ld198h:
@@ -2806,7 +2801,7 @@ sub_d1abh:
     pop ix                                                     ; d1b4    dd e1     . .
     pop hl                                                     ; d1b6    e1     .
     pop bc                                                     ; d1b7    c1     .
-    jp nc,SET_FLAG_TO_LESS_THAN                                               ; d1b8    d2 0f da     . . .
+    jp nc,SET_FLAG_TO_LESS_THAN                                ; d1b8    d2 0f da     . . .
     call sub_d13ch                                             ; d1bb    cd 3c d1     . < .
     call sub_d2c3h                                             ; d1be    cd c3 d2     . . .
     jp CAS_IN_CLOSE                                            ; d1c1    c3 7a bc     . z .
@@ -2834,13 +2829,13 @@ ld1cfh:
     pop iy                                                     ; d1e7    fd e1     . .
     ld a,(iy+012h)                                             ; d1e9    fd 7e 12     . ~ .
     call sub_d1c4h                                             ; d1ec    cd c4 d1     . . .
-    ld a,(iy+WS_INPUT_BUFF_ADDR_SECTOR+1)                                             ; d1ef    fd 7e 1a     . ~ .
+    ld a,(iy+WS_INPUT_BUFF_ADDR_SECTOR+1)                      ; d1ef    fd 7e 1a     . ~ .
     ld (hl),a                                                  ; d1f2    77     w
     inc hl                                                     ; d1f3    23     #
-    ld a,(iy+WS_OUTPUT_BUFF_ADDR_HEADER)                                             ; d1f4    fd 7e 1b     . ~ .
+    ld a,(iy+WS_OUTPUT_BUFF_ADDR_HEADER)                       ; d1f4    fd 7e 1b     . ~ .
     ld (hl),a                                                  ; d1f7    77     w
     call sub_d1c4h                                             ; d1f8    cd c4 d1     . . .
-    ld e,(iy+WS_PREVIOUS_DRIVE_LETTER)                                             ; d1fb    fd 5e 13     . ^ .
+    ld e,(iy+WS_PREVIOUS_DRIVE_LETTER)                         ; d1fb    fd 5e 13     . ^ .
     ld d,(iy+014h)                                             ; d1fe    fd 56 14     . V .
     ld a,e                                                     ; d201    7b     {
     or d                                                       ; d202    b2     .
@@ -2852,7 +2847,7 @@ ld1cfh:
     ld a,(iy+015h)                                             ; d20c    fd 7e 15     . ~ .
     ld (hl),a                                                  ; d20f    77     w
     inc hl                                                     ; d210    23     #
-    ld a,(iy+WS_OVERWRITE_FILE)                                             ; d211    fd 7e 16     . ~ .
+    ld a,(iy+WS_OVERWRITE_FILE)                                ; d211    fd 7e 16     . ~ .
     ld (hl),a                                                  ; d214    77     w
     call sub_d1c4h                                             ; d215    cd c4 d1     . . .
     ld a,(iy+012h)                                             ; d218    fd 7e 12     . ~ .
@@ -2861,8 +2856,8 @@ ld1cfh:
     ld (hl),000h                                               ; d21d    36 00     6 .
     ret                                                        ; d21f    c9     .
 sub_d220h:
-    ld e,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                                             ; d220    fd 5e 18     . ^ .
-    ld d,(iy+WS_INPUT_BUFF_ADDR_SECTOR)                                             ; d223    fd 56 19     . V .
+    ld e,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                        ; d220    fd 5e 18     . ^ .
+    ld d,(iy+WS_INPUT_BUFF_ADDR_SECTOR)                        ; d223    fd 56 19     . V .
     ret                                                        ; d226    c9     .
 
 ;=======================================================================
@@ -3056,7 +3051,7 @@ OPT_1:
     cp 001h                                                    ; d381    fe 01     . .
     jr nz,OPT_2                                                ; d383    20 07       .
     ld a,(ix+000h)                                             ; d385    dd 7e 00     . ~ .
-    ld (iy+WS_LOADING_MESSAGES),a                                             ; d388    fd 77 08     . w .
+    ld (iy+WS_LOADING_MESSAGES),a                              ; d388    fd 77 08     . w .
     ret                                                        ; d38b    c9     .
 OPT_2:
 ;Case sensitivity of filesnames off/on
@@ -3066,10 +3061,10 @@ OPT_2:
     xor 001h                                                   ; d393    ee 01     . .
     and 001h                                                   ; d395    e6 01     . .
     ld c,a                                                     ; d397    4f     O
-    ld a,(iy+WS_CASE_SENSITIVITY)                                             ; d398    fd 7e 41     . ~ A
+    ld a,(iy+WS_CASE_SENSITIVITY)                              ; d398    fd 7e 41     . ~ A
     and 0feh                                                   ; d39b    e6 fe     . .
     or c                                                       ; d39d    b1     .
-    ld (iy+WS_CASE_SENSITIVITY),a                                             ; d39e    fd 77 41     . w A
+    ld (iy+WS_CASE_SENSITIVITY),a                              ; d39e    fd 77 41     . w A
     ret                                                        ; d3a1    c9     .
 OPT_3:
 ;Cassette loading messages off/on
@@ -3084,14 +3079,14 @@ OPT_4:
     cp 004h                                                    ; d3b0    fe 04     . .
     jr nz,OPT_5                                                ; d3b2    20 07       .
     ld a,(ix+000h)                                             ; d3b4    dd 7e 00     . ~ .
-    ld (iy+WS_OVERWRITE_FILE),a                                             ; d3b7    fd 77 16     . w .
+    ld (iy+WS_OVERWRITE_FILE),a                                ; d3b7    fd 77 16     . w .
     ret                                                        ; d3ba    c9     .
 OPT_5:
 ;disk read error retry count (default=16)
     cp 005h                                                    ; d3bb    fe 05     . .
     jr nz,OPT_6                                                ; d3bd    20 0a       .
     ld a,(ix+000h)                                             ; d3bf    dd 7e 00     . ~ .
-    ld (iy+WS_DISK_ERROR_RETRY_COUNT),a                                             ; d3c2    fd 77 09     . w .
+    ld (iy+WS_DISK_ERROR_RETRY_COUNT),a                        ; d3c2    fd 77 09     . w .
     ld (0be66h),a                                              ; d3c5    32 66 be     2 f .
     ret                                                        ; d3c8    c9     .
 OPT_6:
@@ -3137,11 +3132,11 @@ OPT_10:
     cp 00ah                                                    ; d404    fe 0a     . .
     jr nz,OPT_11
     ld hl,0be48h
-    jr UPDATE_DRIVE_PARAM                                               ; d406    20 00       .
+    jr UPDATE_DRIVE_PARAM                                      ; d406    20 00       .
 OPT_11:
     cp 00bh                                                    ; d408    fe 0b     . .
     jr nz,OPT_12                                               ; d40a    20 05       .
-    ;old ld hl,0be48h                                               ; d40c    21 48 be     ! H .
+    ;old ld hl,0be48h                                          ; d40c    21 48 be     ! H .
     ld hl,0be4bh
     jr UPDATE_DRIVE_PARAM                                      ; d40f    18 ec     . .
 OPT_12:
@@ -3149,9 +3144,9 @@ OPT_12:
     cp 00ch                                                    ; d411    fe 0c     . .
     jr nz,OPT_13                                               ; d413    20 0d       .
     ld a,(ix+000h)                                             ; d415    dd 7e 00     . ~ .
-    ld (iy+WS_EXTRA_DRIVE_PORT_LOW),a                                             ; d418    fd 77 58     . w X
+    ld (iy+WS_EXTRA_DRIVE_PORT_LOW),a                          ; d418    fd 77 58     . w X
     ld a,(ix+001h)                                             ; d41b    dd 7e 01     . ~ .
-    ld (iy+WS_EXTRA_DRIVE_PORT_HIGH),a                                             ; d41e    fd 77 59     . w Y
+    ld (iy+WS_EXTRA_DRIVE_PORT_HIGH),a                         ; d41e    fd 77 59     . w Y
     ret                                                        ; d421    c9     .
 OPT_13:
 ;Enable 40 track disk to be read in 80 track drive in double step (off/on)
@@ -3161,10 +3156,10 @@ OPT_13:
     sla a                                                      ; d429    cb 27     . '
     and 002h                                                   ; d42b    e6 02     . .
     ld c,a                                                     ; d42d    4f     O
-    ld a,(iy+WS_CASE_SENSITIVITY)                                             ; d42e    fd 7e 41     . ~ A
+    ld a,(iy+WS_CASE_SENSITIVITY)                              ; d42e    fd 7e 41     . ~ A
     and 0fdh                                                   ; d431    e6 fd     . .
     or c                                                       ; d433    b1     .
-    ld (iy+WS_CASE_SENSITIVITY),a                                             ; d434    fd 77 41     . w A
+    ld (iy+WS_CASE_SENSITIVITY),a                              ; d434    fd 77 41     . w A
     ret                                                        ; d437    c9     .
 OPT_14:
 ;Head settle time in ms (default 15)
@@ -3285,14 +3280,14 @@ RSX_DIR:
     cp 081h                                                    ; d4ef    fe 81     . .
     jr z,ld51ch                                                ; d4f1    28 29     ( )
     ld hl,0bef8h                                               ; d4f3    21 f8 be     ! . .
-    ld a,(iy+WS_CPM_ROM_NUMBER)                                             ; d4f6    fd 7e 01     . ~ .
+    ld a,(iy+WS_CPM_ROM_NUMBER)                                ; d4f6    fd 7e 01     . ~ .
     ld (hl),a                                                  ; d4f9    77     w
     inc hl                                                     ; d4fa    23     #
-    ld (hl),'D'                                               ; d4fb    36 44     6 D
+    ld (hl),'D'                                                ; d4fb    36 44     6 D
     inc hl                                                     ; d4fd    23     #
-    ld (hl),'I'                                               ; d4fe    36 49     6 I
+    ld (hl),'I'                                                ; d4fe    36 49     6 I
     inc hl                                                     ; d500    23     #
-    ld (hl),'R' + 0x80                                               ; d501    36 d2     6 .
+    ld (hl),'R' + 0x80                                         ; d501    36 d2     6 .
     ld hl,0bef8h                                               ; d503    21 f8 be     ! . .
     pop af                                                     ; d506    f1     .
     and a                                                      ; d507    a7     .
@@ -3342,12 +3337,12 @@ RSX_USER:
     jr z,ld558h                                                ; d553    28 03     ( .
     ld a,(ix+000h)                                             ; d555    dd 7e 00     . ~ .
 ld558h:
-    ld (iy+WS_RODOS_USER_NUMBER_LOW),a                                             ; d558    fd 77 4e     . w N
-    ld (iy+WS_RODOS_USER_NUMBER_HIGH),0ffh                                          ; d55b    fd 36 4f ff     . 6 O .
+    ld (iy+WS_RODOS_USER_NUMBER_LOW),a                         ; d558    fd 77 4e     . w N
+    ld (iy+WS_RODOS_USER_NUMBER_HIGH),0ffh                     ; d55b    fd 36 4f ff     . 6 O .
     and 00fh                                                   ; d55f    e6 0f     . .
-    ld (iy+WS_USER_NUMBER),a                                             ; d561    fd 77 36     . w 6
+    ld (iy+WS_USER_NUMBER),a                                   ; d561    fd 77 36     . w 6
     ld ix,0bef0h                                               ; d564    dd 21 f0 be     . ! . .
-    ld a,(iy+WS_CPM_ROM_NUMBER)                                             ; d568    fd 7e 01     . ~ .
+    ld a,(iy+WS_CPM_ROM_NUMBER)                                ; d568    fd 7e 01     . ~ .
     ld (ix+000h),a                                             ; d56b    dd 77 00     . w .
     ;load ix[1-4] for |USER, then do a RSX call
     ld (ix+001h),'U'                                           ; d56e    dd 36 01 55     . 6 . U
@@ -3355,7 +3350,7 @@ ld558h:
     ld (ix+003h),'E'                                           ; d576    dd 36 03 45     . 6 . E
     ld (ix+004h),'R' + 0x80                                    ; d57a    dd 36 04 d2     . 6 . .
     ld ix,0bef5h                                               ; d57e    dd 21 f5 be     . ! . .
-    ld a,(iy+WS_USER_NUMBER)                                             ; d582    fd 7e 36     . ~ 6
+    ld a,(iy+WS_USER_NUMBER)                                   ; d582    fd 7e 36     . ~ 6
     ld (ix+000h),a                                             ; d585    dd 77 00     . w .
     ld (ix+001h),000h                                          ; d588    dd 36 01 00     . 6 . .
     jp ld687h                                                  ; d58c    c3 87 d6     . . .
@@ -3373,7 +3368,7 @@ RSX_REN:
     cp 081h                                                    ; d59f    fe 81     . .
     jr z,ld5b8h                                                ; d5a1    28 15     ( .
     ld hl,0bef0h                                               ; d5a3    21 f0 be     ! . .
-    ld a,(iy+WS_CPM_ROM_NUMBER)                                             ; d5a6    fd 7e 01     . ~ .
+    ld a,(iy+WS_CPM_ROM_NUMBER)                                ; d5a6    fd 7e 01     . ~ .
     ld (hl),a                                                  ; d5a9    77     w
     inc hl                                                     ; d5aa    23     #
     ld (hl),052h                                               ; d5ab    36 52     6 R
@@ -3465,7 +3460,7 @@ ld62ah:
     ldir                                                       ; d64e    ed b0     . .
     pop bc                                                     ; d650    c1     .
     call sub_efbch                                             ; d651    cd bc ef     . . .
-    jp nc,SET_FLAG_TO_GREATER_THAN                                               ; d654    d2 0a da     . . .
+    jp nc,SET_FLAG_TO_GREATER_THAN                             ; d654    d2 0a da     . . .
     xor a                                                      ; d657    af     .
     ret                                                        ; d658    c9     .
 
@@ -3484,7 +3479,7 @@ RSX_ERA:
     cp 081h                                                    ; d66d    fe 81     . .
     jr z,ld69ah                                                ; d66f    28 29     ( )
     ld hl,0bef0h                                               ; d671    21 f0 be     ! . .
-    ld a,(iy+WS_CPM_ROM_NUMBER)                                             ; d674    fd 7e 01     . ~ .
+    ld a,(iy+WS_CPM_ROM_NUMBER)                                ; d674    fd 7e 01     . ~ .
     ld (hl),a                                                  ; d677    77     w
     inc hl                                                     ; d678    23     #
     ld (hl),045h                                               ; d679    36 45     6 E
@@ -3655,11 +3650,11 @@ DO_LOGICAL_DRIVE:
 
     ;So this section loads (de) into A. If A>ascii(a) then uppercase it (ascii(a)-32) and look for a range between A and I
     ld a,(de)                                                  ; d798    1a     .
-    cp 'a'                                                    ; d799    fe 61     . a
-    call nc,MAKE_UPPERCASE                                   ; d79b    d4 9d d9     . . .
-    cp 'A'                                                    ; d79e    fe 41     . A
+    cp 'a'                                                     ; d799    fe 61     . a
+    call nc,MAKE_UPPERCASE                                     ; d79b    d4 9d d9     . . .
+    cp 'A'                                                     ; d79e    fe 41     . A
     jp c,MSG_BAD_DRIVE                                         ; d7a0    da c2 fb     . . .
-    cp 'I'                                                    ; d7a3    fe 49     . I
+    cp 'I'                                                     ; d7a3    fe 49     . I
     jp nc,MSG_BAD_DRIVE                                        ; d7a5    d2 c2 fb     . . .
 
 
@@ -3667,7 +3662,7 @@ DO_LOGICAL_DRIVE:
     ;So take a range of letters starting at A and convert into numbers starting at 0
     ld e,a                                                     ; d7aa    5f     _
     ld d,000h                                                  ; d7ab    16 00     . .
-    ld hl,DISC_NUMBERS                                               ; d7ad    21 00 be     ! . .
+    ld hl,DISC_NUMBERS                                         ; d7ad    21 00 be     ! . .
     add hl,de                                                  ; d7b0    19     .
     ;HL=be00+drive number
     ld a,(ix+000h)                                             ; d7b1    dd 7e 00     . ~ .
@@ -3727,7 +3722,7 @@ RSX_DRIVE:
     jp nz,MSG_BAD_DRIVE                                        ; d7e2    c2 c2 fb     . . .
     ld a,(de)                                                  ; d7e5    1a     .
     cp 061h                                                    ; d7e6    fe 61     . a
-    call nc,MAKE_UPPERCASE                                   ; d7e8    d4 9d d9     . . .
+    call nc,MAKE_UPPERCASE                                     ; d7e8    d4 9d d9     . . .
     cp 049h                                                    ; d7eb    fe 49     . I
     jp nc,MSG_BAD_DRIVE                                        ; d7ed    d2 c2 fb     . . .
     sub 041h                                                   ; d7f0    d6 41     . A
@@ -3742,13 +3737,13 @@ PROCESS_DRIVE_CHANGE:
     ret nc                                                     ; d805    d0     .
     jp nz,MSG_DISC_NOT_FORMATTED                               ; d806    c2 22 fc     . " .
     ld a,(iy+WS_CURRENT_DRIVE_LETTER)                          ; d809    fd 7e 03     . ~ .
-    ld (iy+WS_PREVIOUS_DRIVE_LETTER),a                                             ; d80c    fd 77 13     . w .
+    ld (iy+WS_PREVIOUS_DRIVE_LETTER),a                         ; d80c    fd 77 13     . w .
     ld (iy+WS_CD_HOME_DRIVE_LETTER),a                          ; d80f    fd 77 43     . w C
     call sub_da62h                                             ; d812    cd 62 da     . b .
     ld a,(iy+005h)                                             ; d815    fd 7e 05     . ~ .
     ld (iy+WS_CD_HOME_TRACK),a                                 ; d818    fd 77 44     . w D
     ld a,(iy+006h)                                             ; d81b    fd 7e 06     . ~ .
-    ld (iy+WS_CD_HOME_SECTOR),a                                             ; d81e    fd 77 45     . w E
+    ld (iy+WS_CD_HOME_SECTOR),a                                ; d81e    fd 77 45     . w E
     ld a,(iy+WS_DRIVE_NUMBER)                                  ; d821    fd 7e 04     . ~ .
     ld (iy+WS_CD_HOME_DRIVE_NUMBER),a                          ; d824    fd 77 42     . w B
 ld827h:
@@ -3756,7 +3751,7 @@ ld827h:
     ret z                                                      ; d829    c8     .
     ld e,a                                                     ; d82a    5f     _
     call sub_c9dbh                                             ; d82b    cd db c9     . . .
-    ld a,(iy+WS_CPM_ROM_NUMBER)                                             ; d82e    fd 7e 01     . ~ .
+    ld a,(iy+WS_CPM_ROM_NUMBER)                                ; d82e    fd 7e 01     . ~ .
     cp 03fh                                                    ; d831    fe 3f     . ?
     ret z                                                      ; d833    c8     .
     ld a,e                                                     ; d834    7b     {
@@ -3764,7 +3759,7 @@ ld827h:
     and 001h                                                   ; d838    e6 01     . .
     add a,0c1h                                                 ; d83a    c6 c1     . .
     ld e,a                                                     ; d83c    5f     _
-    ld a,(iy+WS_CPM_ROM_NUMBER)                                             ; d83d    fd 7e 01     . ~ .
+    ld a,(iy+WS_CPM_ROM_NUMBER)                                ; d83d    fd 7e 01     . ~ .
     ld (hl),a                                                  ; d840    77     w
     inc hl                                                     ; d841    23     #
     ld (hl),e                                                  ; d842    73     s
@@ -3791,8 +3786,9 @@ RSX_EB:
     ld a,001h                                                  ; d868    3e 01     > .
     jp sub_d48ch                                               ; d86a    c3 8c d4     . . .
 ld86dh:
+    ;Note: This gets moved from here to &bed2 - see above
     defb 5                   ; &bed2 - length of '*.BAK'       ; d86d    05     .
-    defw 0bed5h              ; &bed3 - Where '*.BAK' lives                         ; d86e    d5     .
+    defw 0bed5h              ; &bed3 - Where '*.BAK' lives     ; d86e    d5     .
     defb '*.BAK'             ; &bed5-&bed9
     defb 'ER', 'A' + 0x80    ; &beda
 
@@ -3823,7 +3819,8 @@ PRINT_STRING:
     djnz PRINT_STRING                                          ; d897    10 f9     . .
     ret                                                        ; d899    c9     .
 CLS_DATA:
-    ;This data provides escape codes to do: Clear screen to Mode 2, with white text (ink 13) on black paper
+    ;This data provides escape codes to do:
+    ; lear screen to Mode 2, with white text (ink 13) on black paper
     defb 04h,002h                                              ; Set mode 2
     defb 0eh,000h                                              ; Set paper ink 0 (Black)
     defb 0fh,001h                                              ; Set pen ink 1 (White)
@@ -4033,7 +4030,7 @@ Space: equ 32
     pop af                                                     ; d99b    f1     .
     ret                                                        ; d99c    c9     .
 MAKE_UPPERCASE:
-    sub 020h                                                   ;d99d    d6 20     .
+    sub 020h                                                   ; d99d    d6 20     .
     ; A=A-32 (aka A=A-0x20)
     ret                                                        ; d99f    c9     .
 sub_d9a0h:
@@ -4140,7 +4137,7 @@ sub_da21h:
     jr nz,lda44h                                               ; da2b    20 17       .
     ld a,(de)                                                  ; da2d    1a     .
     cp 061h                                                    ; da2e    fe 61     . a
-    call nc,MAKE_UPPERCASE                                   ; da30    d4 9d d9     . . .
+    call nc,MAKE_UPPERCASE                                     ; da30    d4 9d d9     . . .
     cp 049h                                                    ; da33    fe 49     . I
     jp nc,MSG_BAD_DRIVE                                        ; da35    d2 c2 fb     . . .
     sub 041h                                                   ; da38    d6 41     . A
@@ -4167,8 +4164,8 @@ lda47h:
     pop af                                                     ; da60    f1     .
     ret                                                        ; da61    c9     .
 sub_da62h:
-    ld a,(iy+WS_PREVIOUS_DRIVE_LETTER)                                             ; Probably Current Side of Disc    ;da62    fd 7e 13     . ~ .
-    ld (iy+WS_CURRENT_DRIVE_LETTER),a                          ; Probably Current Disc    ;da65    fd 77 03     . w .
+    ld a,(iy+WS_PREVIOUS_DRIVE_LETTER)                         ; da62    fd 7e 13     . ~ .
+    ld (iy+WS_CURRENT_DRIVE_LETTER),a                          ; da65    fd 77 03     . w .
     jr lda47h                                                  ; da68    18 dd     . .
 sub_da6ah:
     call sub_da1bh                                             ; da6a    cd 1b da     . . .
@@ -4181,7 +4178,7 @@ sub_da6ah:
     ret nz                                                     ; da75    c0     .
     ex de,hl                                                   ; da76    eb     .
     cp 081h                                                    ; da77    fe 81     . .
-    jp nz,SET_FLAG_TO_GREATER_THAN                                               ; da79    c2 0a da     . . .
+    jp nz,SET_FLAG_TO_GREATER_THAN                             ; da79    c2 0a da     . . .
     xor a                                                      ; da7c    af     .
     ld a,b                                                     ; da7d    78     x
     scf                                                        ; da7e    37     7
@@ -4248,7 +4245,7 @@ sub_dabah:
     jp nz,ldb17h                                               ; dacd    c2 17 db     . . .
     ld a,(hl)                                                  ; dad0    7e     ~
     cp 05bh                                                    ; dad1    fe 5b     . [
-    call nc,MAKE_UPPERCASE                                   ; dad3    d4 9d d9     . . .
+    call nc,MAKE_UPPERCASE                                     ; dad3    d4 9d d9     . . .
     cp 049h                                                    ; dad6    fe 49     . I
     jp nc,MSG_BAD_DRIVE                                        ; dad8    d2 c2 fb     . . .
     sub 041h                                                   ; dadb    d6 41     . A
@@ -4286,11 +4283,11 @@ sub_db19h:
     ld bc,KL_FAR_PCHL                                          ; db1b    01 1b 00     . . .
     add hl,bc                                                  ; db1e    09     .
     ld a,(hl)                                                  ; db1f    7e     ~
-    cp (iy+WS_RODOS_USER_NUMBER_LOW)                                               ; db20    fd be 4e     . . N
+    cp (iy+WS_RODOS_USER_NUMBER_LOW)                           ; db20    fd be 4e     . . N
     jr nz,ldb36h                                               ; db23    20 11       .
     inc hl                                                     ; db25    23     #
     ld a,(hl)                                                  ; db26    7e     ~
-    cp (iy+WS_RODOS_USER_NUMBER_HIGH)                                               ; db27    fd be 4f     . . O
+    cp (iy+WS_RODOS_USER_NUMBER_HIGH)                          ; db27    fd be 4f     . . O
     jr nz,ldb36h                                               ; db2a    20 0a       .
     pop hl                                                     ; db2c    e1     .
     push hl                                                    ; db2d    e5     .
@@ -4377,7 +4374,7 @@ ldba2h:
     jr nz,ldbd7h                                               ; dbaf    20 26       &
     ld b,028h                                                  ; dbb1    06 28     . (
     ld a,(iy+WS_DRIVE_NUMBER)                                  ; dbb3    fd 7e 04     . ~ .
-    ld e,(iy+WS_PREVIOUS_DRIVE_LETTER)                                             ; dbb6    fd 5e 13     . ^ .
+    ld e,(iy+WS_PREVIOUS_DRIVE_LETTER)                         ; dbb6    fd 5e 13     . ^ .
     cp 0ffh                                                    ; dbb9    fe ff     . .
     call z,sub_f11ah                                           ; dbbb    cc 1a f1     . . .
     ld (iy+WS_DRIVE_NUMBER),a                                  ; dbbe    fd 77 04     . w .
@@ -4454,7 +4451,7 @@ ldc22h:
 ldc29h:
     ld e,(iy+002h)                                             ; dc29    fd 5e 02     . ^ .
     ld d,000h                                                  ; dc2c    16 00     . .
-    ld hl,FIRST_SECTOR                                               ; dc2e    21 8d dd     ! . .
+    ld hl,FIRST_SECTOR                                         ; dc2e    21 8d dd     ! . .
     add hl,de                                                  ; dc31    19     .
     ld a,(hl)                                                  ; dc32    7e     ~
     ld (0bebfh),a                                              ; dc33    32 bf be     2 . .
@@ -4472,13 +4469,13 @@ ldc40h:
     inc d                                                      ; dc49    14     .
     cp 0efh                                                    ; dc4a    fe ef     . .
 ldc4ch:
-    jp z,SET_FLAG_TO_GREATER_THAN                                                ; dc4c    ca 0a da     . . .
+    jp z,SET_FLAG_TO_GREATER_THAN                              ; dc4c    ca 0a da     . . .
     ld a,d                                                     ; dc4f    7a     z
     cp (iy+00fh)                                               ; dc50    fd be 0f     . . .
     jr nz,ldc40h                                               ; dc53    20 eb       .
     ld a,(iy+002h)                                             ; dc55    fd 7e 02     . ~ .
     cp 002h                                                    ; dc58    fe 02     . .
-    jp nz,SET_FLAG_TO_EQUAL                                               ; dc5a    c2 14 da     . . .
+    jp nz,SET_FLAG_TO_EQUAL                                    ; dc5a    c2 14 da     . . .
     jr ldcb8h                                                  ; dc5d    18 59     . Y
 ldc5fh:
     ld a,(iy+002h)                                             ; dc5f    fd 7e 02     . ~ .
@@ -4500,7 +4497,7 @@ ldc75h:
     pop iy                                                     ; dc84    fd e1     . .
     pop de                                                     ; dc86    d1     .
     cp 0efh                                                    ; dc87    fe ef     . .
-    jp z,SET_FLAG_TO_GREATER_THAN                                                ; dc89    ca 0a da     . . .
+    jp z,SET_FLAG_TO_GREATER_THAN                              ; dc89    ca 0a da     . . .
     ld a,(iy+012h)                                             ; dc8c    fd 7e 12     . ~ .
     xor 001h                                                   ; dc8f    ee 01     . .
     ld (iy+012h),a                                             ; dc91    fd 77 12     . w .
@@ -4512,7 +4509,7 @@ ldc75h:
     pop iy                                                     ; dc9f    fd e1     . .
     pop de                                                     ; dca1    d1     .
     cp 0efh                                                    ; dca2    fe ef     . .
-    jp z,SET_FLAG_TO_GREATER_THAN                                                ; dca4    ca 0a da     . . .
+    jp z,SET_FLAG_TO_GREATER_THAN                              ; dca4    ca 0a da     . . .
     inc d                                                      ; dca7    14     .
     ld a,d                                                     ; dca8    7a     z
     cp (iy+00fh)                                               ; dca9    fd be 0f     . . .
@@ -4654,7 +4651,7 @@ RSX_TDUMP:
     call SCR_GET_MODE                                          ; dd9a    cd 11 bc     . . .
     ld e,a                                                     ; dd9d    5f     _
     ld d,000h                                                  ; dd9e    16 00     . .
-    ld hl,MODES_LOOKUP                                               ; dda0    21 23 de     ! # .
+    ld hl,MODES_LOOKUP                                         ; dda0    21 23 de     ! # .
     add hl,de                                                  ; dda3    19     .
     ld a,(hl)                                                  ; dda4    7e     ~
     ld (0bef2h),a                                              ; dda5    32 f2 be     2 . .
@@ -4781,6 +4778,7 @@ RSX_DISK_OUT:
     ld de,CAS_OUT_OPEN                                         ; de54    11 8c bc     . . .
     jp MAKE_JP_AT_DE_USING_HL                                  ; de57    c3 74 de     . t .
 lde5ah:
+    ;Table of pointers from MAKE_JP_AT_DE_USING_HL
     dw le729h
     ;add hl,hl                                                  ; de5a    29     )
     ;rst 20h                                                    ; de5b    e7     .
@@ -4954,7 +4952,7 @@ GENERATE_RST18_AT_HL:
     ld (hl),a                                                  ; de98    77     w
     inc ix                                                     ; de99    dd 23     . #
     inc hl                                                     ; de9b    23     #
-    ld a,(iy+WS_RODOS_ROM_NUMBER)                                             ; de9c    fd 7e 00     . ~ .
+    ld a,(iy+WS_RODOS_ROM_NUMBER)                              ; de9c    fd 7e 00     . ~ .
     ld (hl),a                                                  ; de9f    77     w
     inc hl                                                     ; dea0    23     #
     djnz MAKE_JP_AT_DE_USING_HL                                ; dea1    10 d1     . .
@@ -4971,30 +4969,30 @@ ldea4h:
     ret                                                        ; deaf    c9     .
 sub_deb0h:
     push af                                                    ; deb0    f5     .
-    ld l,(iy+WS_KM_TEST_KEY_VALUE)                                             ; deb1    fd 6e 46     . n F
-    ld h,(iy+WS_KM_TEST_KEY_VALUE+1)                                             ; deb4    fd 66 47     . f G
+    ld l,(iy+WS_KM_TEST_KEY_VALUE)                             ; deb1    fd 6e 46     . n F
+    ld h,(iy+WS_KM_TEST_KEY_VALUE+1)                           ; deb4    fd 66 47     . f G
 ldeb7h:
     ld a,(hl)                                                  ; deb7    7e     ~
     and 0a0h                                                   ; deb8    e6 a0     . .
     cp 0a0h                                                    ; deba    fe a0     . .
     jr z,ldeb7h                                                ; debc    28 f9     ( .
     pop af                                                     ; debe    f1     .
-    bit 0,(iy+WS_SCREEN_OUTPUT_VALUE)                                            ; debf    fd cb 11 46     . . . F
+    bit 0,(iy+WS_SCREEN_OUTPUT_VALUE)                          ; debf    fd cb 11 46     . . . F
     call nz,sub_defah                                          ; dec3    c4 fa de     . . .
-    bit 1,(iy+WS_SCREEN_OUTPUT_VALUE)                                            ; dec6    fd cb 11 4e     . . . N
+    bit 1,(iy+WS_SCREEN_OUTPUT_VALUE)                          ; dec6    fd cb 11 4e     . . . N
     call nz,SEND_CHARACTER_TO_PRINTER                          ; deca    c4 00 df     . . .
-    bit 2,(iy+WS_SCREEN_OUTPUT_VALUE)                                            ; decd    fd cb 11 56     . . . V
+    bit 2,(iy+WS_SCREEN_OUTPUT_VALUE)                          ; decd    fd cb 11 56     . . . V
     ret nz                                                     ; ded1    c0     .
     ld hl,(TXT_OUTPUT)                                         ; ded2    2a 5a bb     * Z .
     push hl                                                    ; ded5    e5     .
     ld hl,(0bb5ch)                                             ; ded6    2a 5c bb     * \ .
     ld h,a                                                     ; ded9    67     g
-    ld a,(iy+WS_ORIGINAL_TXT_OUTPUT)                                             ; deda    fd 7e 5a     . ~ Z
+    ld a,(iy+WS_ORIGINAL_TXT_OUTPUT)                           ; deda    fd 7e 5a     . ~ Z
 sub_deddh:
     ld (TXT_OUTPUT),a                                          ; dedd    32 5a bb     2 Z .
-    ld a,(iy+WS_ORIGINAL_TXT_OUTPUT+1)                                             ; dee0    fd 7e 5b     . ~ [
+    ld a,(iy+WS_ORIGINAL_TXT_OUTPUT+1)                         ; dee0    fd 7e 5b     . ~ [
     ld (0bb5bh),a                                              ; dee3    32 5b bb     2 [ .
-    ld a,(iy+WS_ORIGINAL_TXT_OUTPUT+2)                                             ; dee6    fd 7e 5c     . ~ \
+    ld a,(iy+WS_ORIGINAL_TXT_OUTPUT+2)                         ; dee6    fd 7e 5c     . ~ \
     ld (0bb5ch),a                                              ; dee9    32 5c bb     2 \ .
     ld a,h                                                     ; deec    7c     |
     call TXT_OUTPUT                                            ; deed    cd 5a bb     . Z .
@@ -5033,7 +5031,7 @@ CHECK_FOR_ESC:
     pop af                                                     ; df17    f1     .
     jr SEND_CHARACTER_TO_PRINTER                               ; df18    18 e6     . .
 ldf1ah:
-    res 1,(iy+WS_SCREEN_OUTPUT_VALUE)                                            ; df1a    fd cb 11 8e     . . . .
+    res 1,(iy+WS_SCREEN_OUTPUT_VALUE)                          ; df1a    fd cb 11 8e     . . . .
     pop af                                                     ; df1e    f1     .
     ret                                                        ; df1f    c9     .
 
@@ -5043,7 +5041,7 @@ RSX_SPOOL:
     and a                                                      ; df20    a7     .
     jr nz,ldf2ah                                               ; df21    20 07       .
 sub_df23h:
-    res 0,(iy+WS_SCREEN_OUTPUT_VALUE)                                            ; df23    fd cb 11 86     . . . .
+    res 0,(iy+WS_SCREEN_OUTPUT_VALUE)                          ; df23    fd cb 11 86     . . . .
     jp CAS_OUT_CLOSE                                           ; df27    c3 8f bc     . . .
 ldf2ah:
     cp 002h                                                    ; df2a    fe 02     . .
@@ -5052,7 +5050,7 @@ ldf2ah:
     ld de,08000h                                               ; df32    11 00 80     . . .
     call CAS_OUT_OPEN                                          ; df35    cd 8c bc     . . .
     ret nc                                                     ; df38    d0     .
-    set 0,(iy+WS_SCREEN_OUTPUT_VALUE)                                            ; df39    fd cb 11 c6     . . . .
+    set 0,(iy+WS_SCREEN_OUTPUT_VALUE)                          ; df39    fd cb 11 c6     . . . .
     jp ldf4fh                                                  ; df3d    c3 4f df     . O .
 
 ;=======================================================================
@@ -5064,7 +5062,7 @@ RSX_PRINT:
     jp nc,MSG_TOO_MANY_PARAMETERS                              ; df45    d2 9f fb     . . .
     ld a,(ix+000h)                                             ; df48    dd 7e 00     . ~ .
 ldf4bh:
-    ld (iy+WS_SCREEN_OUTPUT_VALUE),a                                             ; df4b    fd 77 11     . w .
+    ld (iy+WS_SCREEN_OUTPUT_VALUE),a                           ; df4b    fd 77 11     . w .
     ret                                                        ; df4e    c9     .
 ldf4fh:
     ld b,001h                                                  ; df4f    06 01     . .
@@ -5174,11 +5172,11 @@ le010h:
     ld a,(iy+WS_CURRENT_DRIVE_LETTER)                          ; e01c    fd 7e 03     . ~ .
     cp 008h                                                    ; e01f    fe 08     . .
     jr nz,le041h                                               ; e021    20 1e       .
-    ld a,(iy+WS_PREVIOUS_DRIVE_LETTER)                                             ; e023    fd 7e 13     . ~ .
+    ld a,(iy+WS_PREVIOUS_DRIVE_LETTER)                         ; e023    fd 7e 13     . ~ .
     cp (iy+WS_CURRENT_DRIVE_LETTER)                            ; e026    fd be 03     . . .
     ret z                                                      ; e029    c8     .
     ld (iy+WS_CURRENT_DRIVE_LETTER),a                          ; e02a    fd 77 03     . w .
-    ld hl,DISC_NUMBERS                                               ; e02d    21 00 be     ! . .
+    ld hl,DISC_NUMBERS                                         ; e02d    21 00 be     ! . .
     ld e,a                                                     ; e030    5f     _
     ld d,000h                                                  ; e031    16 00     . .
     add hl,de                                                  ; e033    19     .
@@ -5188,7 +5186,7 @@ le010h:
     ld a,(iy+WS_DRIVE_NUMBER)                                  ; e03b    fd 7e 04     . ~ .
     jp ld827h                                                  ; e03e    c3 27 d8     . ' .
 le041h:
-    ld (iy+WS_PREVIOUS_DRIVE_LETTER),a                                             ; e041    fd 77 13     . w .
+    ld (iy+WS_PREVIOUS_DRIVE_LETTER),a                         ; e041    fd 77 13     . w .
     ld a,(iy+WS_DRIVE_NUMBER)                                  ; e044    fd 7e 04     . ~ .
     jp ld827h                                                  ; e047    c3 27 d8     . ' .
 le04ah:
@@ -5197,11 +5195,11 @@ le04ah:
     ld e,a                                                     ; e050    5f     _
     ld a,(iy+WS_CD_HOME_TRACK)                                 ; e051    fd 7e 44     . ~ D
     ld (iy+005h),a                                             ; e054    fd 77 05     . w .
-    ld a,(iy+WS_CD_HOME_SECTOR)                                             ; e057    fd 7e 45     . ~ E
+    ld a,(iy+WS_CD_HOME_SECTOR)                                ; e057    fd 7e 45     . ~ E
     ld (iy+006h),a                                             ; e05a    fd 77 06     . w .
     ld a,(iy+WS_CD_HOME_DRIVE_NUMBER)                          ; e05d    fd 7e 42     . ~ B
     ld (iy+WS_DRIVE_NUMBER),a                                  ; e060    fd 77 04     . w .
-    ld hl,DISC_NUMBERS                                               ; e063    21 00 be     ! . .
+    ld hl,DISC_NUMBERS                                         ; e063    21 00 be     ! . .
     ld d,000h                                                  ; e066    16 00     . .
     add hl,de                                                  ; e068    19     .
     ld (hl),a                                                  ; e069    77     w
@@ -5231,7 +5229,7 @@ RSX_LINK:
     cp 0feh                                                    ; e09b    fe fe     . .
     jp nz,MSG_CANT_LINK_TO_LINKED_FILE                         ; e09d    c2 d6 fb     . . .
     ld l,(iy+WS_CURRENT_DRIVE_LETTER)                          ; e0a0    fd 6e 03     . n .
-    ld a,(iy+WS_PREVIOUS_DRIVE_LETTER)                                             ; e0a3    fd 7e 13     . ~ .
+    ld a,(iy+WS_PREVIOUS_DRIVE_LETTER)                         ; e0a3    fd 7e 13     . ~ .
     cp l                                                       ; e0a6    bd     .
     ld l,(iy+WS_DRIVE_NUMBER)                                  ; e0a7    fd 6e 04     . n .
     call z,sub_e0cfh                                           ; e0aa    cc cf e0     . . .
@@ -5385,8 +5383,8 @@ le1a7h:
     xor a                                                      ; e1b7    af     .
     ret                                                        ; e1b8    c9     .
 le1b9h:
-    ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; e1b9    fd 6e 17     . n .
-    ld a,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                                             ; e1bc    fd 7e 18     . ~ .
+    ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                          ; e1b9    fd 6e 17     . n .
+    ld a,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                        ; e1bc    fd 7e 18     . ~ .
     or l                                                       ; e1bf    b5     .
     jp nz,SET_FLAG_TO_LESS_THAN                                               ; e1c0    c2 0f da     . . .
     push de                                                    ; e1c3    d5     .
@@ -5410,7 +5408,7 @@ le1e0h:
     ld (iy+040h),0ffh                                          ; e1e5    fd 36 40 ff     . 6 @ .
 le1e9h:
     call sub_ef8bh                                             ; e1e9    cd 8b ef     . . .
-    jp nc,SET_FLAG_TO_EQUAL                                               ; e1ec    d2 14 da     . . .
+    jp nc,SET_FLAG_TO_EQUAL                                    ; e1ec    d2 14 da     . . .
     push hl                                                    ; e1ef    e5     .
     call sub_e32ch                                             ; e1f0    cd 2c e3     . , .
     pop hl                                                     ; e1f3    e1     .
@@ -5448,7 +5446,7 @@ le232h:
     ld a,04bh                                                  ; e237    3e 4b     > K
     call TXT_OUTPUT                                            ; e239    cd 5a bb     . Z .
     call PRINT_CR_LF                                           ; e23c    cd 7d d9     . } .
-    jp SET_FLAG_TO_GREATER_THAN                                                  ; e23f    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                ; e23f    c3 0a da     . . .
 le242h:
     ld (0beeeh),de                                             ; e242    ed 53 ee be     . S . .
     ld ix,0bef0h                                               ; e246    dd 21 f0 be     . ! . .
@@ -5464,7 +5462,7 @@ le242h:
     ld de,(0beeeh)                                             ; e262    ed 5b ee be     . [ . .
     call CAS_CATALOG                                           ; e266    cd 9b bc     . . .
     call RSX_DISK_IN                                           ; e269    cd 29 de     . ) .
-    jp SET_FLAG_TO_GREATER_THAN                                                  ; e26c    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                ; e26c    c3 0a da     . . .
 sub_e26fh:
     ld b,(iy+005h)                                             ; e26f    fd 46 05     . F .
     ld c,(iy+006h)                                             ; e272    fd 4e 06     . N .
@@ -5494,7 +5492,7 @@ le28dh:
     inc hl                                                     ; e29c    23     #
 le29dh:
     call sub_ed38h                                             ; e29d    cd 38 ed     . 8 .
-    jp nz,SET_FLAG_TO_EQUAL                                               ; e2a0    c2 14 da     . . .
+    jp nz,SET_FLAG_TO_EQUAL                                    ; e2a0    c2 14 da     . . .
     ld a,(hl)                                                  ; e2a3    7e     ~
     and 0c0h                                                   ; e2a4    e6 c0     . .
     jr nz,le305h                                               ; e2a6    20 5d       ]
@@ -5549,7 +5547,7 @@ le305h:
     jr le29dh                                                  ; e309    18 92     . .
 le30bh:
     call sub_e311h                                             ; e30b    cd 11 e3     . . .
-    jp SET_FLAG_TO_GREATER_THAN                                                  ; e30e    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                ; e30e    c3 0a da     . . .
 sub_e311h:
     call sub_e32ch                                             ; e311    cd 2c e3     . , .
     ld hl,MSG_DISC_CHANGED                                     ; e314    21 04 ff     ! . .
@@ -5595,9 +5593,9 @@ le35bh:
     ld l,(iy+WS_DRIVE_NUMBER)                                  ; e36f    fd 6e 04     . n .
     jr le348h                                                  ; e372    18 d4     . .
 sub_e374h:
-    bit 0,(iy+WS_SCREEN_OUTPUT_VALUE)                                            ; e374    fd cb 11 46     . . . F
+    bit 0,(iy+WS_SCREEN_OUTPUT_VALUE)                          ; e374    fd cb 11 46     . . . F
     ret z                                                      ; e378    c8     .
-    res 0,(iy+WS_SCREEN_OUTPUT_VALUE)                                            ; e379    fd cb 11 86     . . . .
+    res 0,(iy+WS_SCREEN_OUTPUT_VALUE)                          ; e379    fd cb 11 86     . . . .
     jp CAS_OUT_CLOSE                                           ; e37d    c3 8f bc     . . .
 le380h:
     push de                                                    ; e380    d5     .
@@ -5613,13 +5611,13 @@ le380h:
     add ix,de                                                  ; e398    dd 19     . .
     ld de,(0bee2h)                                             ; e39a    ed 5b e2 be     . [ . .
     call sub_da21h                                             ; e39e    cd 21 da     . ! .
-    jp nz,SET_FLAG_TO_EQUAL                                               ; e3a1    c2 14 da     . . .
+    jp nz,SET_FLAG_TO_EQUAL                                    ; e3a1    c2 14 da     . . .
     ex de,hl                                                   ; e3a4    eb     .
     call sub_edb6h                                             ; e3a5    cd b6 ed     . . .
     jp c,MSG_BAD_FILE_NAME                                     ; e3a8    da 8e fb     . . .
-    jp nz,SET_FLAG_TO_EQUAL                                               ; e3ab    c2 14 da     . . .
+    jp nz,SET_FLAG_TO_EQUAL                                    ; e3ab    c2 14 da     . . .
     call sub_d9a0h                                             ; e3ae    cd a0 d9     . . .
-    jp nc,SET_FLAG_TO_EQUAL                                               ; e3b1    d2 14 da     . . .
+    jp nc,SET_FLAG_TO_EQUAL                                    ; e3b1    d2 14 da     . . .
     jp nz,MSG_DISC_NOT_FORMATTED                               ; e3b4    c2 22 fc     . " .
     cp 081h                                                    ; e3b7    fe 81     . .
     jp nz,le4a3h                                               ; e3b9    c2 a3 e4     . . .
@@ -5631,7 +5629,7 @@ le380h:
     ld (0bc78h),hl                                             ; e3c6    22 78 bc     " x .
     pop ix                                                     ; e3c9    dd e1     . .
     call sub_ed01h                                             ; e3cb    cd 01 ed     . . .
-    jp nz,SET_FLAG_TO_EQUAL                                               ; e3ce    c2 14 da     . . .
+    jp nz,SET_FLAG_TO_EQUAL                                    ; e3ce    c2 14 da     . . .
     call sub_ed38h                                             ; e3d1    cd 38 ed     . 8 .
     jp nz,lfbf7h                                               ; e3d4    c2 f7 fb     . . .
     ld a,(hl)                                                  ; e3d7    7e     ~
@@ -5688,12 +5686,12 @@ le417h:
     ld a,(iy+006h)                                             ; e440    fd 7e 06     . ~ .
     ld (ix-00ah),a                                             ; e443    dd 77 f6     . w .
     ld hl,(0bee0h)                                             ; e446    2a e0 be     * . .
-    ld (iy+WS_INPUT_BUFF_ADDR_SECTOR),l                                             ; e449    fd 75 19     . u .
-    ld (iy+WS_INPUT_BUFF_ADDR_SECTOR+1),h                                             ; e44c    fd 74 1a     . t .
+    ld (iy+WS_INPUT_BUFF_ADDR_SECTOR),l                        ; e449    fd 75 19     . u .
+    ld (iy+WS_INPUT_BUFF_ADDR_SECTOR+1),h                      ; e44c    fd 74 1a     . t .
     push ix                                                    ; e44f    dd e5     . .
     pop hl                                                     ; e451    e1     .
-    ld (iy+WS_INPUT_BUFF_ADDR_FILE),l                                             ; e452    fd 75 17     . u .
-    ld (iy+WS_INPUT_BUFF_ADDR_FILE+1),h                                             ; e455    fd 74 18     . t .
+    ld (iy+WS_INPUT_BUFF_ADDR_FILE),l                          ; e452    fd 75 17     . u .
+    ld (iy+WS_INPUT_BUFF_ADDR_FILE+1),h                        ; e455    fd 74 18     . t .
     ld e,(ix+015h)                                             ; e458    dd 5e 15     . ^ .
     ld d,(ix+016h)                                             ; e45b    dd 56 16     . V .
     ld c,(ix+013h)                                             ; e45e    dd 4e 13     . N .
@@ -5701,7 +5699,7 @@ le417h:
     xor a                                                      ; e464    af     .
     ld (iy+01fh),a                                             ; e465    fd 77 1f     . w .
     ld (iy+020h),a                                             ; e468    fd 77 20     . w
-    call SET_FLAG_TO_GREATER_THAN                                                ; e46b    cd 0a da     . . .
+    call SET_FLAG_TO_GREATER_THAN                              ; e46b    cd 0a da     . . .
     ld a,(ix+012h)                                             ; e46e    dd 7e 12     . ~ .
     ret                                                        ; e471    c9     .
 le472h:
@@ -5714,7 +5712,7 @@ le478h:
     jp z,MSG_UNKNOWN_FILE_SYSTEM                               ; e47a    ca c6 fb     . . .
     ld a,(hl)                                                  ; e47d    7e     ~
     cp 061h                                                    ; e47e    fe 61     . a
-    call nc,MAKE_UPPERCASE                                   ; e480    d4 9d d9     . . .
+    call nc,MAKE_UPPERCASE                                     ; e480    d4 9d d9     . . .
     ld (ix+000h),a                                             ; e483    dd 77 00     . w .
     inc ix                                                     ; e486    dd 23     . #
     inc hl                                                     ; e488    23     #
@@ -5760,57 +5758,57 @@ le4b2h:
     ld a,0c3h                                                  ; e4e4    3e c3     > .
     ld (CAS_IN_OPEN),a                                         ; e4e6    32 77 bc     2 w .
     ld a,(iy+04ah)                                             ; e4e9    fd 7e 4a     . ~ J
-    ld (CAS_IN_OPEN+1),a                                              ; e4ec    32 78 bc     2 x .
+    ld (CAS_IN_OPEN+1),a                                       ; e4ec    32 78 bc     2 x .
     ld a,(iy+04bh)                                             ; e4ef    fd 7e 4b     . ~ K
-    ld (CAS_IN_OPEN+2),a                                              ; e4f2    32 79 bc     2 y .
+    ld (CAS_IN_OPEN+2),a                                       ; e4f2    32 79 bc     2 y .
     ld a,l                                                     ; e4f5    7d     }
     ld (CAS_CATALOG),a                                         ; e4f6    32 9b bc     2 . .
     pop af                                                     ; e4f9    f1     .
     pop hl                                                     ; e4fa    e1     .
-    ld (CAS_CATALOG+1),hl                                             ; e4fb    22 9c bc     " . .
+    ld (CAS_CATALOG+1),hl                                      ; e4fb    22 9c bc     " . .
     ld hl,(0bf02h)                                             ; e4fe    2a 02 bf     * . .
     ret                                                        ; e501    c9     .
 le502h:
-    ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; e502    fd 6e 17     . n .
-    ld h,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                                             ; e505    fd 66 18     . f .
+    ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                          ; e502    fd 6e 17     . n .
+    ld h,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                        ; e505    fd 66 18     . f .
     ld a,l                                                     ; e508    7d     }
     or h                                                       ; e509    b4     .
-    jp z,SET_FLAG_TO_LESS_THAN                                                ; e50a    ca 0f da     . . .
+    jp z,SET_FLAG_TO_LESS_THAN                                 ; e50a    ca 0f da     . . .
     push hl                                                    ; e50d    e5     .
     pop ix                                                     ; e50e    dd e1     . .
     ld a,(ix-00fh)                                             ; e510    dd 7e f1     . ~ .
     cp 052h                                                    ; e513    fe 52     . R
     call z,sub_eb34h                                           ; e515    cc 34 eb     . 4 .
 le518h:
-    ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; e518    fd 6e 17     . n .
-    ld h,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                                             ; e51b    fd 66 18     . f .
+    ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                          ; e518    fd 6e 17     . n .
+    ld h,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                        ; e51b    fd 66 18     . f .
     push hl                                                    ; e51e    e5     .
     pop ix                                                     ; e51f    dd e1     . .
     ld a,h                                                     ; e521    7c     |
     or l                                                       ; e522    b5     .
-    jp z,SET_FLAG_TO_GREATER_THAN                                                ; e523    ca 0a da     . . .
+    jp z,SET_FLAG_TO_GREATER_THAN                              ; e523    ca 0a da     . . .
     ld (ix-00fh),043h                                          ; e526    dd 36 f1 43     . 6 . C
     xor a                                                      ; e52a    af     .
-    ld (iy+WS_INPUT_BUFF_ADDR_FILE),a                                             ; e52b    fd 77 17     . w .
-    ld (iy+WS_INPUT_BUFF_ADDR_FILE+1),a                                             ; e52e    fd 77 18     . w .
+    ld (iy+WS_INPUT_BUFF_ADDR_FILE),a                          ; e52b    fd 77 17     . w .
+    ld (iy+WS_INPUT_BUFF_ADDR_FILE+1),a                        ; e52e    fd 77 18     . w .
     ld (iy+039h),000h                                          ; e531    fd 36 39 00     . 6 9 .
-    jp SET_FLAG_TO_GREATER_THAN                                                  ; e535    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                ; e535    c3 0a da     . . .
 
 ;=======================================================================
  PATCH_CAS_IN_CHAR:
 ;=======================================================================
     ;patch for CAS_IN_CHAR
-    ld a,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; e538    fd 7e 17     . ~ .
-    or (iy+WS_INPUT_BUFF_ADDR_FILE+1)                                               ; e53b    fd b6 18     . . .
-    jp z,DO_ERROR_0F                                                ; e53e    ca 96 e6     . . .
+    ld a,(iy+WS_INPUT_BUFF_ADDR_FILE)                          ; e538    fd 7e 17     . ~ .
+    or (iy+WS_INPUT_BUFF_ADDR_FILE+1)                          ; e53b    fd b6 18     . . .
+    jp z,DO_ERROR_0F                                           ; e53e    ca 96 e6     . . .
     ld a,(iy+039h)                                             ; e541    fd 7e 39     . ~ 9
     and a                                                      ; e544    a7     .
-    jp z,DO_ERROR_0F                                                ; e545    ca 96 e6     . . .
+    jp z,DO_ERROR_0F                                           ; e545    ca 96 e6     . . .
     push hl                                                    ; e548    e5     .
     push de                                                    ; e549    d5     .
     push bc                                                    ; e54a    c5     .
-    ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; e54b    fd 6e 17     . n .
-    ld h,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                                             ; e54e    fd 66 18     . f .
+    ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                          ; e54b    fd 6e 17     . n .
+    ld h,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                        ; e54e    fd 66 18     . f .
     push hl                                                    ; e551    e5     .
     pop ix                                                     ; e552    dd e1     . .
     bit 2,(ix-007h)                                            ; e554    dd cb f9 56     . . . V
@@ -5826,7 +5824,7 @@ le560h:
     pop bc                                                     ; e56c    c1     .
     pop de                                                     ; e56d    d1     .
     pop hl                                                     ; e56e    e1     .
-    jp SET_FLAG_TO_EQUAL                                                  ; e56f    c3 14 da     . . .
+    jp SET_FLAG_TO_EQUAL                                       ; e56f    c3 14 da     . . .
 le572h:
     ld l,(ix-004h)                                             ; e572    dd 6e fc     . n .
     ld h,(ix-003h)                                             ; e575    dd 66 fd     . f .
@@ -5912,7 +5910,7 @@ le5b6h:
     ; ret                                                        ; e5e7    c9     .
 
 le5e8h:
-    call SET_FLAG_TO_LESS_THAN                                                ; e5e8    cd 0f da     . . .
+    call SET_FLAG_TO_LESS_THAN                                 ; e5e8    cd 0f da     . . .
     ld a,01ah                                                  ; e5eb    3e 1a     > .
     pop de                                                     ; e5ed    d1     .
     pop hl                                                     ; e5ee    e1     .
@@ -5928,22 +5926,22 @@ le5feh:
     pop bc                                                     ; e5fe    c1     .
     pop de                                                     ; e5ff    d1     .
     pop hl                                                     ; e600    e1     .
-    jp DO_ERROR_0F                                                  ; e601    c3 96 e6     . . .
+    jp DO_ERROR_0F                                             ; e601    c3 96 e6     . . .
 sub_e604h:
-    ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; e604    fd 6e 17     . n .
-    ld h,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                                             ; e607    fd 66 18     . f .
+    ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                          ; e604    fd 6e 17     . n .
+    ld h,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                        ; e607    fd 66 18     . f .
     ld de,0fff1h                                               ; e60a    11 f1 ff     . . .
     add hl,de                                                  ; e60d    19     .
-    ld e,(iy+WS_INPUT_BUFF_ADDR_SECTOR)                                             ; e60e    fd 5e 19     . ^ .
-    ld d,(iy+WS_INPUT_BUFF_ADDR_SECTOR+1)                                             ; e611    fd 56 1a     . V .
+    ld e,(iy+WS_INPUT_BUFF_ADDR_SECTOR)                        ; e60e    fd 5e 19     . ^ .
+    ld d,(iy+WS_INPUT_BUFF_ADDR_SECTOR+1)                      ; e611    fd 56 1a     . V .
     push de                                                    ; e614    d5     .
     ld bc,0000fh                                               ; e615    01 0f 00     . . .
     ldir                                                       ; e618    ed b0     . .
     pop hl                                                     ; e61a    e1     .
     ld de,0000fh                                               ; e61b    11 0f 00     . . .
     add hl,de                                                  ; e61e    19     .
-    ld (iy+WS_INPUT_BUFF_ADDR_FILE),l                                             ; e61f    fd 75 17     . u .
-    ld (iy+WS_INPUT_BUFF_ADDR_FILE+1),h                                             ; e622    fd 74 18     . t .
+    ld (iy+WS_INPUT_BUFF_ADDR_FILE),l                          ; e61f    fd 75 17     . u .
+    ld (iy+WS_INPUT_BUFF_ADDR_FILE+1),h                        ; e622    fd 74 18     . t .
     push hl                                                    ; e625    e5     .
     pop ix                                                     ; e626    dd e1     . .
     ld a,(ix-00bh)                                             ; e628    dd 7e f5     . ~ .
@@ -6001,7 +5999,7 @@ DO_ERROR_0F:
 le69bh:
     ld a,(iy+039h)                                             ; e69b    fd 7e 39     . ~ 9
     and a                                                      ; e69e    a7     .
-    jr z,DO_ERROR_0F                                                ; e69f    28 f5     ( .
+    jr z,DO_ERROR_0F                                           ; e69f    28 f5     ( .
     push hl                                                    ; e6a1    e5     .
     push bc                                                    ; e6a2    c5     .
     push de                                                    ; e6a3    d5     .
@@ -6009,25 +6007,25 @@ le69bh:
     call z,sub_e604h                                           ; e6a6    cc 04 e6     . . .
     pop de                                                     ; e6a9    d1     .
     pop bc                                                     ; e6aa    c1     .
-    ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; e6ab    fd 6e 17     . n .
-    ld h,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                                             ; e6ae    fd 66 18     . f .
+    ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                          ; e6ab    fd 6e 17     . n .
+    ld h,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                        ; e6ae    fd 66 18     . f .
     push hl                                                    ; e6b1    e5     .
     pop ix                                                     ; e6b2    dd e1     . .
     pop hl                                                     ; e6b4    e1     .
     ld a,(ix-004h)                                             ; e6b5    dd 7e fc     . ~ .
     or (ix-003h)                                               ; e6b8    dd b6 fd     . . .
-    jr z,DO_ERROR_0F                                                ; e6bb    28 d9     ( .
-    jp SET_FLAG_TO_GREATER_THAN                                                  ; e6bd    c3 0a da     . . .
+    jr z,DO_ERROR_0F                                           ; e6bb    28 d9     ( .
+    jp SET_FLAG_TO_GREATER_THAN                                ; e6bd    c3 0a da     . . .
 le6c0h:
     ret                                                        ; e6c0    c9     .
 le6c1h:
     ld a,(iy+039h)                                             ; e6c1    fd 7e 39     . ~ 9
     cp 001h                                                    ; e6c4    fe 01     . .
-    jp nz,SET_FLAG_TO_LESS_THAN                                               ; e6c6    c2 0f da     . . .
+    jp nz,SET_FLAG_TO_LESS_THAN                                ; e6c6    c2 0f da     . . .
     call sub_e648h                                             ; e6c9    cd 48 e6     . H .
     ex de,hl                                                   ; e6cc    eb     .
-    ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                                             ; e6cd    fd 6e 17     . n .
-    ld h,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                                             ; e6d0    fd 66 18     . f .
+    ld l,(iy+WS_INPUT_BUFF_ADDR_FILE)                          ; e6cd    fd 6e 17     . n .
+    ld h,(iy+WS_INPUT_BUFF_ADDR_FILE+1)                        ; e6d0    fd 66 18     . f .
     push hl                                                    ; e6d3    e5     .
     pop ix                                                     ; e6d4    dd e1     . .
 le6d6h:
@@ -6036,7 +6034,7 @@ le6d6h:
     push de                                                    ; e6dc    d5     .
     call sub_ef39h                                             ; e6dd    cd 39 ef     . 9 .
     pop de                                                     ; e6e0    d1     .
-    jp nz,SET_FLAG_TO_EQUAL                                               ; e6e1    c2 14 da     . . .
+    jp nz,SET_FLAG_TO_EQUAL                                    ; e6e1    c2 14 da     . . .
     inc hl                                                     ; e6e4    23     #
 sub_e6e5h:
     inc hl                                                     ; e6e5    23     #
@@ -6077,7 +6075,7 @@ le720h:
 ;TODO: Changes between here and le7a6h break saving basic files
     ld l,(ix+01ah)                                             ; e720    dd 6e 1a     . n .
     ld h,(ix+01bh)                                             ; e723    dd 66 1b     . f .
-    jp SET_FLAG_TO_GREATER_THAN                                                  ; e726    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                ; e726    c3 0a da     . . .
 le729h:
     push de                                                    ; e729    d5     .
     pop ix                                                     ; e72a    dd e1     . .
@@ -6089,13 +6087,13 @@ le729h:
     ld (0bee4h),a                                              ; e738    32 e4 be     2 . .
     ld de,0000fh                                               ; e73b    11 0f 00     . . .
     add ix,de                                                  ; e73e    dd 19     . .
-    ld a,(iy+WS_OUTPUT_BUFF_ADDR_HEADER)                                             ; e740    fd 7e 1b     . ~ .
-    or (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1)                                               ; e743    fd b6 1c     . . .
-    jp nz,SET_FLAG_TO_LESS_THAN                                               ; e746    c2 0f da     . . .
+    ld a,(iy+WS_OUTPUT_BUFF_ADDR_HEADER)                       ; e740    fd 7e 1b     . ~ .
+    or (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1)                       ; e743    fd b6 1c     . . .
+    jp nz,SET_FLAG_TO_LESS_THAN                                ; e746    c2 0f da     . . .
     push ix                                                    ; e749    dd e5     . .
     pop de                                                     ; e74b    d1     .
-    ld (iy+WS_OUTPUT_BUFF_ADDR_SECTOR),e                                             ; e74c    fd 73 1d     . s .
-    ld (iy+WS_OUTPUT_BUFF_ADDR_SECTOR+1),d                                             ; e74f    fd 72 1e     . r .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_SECTOR),e                       ; e74c    fd 73 1d     . s .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_SECTOR+1),d                     ; e74f    fd 72 1e     . r .
     push iy                                                    ; e752    fd e5     . .
     pop ix                                                     ; e754    dd e1     . .
     ld de,001f8h                                               ; e756    11 f8 01     . . .
@@ -6105,24 +6103,24 @@ le729h:
     ld a,(0bee4h)                                              ; e762    3a e4 be     : . .
     ld b,a                                                     ; e765    47     G
     call sub_da21h                                             ; e766    cd 21 da     . ! .
-    jp nz,SET_FLAG_TO_EQUAL                                               ; e769    c2 14 da     . . .
+    jp nz,SET_FLAG_TO_EQUAL                                    ; e769    c2 14 da     . . .
     ex de,hl                                                   ; e76c    eb     .
     call sub_edb6h                                             ; e76d    cd b6 ed     . . .
     jp c,MSG_BAD_FILE_NAME                                     ; e770    da 8e fb     . . .
-    jp nz,SET_FLAG_TO_GREATER_THAN                                               ; e773    c2 0a da     . . .
+    jp nz,SET_FLAG_TO_GREATER_THAN                             ; e773    c2 0a da     . . .
     bit 7,e                                                    ; e776    cb 7b     . {
     jp nz,MSG_BAD_FILE_NAME                                    ; e778    c2 8e fb     . . .
     call sub_d9a0h                                             ; e77b    cd a0 d9     . . .
-    jp nc,SET_FLAG_TO_EQUAL                                               ; e77e    d2 14 da     . . .
+    jp nc,SET_FLAG_TO_EQUAL                                    ; e77e    d2 14 da     . . .
     jp nz,MSG_DISC_NOT_FORMATTED                               ; e781    c2 22 fc     . " .
     cp 081h                                                    ; e784    fe 81     . .
     jp nz,le842h                                               ; e786    c2 42 e8     . B .
     push ix                                                    ; e789    dd e5     . .
-    ld hl,(CAS_OUT_OPEN+1)                                             ; e78b    2a 8d bc     * . .
+    ld hl,(CAS_OUT_OPEN+1)                                     ; e78b    2a 8d bc     * . .
     push hl                                                    ; e78e    e5     .
     call RSX_DISK_OUT                                          ; e78f    cd 47 de     . G .
     pop hl                                                     ; e792    e1     .
-    ld (CAS_OUT_OPEN+1),hl                                             ; e793    22 8d bc     " . .
+    ld (CAS_OUT_OPEN+1),hl                                     ; e793    22 8d bc     " . .
     pop ix                                                     ; e796    dd e1     . .
     call sub_ef8bh                                             ; e798    cd 8b ef     . . .
     ret nz                                                     ; e79b    c0     .
@@ -6161,10 +6159,10 @@ le7a6h:
     ld (iy+03ah),001h                                          ; e7f9    fd 36 3a 01     . 6 : .
     push ix                                                    ; e7fd    dd e5     . .
     pop hl                                                     ; e7ff    e1     .
-    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER),l                                             ; e800    fd 75 1b     . u .
-    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1),h                                             ; e803    fd 74 1c     . t .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER),l                       ; e800    fd 75 1b     . u .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1),h                     ; e803    fd 74 1c     . t .
     ld (ix-00fh),04fh                                          ; e806    dd 36 f1 4f     . 6 . O
-    jp SET_FLAG_TO_GREATER_THAN                                                  ; e80a    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                ; e80a    c3 0a da     . . .
 le80dh:
     inc hl                                                     ; e80d    23     #
     dec b                                                      ; e80e    05     .
@@ -6174,8 +6172,8 @@ le813h:
     and a                                                      ; e814    a7     .
     jp z,MSG_UNKNOWN_FILE_SYSTEM                               ; e815    ca c6 fb     . . .
     ld a,(hl)                                                  ; e818    7e     ~
-    cp 'a'                                                    ; e819    fe 61     . a
-    call nc,MAKE_UPPERCASE                                   ; e81b    d4 9d d9     . . .
+    cp 'a'                                                     ; e819    fe 61     . a
+    call nc,MAKE_UPPERCASE                                     ; e81b    d4 9d d9     . . .
     ld (ix+000h),a                                             ; e81e    dd 77 00     . w .
     inc hl                                                     ; e821    23     #
     dec b                                                      ; e822    05     .
@@ -6216,7 +6214,7 @@ le855h:
     ld a,0c3h                                                  ; e875    3e c3     > .
     ld (CAS_OUT_OPEN),a                                        ; e877    32 8c bc     2 . .
     ld a,(iy+04ch)                                             ; e87a    fd 7e 4c     . ~ L
-    ld (CAS_OUT_OPEN+1),a                                              ; e87d    32 8d bc     2 . .
+    ld (CAS_OUT_OPEN+1),a                                      ; e87d    32 8d bc     2 . .
     ld a,(iy+04dh)                                             ; e880    fd 7e 4d     . ~ M
     ld (0bc8eh),a                                              ; e883    32 8e bc     2 . .
     pop af                                                     ; e886    f1     .
@@ -6224,7 +6222,7 @@ le855h:
 le888h:
     bit 2,(hl)                                                 ; e888    cb 56     . V
     jp nz,MSG_DIR_ALREADY_EXISTS                               ; e88a    c2 be fb     . . .
-    ld a,(iy+WS_OVERWRITE_FILE)                                             ; e88d    fd 7e 16     . ~ .
+    ld a,(iy+WS_OVERWRITE_FILE)                                ; e88d    fd 7e 16     . ~ .
     cp 002h                                                    ; e890    fe 02     . .
     jr z,le8b7h                                                ; e892    28 23     ( #
     cp 001h                                                    ; e894    fe 01     . .
@@ -6233,8 +6231,8 @@ le888h:
     call DISPLAY_MSG                                           ; e89b    cd 6a d9     . j .
     call KM_WAIT_KEY                                           ; e89e    cd 18 bb     . . .
     ;Was A pressed?
-    cp 'a'                                                    ; e8a1    fe 61     . a
-    call nc,MAKE_UPPERCASE                                   ; e8a3    d4 9d d9     . . .
+    cp 'a'                                                     ; e8a1    fe 61     . a
+    call nc,MAKE_UPPERCASE                                     ; e8a3    d4 9d d9     . . .
     call TXT_OUTPUT                                            ; e8a6    cd 5a bb     . Z .
     push af                                                    ; e8a9    f5     .
     call PRINT_CR_LF                                           ; e8aa    cd 7d d9     . } .
@@ -6244,7 +6242,7 @@ le888h:
     jr z,le8f7h                                                ; e8b0    28 45     ( E
     ;B key maybe/?
     cp 042h                                                    ; e8b2    fe 42     . B
-    jp nz,SET_FLAG_TO_EQUAL                                               ; e8b4    c2 14 da     . . .
+    jp nz,SET_FLAG_TO_EQUAL                                    ; e8b4    c2 14 da     . . .
 le8b7h:
     ld de,0bee0h                                               ; e8b7    11 e0 be     . . .
     push ix                                                    ; e8ba    dd e5     . .
@@ -6278,7 +6276,7 @@ le8f7h:
     pop ix                                                     ; e8fc    dd e1     . .
     jp le7a6h                                                  ; e8fe    c3 a6 e7     . . .
 IX_STORE_DISC:
-    ld a,(iy+WS_CPM_ROM_NUMBER)                                             ; e901    fd 7e 01     . ~ .
+    ld a,(iy+WS_CPM_ROM_NUMBER)                                ; e901    fd 7e 01     . ~ .
     ld (ix+000h),a                                             ; e904    dd 77 00     . w .
     ;Next file stows "DISC."
     ld (ix+001h),'D'                                           ; e907    dd 36 01 44     . 6 . D
@@ -6289,30 +6287,30 @@ IX_STORE_DISC:
     ret                                                        ; e91b    c9     .
 le91ch:
     xor a                                                      ; e91c    af     .
-    ld (iy+WS_OUTPUT_BUFF_ADDR_SECTOR),a                                             ; e91d    fd 77 1d     . w .
-    ld (iy+WS_OUTPUT_BUFF_ADDR_SECTOR+1),a                                             ; e920    fd 77 1e     . w .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_SECTOR),a                       ; e91d    fd 77 1d     . w .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_SECTOR+1),a                     ; e920    fd 77 1e     . w .
     xor a                                                      ; e923    af     .
-    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER),a                                             ; e924    fd 77 1b     . w .
-    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1),a                                             ; e927    fd 77 1c     . w .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER),a                       ; e924    fd 77 1b     . w .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1),a                     ; e927    fd 77 1c     . w .
     ld (iy+03ah),a                                             ; e92a    fd 77 3a     . w :
-    res 2,(iy+WS_CASE_SENSITIVITY)                                            ; e92d    fd cb 41 96     . . A .
-    res 4,(iy+WS_CASE_SENSITIVITY)                                            ; e931    fd cb 41 a6     . . A .
-    jp SET_FLAG_TO_GREATER_THAN                                                  ; e935    c3 0a da     . . .
+    res 2,(iy+WS_CASE_SENSITIVITY)                             ; e92d    fd cb 41 96     . . A .
+    res 4,(iy+WS_CASE_SENSITIVITY)                             ; e931    fd cb 41 a6     . . A .
+    jp SET_FLAG_TO_GREATER_THAN                                ; e935    c3 0a da     . . .
 sub_e938h:
     ld (0bf03h),a                                              ; e938    32 03 bf     2 . .
     jr le953h                                                  ; e93b    18 16     . .
 le93dh:
     ld (0bf03h),a                                              ; e93d    32 03 bf     2 . .
-    ld a,(iy+WS_OUTPUT_BUFF_ADDR_HEADER+1)                                             ; e940    fd 7e 1c     . ~ .
-    or (iy+WS_OUTPUT_BUFF_ADDR_HEADER)                                               ; e943    fd b6 1b     . . .
-    jp z,SET_FLAG_TO_LESS_THAN                                                ; e946    ca 0f da     . . .
-    bit 4,(iy+WS_CASE_SENSITIVITY)                                            ; e949    fd cb 41 66     . . A f
+    ld a,(iy+WS_OUTPUT_BUFF_ADDR_HEADER+1)                     ; e940    fd 7e 1c     . ~ .
+    or (iy+WS_OUTPUT_BUFF_ADDR_HEADER)                         ; e943    fd b6 1b     . . .
+    jp z,SET_FLAG_TO_LESS_THAN                                 ; e946    ca 0f da     . . .
+    bit 4,(iy+WS_CASE_SENSITIVITY)                             ; e949    fd cb 41 66     . . A f
     jr nz,le953h                                               ; e94d    20 04       .
-    res 2,(iy+WS_CASE_SENSITIVITY)                                            ; e94f    fd cb 41 96     . . A .
+    res 2,(iy+WS_CASE_SENSITIVITY)                             ; e94f    fd cb 41 96     . . A .
 le953h:
     push hl                                                    ; e953    e5     .
-    ld l,(iy+WS_OUTPUT_BUFF_ADDR_HEADER)                                             ; e954    fd 6e 1b     . n .
-    ld h,(iy+WS_OUTPUT_BUFF_ADDR_HEADER+1)                                             ; e957    fd 66 1c     . f .
+    ld l,(iy+WS_OUTPUT_BUFF_ADDR_HEADER)                       ; e954    fd 6e 1b     . n .
+    ld h,(iy+WS_OUTPUT_BUFF_ADDR_HEADER+1)                     ; e957    fd 66 1c     . f .
     push hl                                                    ; e95a    e5     .
     pop ix                                                     ; e95b    dd e1     . .
     push de                                                    ; e95d    d5     .
@@ -6337,7 +6335,7 @@ le975h:
 sub_e97ah:
     ld a,(ix-00ch)                                             ; e97a    dd 7e f4     . ~ .
     ld (iy+WS_DRIVE_NUMBER),a                                  ; e97d    fd 77 04     . w .
-    res 2,(iy+WS_CASE_SENSITIVITY)                                            ; e980    fd cb 41 96     . . A .
+    res 2,(iy+WS_CASE_SENSITIVITY)                             ; e980    fd cb 41 96     . . A .
     call lf07ch                                                ; e984    cd 7c f0     . | .
     ret nz                                                     ; e987    c0     .
     ld b,(iy+037h)                                             ; e988    fd 46 37     . F 7
@@ -6375,8 +6373,8 @@ sub_e97ah:
     pop bc                                                     ; e9cd    c1     .
     call sub_eff2h                                             ; e9ce    cd f2 ef     . . .
     ret nz                                                     ; e9d1    c0     .
-    ld l,(iy+WS_OUTPUT_BUFF_ADDR_SECTOR)                                             ; e9d2    fd 6e 1d     . n .
-    ld h,(iy+WS_OUTPUT_BUFF_ADDR_SECTOR+1)                                             ; e9d5    fd 66 1e     . f .
+    ld l,(iy+WS_OUTPUT_BUFF_ADDR_SECTOR)                       ; e9d2    fd 6e 1d     . n .
+    ld h,(iy+WS_OUTPUT_BUFF_ADDR_SECTOR+1)                     ; e9d5    fd 66 1e     . f .
     push hl                                                    ; e9d8    e5     .
     push hl                                                    ; e9d9    e5     .
     push iy                                                    ; e9da    fd e5     . .
@@ -6389,8 +6387,8 @@ sub_e97ah:
     pop hl                                                     ; e9e7    e1     .
     ld de,0000fh                                               ; e9e8    11 0f 00     . . .
     add hl,de                                                  ; e9eb    19     .
-    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER),l                                             ; e9ec    fd 75 1b     . u .
-    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1),h                                             ; e9ef    fd 74 1c     . t .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER),l                       ; e9ec    fd 75 1b     . u .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1),h                     ; e9ef    fd 74 1c     . t .
     push hl                                                    ; e9f2    e5     .
     pop ix                                                     ; e9f3    dd e1     . .
     ld a,(ix-00bh)                                             ; e9f5    dd 7e f5     . ~ .
@@ -6410,8 +6408,8 @@ sub_e97ah:
     pop hl                                                     ; ea19    e1     .
     ld b,(ix-002h)                                             ; ea1a    dd 46 fe     . F .
     ld c,(ix-001h)                                             ; ea1d    dd 4e ff     . N .
-    bit 2,(iy+WS_CASE_SENSITIVITY)                                            ; ea20    fd cb 41 56     . . A V
-    jp nz,SET_FLAG_TO_EQUAL                                               ; ea24    c2 14 da     . . .
+    bit 2,(iy+WS_CASE_SENSITIVITY)                             ; ea20    fd cb 41 56     . . A V
+    jp nz,SET_FLAG_TO_EQUAL                                    ; ea24    c2 14 da     . . .
     call sub_efd5h                                             ; ea27    cd d5 ef     . . .
     ret                                                        ; ea2a    c9     .
 sub_ea2bh:
@@ -6463,7 +6461,7 @@ lea86h:
     pop hl                                                     ; ea90    e1     .
     call sub_efd5h                                             ; ea91    cd d5 ef     . . .
     call sub_f010h                                             ; ea94    cd 10 f0     . . .
-    jp SET_FLAG_TO_GREATER_THAN                                                  ; ea97    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                ; ea97    c3 0a da     . . .
 lea9ah:
     ld a,(ix-00ch)                                             ; ea9a    dd 7e f4     . ~ .
     ld (iy+WS_DRIVE_NUMBER),a                                  ; ea9d    fd 77 04     . w .
@@ -6519,7 +6517,7 @@ leaceh:
     ld (ix-005h),h                                             ; eb18    dd 74 fb     . t .
     ld (ix-004h),000h                                          ; eb1b    dd 36 fc 00     . 6 . .
     ld (ix-003h),000h                                          ; eb1f    dd 36 fd 00     . 6 . .
-    bit 2,(iy+WS_CASE_SENSITIVITY)                                            ; eb23    fd cb 41 56     . . A V
+    bit 2,(iy+WS_CASE_SENSITIVITY)                             ; eb23    fd cb 41 56     . . A V
     jp nz,sub_ea38h                                            ; eb27    c2 38 ea     . 8 .
     push ix                                                    ; eb2a    dd e5     . .
     pop hl                                                     ; eb2c    e1     .
@@ -6527,11 +6525,11 @@ leaceh:
     ret nz                                                     ; eb30    c0     .
     jp sub_ea38h                                               ; eb31    c3 38 ea     . 8 .
 sub_eb34h:
-    ld l,(iy+WS_OUTPUT_BUFF_ADDR_HEADER)                                             ; eb34    fd 6e 1b     . n .
-    ld h,(iy+WS_OUTPUT_BUFF_ADDR_HEADER+1)                                             ; eb37    fd 66 1c     . f .
+    ld l,(iy+WS_OUTPUT_BUFF_ADDR_HEADER)                       ; eb34    fd 6e 1b     . n .
+    ld h,(iy+WS_OUTPUT_BUFF_ADDR_HEADER+1)                     ; eb37    fd 66 1c     . f .
     ld a,l                                                     ; eb3a    7d     }
     or h                                                       ; eb3b    b4     .
-    jp z,SET_FLAG_TO_LESS_THAN                                                ; eb3c    ca 0f da     . . .
+    jp z,SET_FLAG_TO_LESS_THAN                                 ; eb3c    ca 0f da     . . .
     ld a,(iy+03ah)                                             ; eb3f    fd 7e 3a     . ~ :
     cp 001h                                                    ; eb42    fe 01     . .
     jp z,le91ch                                                ; eb44    ca 1c e9     . . .
@@ -6556,28 +6554,28 @@ leb73h:
     push af                                                    ; eb76    f5     .
     call sub_f010h                                             ; eb77    cd 10 f0     . . .
     pop af                                                     ; eb7a    f1     .
-    jp nz,SET_FLAG_TO_EQUAL                                               ; eb7b    c2 14 da     . . .
-    jp SET_FLAG_TO_GREATER_THAN                                                  ; eb7e    c3 0a da     . . .
+    jp nz,SET_FLAG_TO_EQUAL                                    ; eb7b    c2 14 da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                ; eb7e    c3 0a da     . . .
 sub_eb81h:
     ld (ix-00fh),049h                                          ; eb81    dd 36 f1 49     . 6 . I
     ret                                                        ; eb85    c9     .
-    ld e,(iy+WS_OUTPUT_BUFF_ADDR_HEADER)                                             ; eb86    fd 5e 1b     . ^ .
-    ld d,(iy+WS_OUTPUT_BUFF_ADDR_HEADER+1)                                             ; eb89    fd 56 1c     . V .
+    ld e,(iy+WS_OUTPUT_BUFF_ADDR_HEADER)                       ; eb86    fd 5e 1b     . ^ .
+    ld d,(iy+WS_OUTPUT_BUFF_ADDR_HEADER+1)                     ; eb89    fd 56 1c     . V .
     push de                                                    ; eb8c    d5     .
     call sub_eb34h                                             ; eb8d    cd 34 eb     . 4 .
     pop de                                                     ; eb90    d1     .
-    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER),e                                             ; eb91    fd 73 1b     . s .
-    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1),d                                             ; eb94    fd 72 1c     . r .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER),e                       ; eb91    fd 73 1b     . s .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_HEADER+1),d                     ; eb94    fd 72 1c     . r .
     ret                                                        ; eb97    c9     .
 leb98h:
     ld (0bef0h),hl                                             ; eb98    22 f0 be     " . .
     ld (0bef2h),a                                              ; eb9b    32 f2 be     2 . .
-    ld l,(iy+WS_OUTPUT_BUFF_ADDR_HEADER)                                             ; eb9e    fd 6e 1b     . n .
-    ld h,(iy+WS_OUTPUT_BUFF_ADDR_HEADER+1)                                             ; eba1    fd 66 1c     . f .
+    ld l,(iy+WS_OUTPUT_BUFF_ADDR_HEADER)                       ; eb9e    fd 6e 1b     . n .
+    ld h,(iy+WS_OUTPUT_BUFF_ADDR_HEADER+1)                     ; eba1    fd 66 1c     . f .
     ld a,h                                                     ; eba4    7c     |
     or l                                                       ; eba5    b5     .
-    jp z,SET_FLAG_TO_LESS_THAN                                                ; eba6    ca 0f da     . . .
-    res 2,(iy+WS_CASE_SENSITIVITY)                                            ; eba9    fd cb 41 96     . . A .
+    jp z,SET_FLAG_TO_LESS_THAN                                 ; eba6    ca 0f da     . . .
+    res 2,(iy+WS_CASE_SENSITIVITY)                             ; eba9    fd cb 41 96     . . A .
     push hl                                                    ; ebad    e5     .
     pop ix                                                     ; ebae    dd e1     . .
     ld hl,(0bef0h)                                             ; ebb0    2a f0 be     * . .
@@ -6593,8 +6591,8 @@ leb98h:
     push iy                                                    ; ebce    fd e5     . .
     pop de                                                     ; ebd0    d1     .
     add hl,de                                                  ; ebd1    19     .
-    ld (iy+WS_OUTPUT_BUFF_ADDR_SECTOR),l                                             ; ebd2    fd 75 1d     . u .
-    ld (iy+WS_OUTPUT_BUFF_ADDR_SECTOR+1),h                                             ; ebd5    fd 74 1e     . t .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_SECTOR),l                       ; ebd2    fd 75 1d     . u .
+    ld (iy+WS_OUTPUT_BUFF_ADDR_SECTOR+1),h                     ; ebd5    fd 74 1e     . t .
     ld l,(ix+015h)                                             ; ebd8    dd 6e 15     . n .
     ld h,(ix+016h)                                             ; ebdb    dd 66 16     . f .
     ld c,(ix+013h)                                             ; ebde    dd 4e 13     . N .
@@ -6602,7 +6600,7 @@ leb98h:
     call RAM_LAM                                               ; ebe4    cd 20 00     .   .
     call sub_e938h                                             ; ebe7    cd 38 e9     . 8 .
     jr nc,lec03h                                               ; ebea    30 17     0 .
-    set 2,(iy+WS_CASE_SENSITIVITY)                                            ; ebec    fd cb 41 d6     . . A .
+    set 2,(iy+WS_CASE_SENSITIVITY)                             ; ebec    fd cb 41 d6     . . A .
     jr lebfah                                                  ; ebf0    18 08     . .
 lebf2h:
     call RAM_LAM                                               ; ebf2    cd 20 00     .   .
@@ -6614,10 +6612,10 @@ lebfah:
     ld a,b                                                     ; ebfc    78     x
     or c                                                       ; ebfd    b1     .
     jr nz,lebf2h                                               ; ebfe    20 f2       .
-    jp SET_FLAG_TO_GREATER_THAN                                                  ; ec00    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                ; ec00    c3 0a da     . . .
 lec03h:
     call sub_eb34h                                             ; ec03    cd 34 eb     . 4 .
-    jp SET_FLAG_TO_EQUAL                                                  ; ec06    c3 14 da     . . .
+    jp SET_FLAG_TO_EQUAL                                       ; ec06    c3 14 da     . . .
 sub_ec09h:
     call sub_ed01h                                             ; ec09    cd 01 ed     . . .
     ret nz                                                     ; ec0c    c0     .
@@ -6656,9 +6654,9 @@ lec2bh:
     ld (ix+018h),a                                             ; ec49    dd 77 18     . w .
     ld (ix+019h),a                                             ; ec4c    dd 77 19     . w .
     ld (ix+01ah),a                                             ; ec4f    dd 77 1a     . w .
-    ld a,(iy+WS_RODOS_USER_NUMBER_LOW)                                             ; ec52    fd 7e 4e     . ~ N
+    ld a,(iy+WS_RODOS_USER_NUMBER_LOW)                         ; ec52    fd 7e 4e     . ~ N
     ld (ix+01bh),a                                             ; ec55    dd 77 1b     . w .
-    ld a,(iy+WS_RODOS_USER_NUMBER_HIGH)                                             ; ec58    fd 7e 4f     . ~ O
+    ld a,(iy+WS_RODOS_USER_NUMBER_HIGH)                        ; ec58    fd 7e 4f     . ~ O
     ld (ix+01ch),a                                             ; ec5b    dd 77 1c     . w .
     ld (ix+01dh),0feh                                          ; ec5e    dd 36 1d fe     . 6 . .
     ld a,000h                                                  ; ec62    3e 00     > .
@@ -6699,7 +6697,7 @@ lec7eh:
     jr lec1ch                                                  ; ec96    18 84     . .
 lec98h:
     call sub_e311h                                             ; ec98    cd 11 e3     . . .
-    jp SET_FLAG_TO_LESS_THAN                                                  ; ec9b    c3 0f da     . . .
+    jp SET_FLAG_TO_LESS_THAN                                   ; ec9b    c3 0f da     . . .
 lec9eh:
     ld d,(iy+037h)                                             ; ec9e    fd 56 37     . V 7
     ld e,(iy+038h)                                             ; eca1    fd 5e 38     . ^ 8
@@ -6757,7 +6755,7 @@ lecf8h:
     pop hl                                                     ; ecf9    e1     .
     pop de                                                     ; ecfa    d1     .
     call MSG_DISC_FULL                                         ; ecfb    cd af fb     . . .
-    jp SET_FLAG_TO_LESS_THAN                                                  ; ecfe    c3 0f da     . . .
+    jp SET_FLAG_TO_LESS_THAN                                   ; ecfe    c3 0f da     . . .
 sub_ed01h:
     ld b,(iy+005h)                                             ; ed01    fd 46 05     . F .
     ld c,(iy+006h)                                             ; ed04    fd 4e 06     . N .
@@ -6791,13 +6789,13 @@ led26h:
     jr led16h                                                  ; ed30    18 e4     . .
 led32h:
     call MSG_BAD_DIR                                           ; ed32    cd 9b fb     . . .
-    jp SET_FLAG_TO_LESS_THAN                                                  ; ed35    c3 0f da     . . .
+    jp SET_FLAG_TO_LESS_THAN                                   ; ed35    c3 0f da     . . .
 sub_ed38h:
     bit 7,(hl)                                                 ; ed38    cb 7e     . ~
     jr nz,led8dh                                               ; ed3a    20 51       Q
     ld a,(hl)                                                  ; ed3c    7e     ~
     cp 001h                                                    ; ed3d    fe 01     . .
-    jp z,SET_FLAG_TO_GREATER_THAN                                                ; ed3f    ca 0a da     . . .
+    jp z,SET_FLAG_TO_GREATER_THAN                              ; ed3f    ca 0a da     . . .
     cp 002h                                                    ; ed42    fe 02     . .
     jr z,led93h                                                ; ed44    28 4d     ( M
     push hl                                                    ; ed46    e5     .
@@ -6805,7 +6803,7 @@ sub_ed38h:
     push bc                                                    ; ed49    c5     .
     ld b,010h                                                  ; ed4a    06 10     . .
     inc hl                                                     ; ed4c    23     #
-    bit 0,(iy+WS_CASE_SENSITIVITY)                                            ; ed4d    fd cb 41 46     . . A F
+    bit 0,(iy+WS_CASE_SENSITIVITY)                             ; ed4d    fd cb 41 46     . . A F
     jr nz,led68h                                               ; ed51    20 15       .
 led53h:
     ld a,(ix+000h)                                             ; ed53    dd 7e 00     . ~ .
@@ -6827,11 +6825,11 @@ led68h:
     cp 03fh                                                    ; ed6b    fe 3f     . ?
     jr z,led7eh                                                ; ed6d    28 0f     ( .
     cp 05bh                                                    ; ed6f    fe 5b     . [
-    call nc,MAKE_UPPERCASE                                   ; ed71    d4 9d d9     . . .
+    call nc,MAKE_UPPERCASE                                     ; ed71    d4 9d d9     . . .
     ld c,a                                                     ; ed74    4f     O
     ld a,(hl)                                                  ; ed75    7e     ~
     cp 05bh                                                    ; ed76    fe 5b     . [
-    call nc,MAKE_UPPERCASE                                   ; ed78    d4 9d d9     . . .
+    call nc,MAKE_UPPERCASE                                     ; ed78    d4 9d d9     . . .
     cp c                                                       ; ed7b    b9     .
     jr nz,led89h                                               ; ed7c    20 0b       .
 led7eh:
@@ -6873,12 +6871,12 @@ led93h:
     jr sub_ed38h                                               ; edad    18 89     . .
     pop hl                                                     ; edaf    e1     .
     call MSG_BAD_FILE_NAME                                     ; edb0    cd 8e fb     . . .
-    jp SET_FLAG_TO_EQUAL                                                  ; edb3    c3 14 da     . . .
+    jp SET_FLAG_TO_EQUAL                                       ; edb3    c3 14 da     . . .
 sub_edb6h:
     res 7,e                                                    ; edb6    cb bb     . .
     ld a,b                                                     ; edb8    78     x
     and a                                                      ; edb9    a7     .
-    jp z,SET_FLAG_TO_GREATER_THAN                                                ; edba    ca 0a da     . . .
+    jp z,SET_FLAG_TO_GREATER_THAN                              ; edba    ca 0a da     . . .
     cp 001h                                                    ; edbd    fe 01     . .
     jr z,lede7h                                                ; edbf    28 26     ( &
     inc hl                                                     ; edc1    23     #
@@ -6903,18 +6901,18 @@ sub_edb6h:
     inc hl                                                     ; ede1    23     #
     ld a,b                                                     ; ede2    78     x
     and a                                                      ; ede3    a7     .
-    jp z,SET_FLAG_TO_GREATER_THAN                                                ; ede4    ca 0a da     . . .
+    jp z,SET_FLAG_TO_GREATER_THAN                              ; ede4    ca 0a da     . . .
 lede7h:
     call sub_ee7ch                                             ; ede7    cd 7c ee     . | .
     ret nz                                                     ; edea    c0     .
     ld a,b                                                     ; edeb    78     x
     and a                                                      ; edec    a7     .
-    jp z,SET_FLAG_TO_GREATER_THAN                                                ; eded    ca 0a da     . . .
+    jp z,SET_FLAG_TO_GREATER_THAN                              ; eded    ca 0a da     . . .
     cp 002h                                                    ; edf0    fe 02     . .
     jr nz,ledfch                                               ; edf2    20 08       .
     call sub_ef01h                                             ; edf4    cd 01 ef     . . .
     jr nz,ledfch                                               ; edf7    20 03       .
-    jp SET_FLAG_TO_GREATER_THAN                                                  ; edf9    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                ; edf9    c3 0a da     . . .
 ledfch:
     ld c,010h                                                  ; edfc    0e 10     . .
     push ix                                                    ; edfe    dd e5     . .
@@ -7056,7 +7054,7 @@ leec5h:
 leecah:
     pop bc                                                     ; eeca    c1     .
     pop hl                                                     ; eecb    e1     .
-    jp SET_FLAG_TO_LESS_THAN                                                  ; eecc    c3 0f da     . . .
+    jp SET_FLAG_TO_LESS_THAN                                   ; eecc    c3 0f da     . . .
 sub_eecfh:
     ld de,00012h                                               ; eecf    11 12 00     . . .
     add hl,de                                                  ; eed2    19     .
@@ -7118,7 +7116,7 @@ lef27h:
     dec b                                                      ; ef28    05     .
     ld a,b                                                     ; ef29    78     x
     and a                                                      ; ef2a    a7     .
-    jp z,SET_FLAG_TO_GREATER_THAN                                                ; ef2b    ca 0a da     . . .
+    jp z,SET_FLAG_TO_GREATER_THAN                              ; ef2b    ca 0a da     . . .
     jp sub_ee7ch                                               ; ef2e    c3 7c ee     . | .
 sub_ef31h:
     ld de,006ebh                                               ; ef31    11 eb 06     . . .
@@ -7256,7 +7254,7 @@ sub_f010h:
     jp lefdbh                                                  ; f025    c3 db ef     . . .
 lf028h:
     call sub_ef8bh                                             ; f028    cd 8b ef     . . .
-    jp nc,SET_FLAG_TO_GREATER_THAN                                               ; f02b    d2 0a da     . . .
+    jp nc,SET_FLAG_TO_GREATER_THAN                             ; f02b    d2 0a da     . . .
     ld de,00012h                                               ; f02e    11 12 00     . . .
     add hl,de                                                  ; f031    19     .
     ld de,00081h                                               ; f032    11 81 00     . . .
@@ -7327,8 +7325,8 @@ lf07ch:
     ld (iy+037h),d                                             ; f082    fd 72 37     . r 7
     ld (iy+038h),e                                             ; f085    fd 73 38     . s 8
 lf088h:
-    bit 2,(iy+WS_CASE_SENSITIVITY)                                            ; f088    fd cb 41 56     . . A V
-    jp nz,SET_FLAG_TO_EQUAL                                               ; f08c    c2 14 da     . . .
+    bit 2,(iy+WS_CASE_SENSITIVITY)                             ; f088    fd cb 41 56     . . A V
+    jp nz,SET_FLAG_TO_EQUAL                                    ; f08c    c2 14 da     . . .
     call sub_f010h                                             ; f08f    cd 10 f0     . . .
     ret                                                        ; f092    c9     .
 sub_f093h:
@@ -7393,7 +7391,7 @@ lf0c7h:
 
 sub_0f0d0h:
     call sub_ef8bh
-    jp nc,SET_FLAG_TO_GREATER_THAN                                               ; f0d3    d2 0a da     . . .
+    jp nc,SET_FLAG_TO_GREATER_THAN                             ; f0d3    d2 0a da     . . .
     ld ix,RESET_ENTRY_RST_0                                    ; f0d6    dd 21 00 00     . ! . .
     ld a,(hl)                                                  ; f0da    7e     ~
     ld (iy+00fh),a                                             ; f0db    fd 77 0f     . w .
@@ -7426,7 +7424,7 @@ lf103h:
     inc d                                                      ; f109    14     .
     ld a,d                                                     ; f10a    7a     z
     cp (iy+012h)                                               ; f10b    fd be 12     . . .
-    jp z,SET_FLAG_TO_EQUAL                                                ; f10e    ca 14 da     . . .
+    jp z,SET_FLAG_TO_EQUAL                                     ; f10e    ca 14 da     . . .
     ld e,081h                                                  ; f111    1e 81     . .
 lf113h:
     sra c                                                      ; f113    cb 29     . )
@@ -7438,7 +7436,7 @@ sub_f11ah:
     push hl                                                    ; f11a    e5     .
     push de                                                    ; f11b    d5     .
     ld d,000h                                                  ; f11c    16 00     . .
-    ld hl,DISC_NUMBERS                                               ; f11e    21 00 be     ! . .
+    ld hl,DISC_NUMBERS                                         ; f11e    21 00 be     ! . .
     add hl,de                                                  ; f121    19     .
     ld a,(hl)                                                  ; f122    7e     ~
     pop de                                                     ; f123    d1     .
@@ -7458,7 +7456,7 @@ sub_f131h:
     ld a,c                                                     ; f135    79     y
     and 01fh                                                   ; f136    e6 1f     . .
     cp 00bh                                                    ; f138    fe 0b     . .
-    jp c,SET_FLAG_TO_EQUAL                                                ; f13a    da 14 da     . . .
+    jp c,SET_FLAG_TO_EQUAL                                     ; f13a    da 14 da     . . .
     ld (iy+012h),001h                                          ; f13d    fd 36 12 01     . 6 . .
     cp a                                                       ; f141    bf     .
     ret                                                        ; f142    c9     .
@@ -7499,8 +7497,8 @@ lf16eh:
     ret                                                        ; f173    c9     .
 sub_f174h:
     push bc                                                    ; f174    c5     .
-    ld c,(iy+WS_EXTRA_DRIVE_PORT_LOW)                                             ; f175    fd 4e 58     . N X
-    ld b,(iy+WS_EXTRA_DRIVE_PORT_HIGH)                                             ; f178    fd 46 59     . F Y
+    ld c,(iy+WS_EXTRA_DRIVE_PORT_LOW)                          ; f175    fd 4e 58     . N X
+    ld b,(iy+WS_EXTRA_DRIVE_PORT_HIGH)                         ; f178    fd 46 59     . F Y
     out (c),a                                                  ; f17b    ed 79     . y
     cp (iy+03ch)                                               ; f17d    fd be 3c     . . <
     call nz,sub_f185h                                          ; f180    c4 85 f1     . . .
@@ -7881,7 +7879,7 @@ RSX_ROMS:
     ld (0bebfh),a                                              ; f3db    32 bf be     2 . .
     ld a,(ix+001h)                                             ; f3de    dd 7e 01     . ~ .
     and a                                                      ; f3e1    a7     .
-    call nz,STORE_BOOT_STRING                                          ; f3e2    c4 8b f4     . . .
+    call nz,STORE_BOOT_STRING                                  ; f3e2    c4 8b f4     . . .
     ld a,b                                                     ; f3e5    78     x
     and a                                                      ; f3e6    a7     .
     call z,sub_f3fdh                                           ; f3e7    cc fd f3     . . .
@@ -7922,7 +7920,7 @@ lf41bh:
     ld (0bebfh),a                                              ; f422    32 bf be     2 . .
     ld a,(ix+001h)                                             ; f425    dd 7e 01     . ~ .
     and a                                                      ; f428    a7     .
-    call nz,STORE_BOOT_STRING                                          ; f429    c4 8b f4     . . .
+    call nz,STORE_BOOT_STRING                                  ; f429    c4 8b f4     . . .
     ld a,b                                                     ; f42c    78     x
     and a                                                      ; f42d    a7     .
     jr z,lf450h                                                ; f42e    28 20     (
@@ -8000,7 +7998,7 @@ STORE_BOOT_STRING:
     ld c,a                                                     ; f4a2    4f     O
     ld b,000h                                                  ; f4a3    06 00     . .
     ldir                                                       ; f4a5    ed b0     . .
-    ld a,(iy+WS_RODOS_ROM_NUMBER)                                             ; f4a7    fd 7e 00     . ~ .
+    ld a,(iy+WS_RODOS_ROM_NUMBER)                              ; f4a7    fd 7e 00     . ~ .
     ld (0bebeh),a                                              ; f4aa    32 be be     2 . .
     ld hl,lf779h                                               ; f4ad    21 79 f7     ! y .
     ld (0bebch),hl                                             ; f4b0    22 bc be     " . .
@@ -8146,7 +8144,7 @@ sub_f541h:
     pop hl                                                     ; f54d    e1     .
     ld bc,00086h                                               ; f54e    01 86 00     . . .
     add hl,bc                                                  ; f551    09     .
-    ld c,(iy+WS_RODOS_ROM_NUMBER)                                             ; f552    fd 4e 00     . N .
+    ld c,(iy+WS_RODOS_ROM_NUMBER)                              ; f552    fd 4e 00     . N .
     ld b,080h                                                  ; f555    06 80     . .
     call KL_INIT_EVENT                                         ; f557    cd ef bc     . . .
     ld a,032h                                                  ; f55a    3e 32     > 2
@@ -8190,7 +8188,7 @@ sub_f593h:
     ret nz                                                     ; f5a8    c0     .
 lf5a9h:
     ld (iy+03bh),a                                             ; f5a9    fd 77 3b     . w ;
-    bit 4,(iy+WS_CASE_SENSITIVITY)                                            ; f5ac    fd cb 41 66     . . A f
+    bit 4,(iy+WS_CASE_SENSITIVITY)                             ; f5ac    fd cb 41 66     . . A f
     jr nz,lf5b9h                                               ; f5b0    20 07       .
     dec a                                                      ; f5b2    3d     =
     ld (iy+040h),a                                             ; f5b3    fd 77 40     . w @
@@ -8266,10 +8264,10 @@ lf607h:
 lf643h:
     ;Pointer for RST 18 generator
     dw lf645h
-    ;ld b,l                                                     ; f643    45     E
-    ;or 0e5h                                                    ; f644    f6 e5     . .
+    ;ld b,l                                                    ; f643    45     E
+    ;or 0e5h                                                   ; f644    f6 e5     . .
 lf645h:
-    push hl                                                     ; f645   e5
+    push hl                                                    ; f645    e5
     push de                                                    ; f646    d5     .
     push bc                                                    ; f647    c5     .
     push af                                                    ; f648    f5     .
@@ -8382,8 +8380,8 @@ lf6feh:
     res 2,(iy+00dh)                                            ; f6fe    fd cb 0d 96     . . . .
     ret                                                        ; f702    c9     .
 sub_f703h:
-    ld l,(iy+WS_KM_TEST_KEY_VALUE)                                             ; f703    fd 6e 46     . n F
-    ld h,(iy+WS_KM_TEST_KEY_VALUE+1)                                             ; f706    fd 66 47     . f G
+    ld l,(iy+WS_KM_TEST_KEY_VALUE)                             ; f703    fd 6e 46     . n F
+    ld h,(iy+WS_KM_TEST_KEY_VALUE+1)                           ; f706    fd 66 47     . f G
     ld b,008h                                                  ; f709    06 08     . .
 lf70bh:
     ld a,(hl)                                                  ; f70b    7e     ~
@@ -8405,7 +8403,7 @@ lf70bh:
     res 0,(iy+00dh)                                            ; f72c    fd cb 0d 86     . . . .
     bit 5,a                                                    ; f730    cb 6f     . o
     jr nz,lf751h                                               ; f732    20 1d       .
-    ld (iy+WS_PREVIOUS_DRIVE_LETTER),001h                                          ; f734    fd 36 13 01     . 6 . .
+    ld (iy+WS_PREVIOUS_DRIVE_LETTER),001h                      ; f734    fd 36 13 01     . 6 . .
     call sub_da62h                                             ; f738    cd 62 da     . b .
     set 0,(iy+00dh)                                            ; f73b    fd cb 0d c6     . . . .
     call sub_cab5h                                             ; f73f    cd b5 ca     . . .
@@ -8413,7 +8411,7 @@ lf70bh:
     bit 5,a                                                    ; f746    cb 6f     . o
     call nz,lf751h                                             ; f748    c4 51 f7     . Q .
     ret nz                                                     ; f74b    c0     .
-    ld (iy+WS_PREVIOUS_DRIVE_LETTER),000h                                          ; f74c    fd 36 13 00     . 6 . .
+    ld (iy+WS_PREVIOUS_DRIVE_LETTER),000h                      ; f74c    fd 36 13 00     . 6 . .
     ret                                                        ; f750    c9     .
 lf751h:
     ;Now copy DISC and whitespace to 0xbef0
@@ -8428,8 +8426,8 @@ lf751h:
     push af                                                    ; f76b    f5     .
     res 0,(iy+00dh)                                            ; f76c    fd cb 0d 86     . . . .
     pop af                                                     ; f770    f1     .
-    jp nz,SET_FLAG_TO_EQUAL                                               ; f771    c2 14 da     . . .
-    bit 3,(iy+WS_CASE_SENSITIVITY)                                            ; f774    fd cb 41 5e     . . A ^
+    jp nz,SET_FLAG_TO_EQUAL                                    ; f771    c2 14 da     . . .
+    bit 3,(iy+WS_CASE_SENSITIVITY)                             ; f774    fd cb 41 5e     . . A ^
     ret z                                                      ; f778    c8     .
 lf779h:
     ;Part of the |ZAP function
@@ -8449,29 +8447,29 @@ lf779h:
     inc hl                                                     ; f781    23     #
     inc hl                                                     ; f782    23     #
     ld (hl),07fh                                               ; f783    36 7f     6 
-    jp SET_FLAG_TO_GREATER_THAN                                                  ; f785    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                ; f785    c3 0a da     . . .
 lf788h:
     db "DISC"
     db "    "
     db "    "
     db "????"
 sub_f798h:
-    res 3,(iy+WS_CASE_SENSITIVITY)                                            ; f798    fd cb 41 9e     . . A .
+    res 3,(iy+WS_CASE_SENSITIVITY)                             ; f798    fd cb 41 9e     . . A .
     call sub_d9a0h                                             ; f79c    cd a0 d9     . . .
     ret nz                                                     ; f79f    c0     .
     and a                                                      ; f7a0    a7     .
-    jp z,SET_FLAG_TO_GREATER_THAN                                                ; f7a1    ca 0a da     . . .
+    jp z,SET_FLAG_TO_GREATER_THAN                              ; f7a1    ca 0a da     . . .
     cp 081h                                                    ; f7a4    fe 81     . .
     jp nz,lf829h                                               ; f7a6    c2 29 f8     . ) .
     call sub_ed01h                                             ; f7a9    cd 01 ed     . . .
-    jp nz,SET_FLAG_TO_LESS_THAN                                               ; f7ac    c2 0f da     . . .
+    jp nz,SET_FLAG_TO_LESS_THAN                                ; f7ac    c2 0f da     . . .
 lf7afh:
     call sub_ed38h                                             ; f7af    cd 38 ed     . 8 .
 lf7b2h:
     jp nz,lda18h                                               ; f7b2    c2 18 da     . . .
     call sub_c5ffh                                             ; f7b5    cd ff c5     . . .
-    jp nz,SET_FLAG_TO_LESS_THAN                                               ; f7b8    c2 0f da     . . .
-    set 3,(iy+WS_CASE_SENSITIVITY)                                            ; f7bb    fd cb 41 de     . . A .
+    jp nz,SET_FLAG_TO_LESS_THAN                                ; f7b8    c2 0f da     . . .
+    set 3,(iy+WS_CASE_SENSITIVITY)                             ; f7bb    fd cb 41 de     . . A .
     ld a,(iy+014h)                                             ; f7bf    fd 7e 14     . ~ .
     and a                                                      ; f7c2    a7     .
     jp z,lda18h                                                ; f7c3    ca 18 da     . . .
@@ -8563,21 +8561,21 @@ sub_f858h:
 sub_f868h:
     call sub_f858h                                             ; f868    cd 58 f8     . X .
     call sub_ef6ch                                             ; f86b    cd 6c ef     . l .
-    jp nz,SET_FLAG_TO_LESS_THAN                                               ; f86e    c2 0f da     . . .
+    jp nz,SET_FLAG_TO_LESS_THAN                                ; f86e    c2 0f da     . . .
     ld b,010h                                                  ; f871    06 10     . .
 lf873h:
     push ix                                                    ; f873    dd e5     . .
     push hl                                                    ; f875    e5     .
     push bc                                                    ; f876    c5     .
     ld a,(hl)                                                  ; f877    7e     ~
-    cp (iy+WS_USER_NUMBER)                                               ; f878    fd be 36     . . 6
+    cp (iy+WS_USER_NUMBER)                                     ; f878    fd be 36     . . 6
     jr nz,lf8d4h                                               ; f87b    20 57       W
     inc hl                                                     ; f87d    23     #
     ld b,00bh                                                  ; f87e    06 0b     . .
 lf880h:
     ld a,(ix+000h)                                             ; f880    dd 7e 00     . ~ .
     cp 061h                                                    ; f883    fe 61     . a
-    call nc,MAKE_UPPERCASE                                   ; f885    d4 9d d9     . . .
+    call nc,MAKE_UPPERCASE                                     ; f885    d4 9d d9     . . .
     cp 03fh                                                    ; f888    fe 3f     . ?
     jr z,lf893h                                                ; f88a    28 07     ( .
     ld c,a                                                     ; f88c    4f     O
@@ -8596,8 +8594,8 @@ lf893h:
     pop hl                                                     ; f89d    e1     .
     pop ix                                                     ; f89e    dd e1     . .
     call sub_c5ffh                                             ; f8a0    cd ff c5     . . .
-    jp nz,SET_FLAG_TO_LESS_THAN                                               ; f8a3    c2 0f da     . . .
-    set 3,(iy+WS_CASE_SENSITIVITY)                                            ; f8a6    fd cb 41 de     . . A .
+    jp nz,SET_FLAG_TO_LESS_THAN                                ; f8a3    c2 0f da     . . .
+    set 3,(iy+WS_CASE_SENSITIVITY)                             ; f8a6    fd cb 41 de     . . A .
     ld a,(iy+014h)                                             ; f8aa    fd 7e 14     . ~ .
     and a                                                      ; f8ad    a7     .
     jp z,lda18h                                                ; f8ae    ca 18 da     . . .
@@ -8625,7 +8623,7 @@ lf8d4h:
     ld de,RAM_LAM                                              ; f8d8    11 20 00     .   .
     add hl,de                                                  ; f8db    19     .
     djnz lf873h                                                ; f8dc    10 95     . .
-    jp SET_FLAG_TO_GREATER_THAN                                                  ; f8de    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                ; f8de    c3 0a da     . . .
 sub_f8e1h:
     inc b                                                      ; f8e1    04     .
     ret                                                        ; f8e2    c9     .
@@ -8994,7 +8992,7 @@ lfaeah:
 ;     rst 38h            ;fb09    ff     .
 ;     ret nz            ;fb0a    c0     .
 CALCULATE_RAM_BLOCKS:
-ld a,001h                                                   ; fb0b    3e 01     > .
+ld a,001h                                                      ; fb0b    3e 01     > .
     ld (iy+WS_EXPANSION_RAM_COUNT),a                           ; fb0d    fd 77 0b     . w .
     ld ix,04000h                                               ; fb10    dd 21 00 40     . ! . @
     ld hl,lfaeah+1                                             ; fb14    21 eb fa     ! . .
@@ -9050,7 +9048,7 @@ lfb71h:
     cp 05ch                                                    ; fb73    fe 5c     . \
     jr nz,lfb71h                                               ; fb75    20 fa       .
     djnz lfb71h                                                ; fb77    10 f8     . .
-    res 2,(iy+WS_SCREEN_OUTPUT_VALUE)                                            ; fb79    fd cb 11 96     . . . .
+    res 2,(iy+WS_SCREEN_OUTPUT_VALUE)                          ; fb79    fd cb 11 96     . . . .
     call DISPLAY_MSG                                           ; fb7d    cd 6a d9     . j .
     call MAKE_A_BEEP                                           ; fb80    cd 88 fb     . . .
     ld a,092h                                                  ; fb83    3e 92     > .
@@ -9148,7 +9146,7 @@ lfbfch:
     ld a,008h                                                  ; fc07    3e 08     > .
 ERROR_H_RELAY_1:
     call ERROR_HANDLER                                         ; fc09    cd 6a fb     . j .
-    jp SET_FLAG_TO_EQUAL                                                  ; fc0c    c3 14 da     . . .
+    jp SET_FLAG_TO_EQUAL                                       ; fc0c    c3 14 da     . . .
 MSG_ALREADY_EXISTS:
     call sub_fc2ah                                             ; fc0f    cd 2a fc     . * .
     ld a,013h                                                  ; fc12    3e 13     > .
@@ -9160,7 +9158,7 @@ MSG_CORRUPTED_DISC:
     ld a,015h                                                  ; fc1a    3e 15     > .
 ERROR_H_RELAY_0:
     call ERROR_HANDLER                                         ; fc1c    cd 6a fb     . j .
-    jp SET_FLAG_TO_GREATER_THAN                                                  ; fc1f    c3 0a da     . . .
+    jp SET_FLAG_TO_GREATER_THAN                                ; fc1f    c3 0a da     . . .
 MSG_DISC_NOT_FORMATTED:
     ld a,016h                                                  ; fc22    3e 16     > .
     jr ERROR_H_RELAY_0                                         ; fc24    18 f6     . .
@@ -9179,7 +9177,7 @@ sub_fc30h:
     call PRINT_CR_LF                                           ; fc3d    cd 7d d9     . } .
     pop af                                                     ; fc40    f1     .
     cp 061h                                                    ; fc41    fe 61     . a
-    call nc,MAKE_UPPERCASE                                   ; fc43    d4 9d d9     . . .
+    call nc,MAKE_UPPERCASE                                     ; fc43    d4 9d d9     . . .
     cp 059h                                                    ; fc46    fe 59     . Y
     ret z                                                      ; fc48    c8     .
     pop hl                                                     ; fc49    e1     .
@@ -9198,7 +9196,7 @@ sub_fc59h:
     jr lfc67h                                                  ; fc5b    18 0a     . .
 sub_fc5dh:
     ld l,01fh                                                  ; fc5d    2e 1f     . .
-    jr ERROR_HANDLER_RELAY_PROCESS                                   ; fc5f    18 0e     . .
+    jr ERROR_HANDLER_RELAY_PROCESS                             ; fc5f    18 0e     . .
 sub_fc61h:
     ld a,020h                                                  ; fc61    3e 20     >
     jr lfc67h                                                  ; fc63    18 02     . .
@@ -9227,7 +9225,7 @@ lfc87h:
     call sub_f143h                                             ; fc8e    cd 43 f1     . C .
     pop af                                                     ; fc91    f1     .
     cp 05bh                                                    ; fc92    fe 5b     . [
-    call nc,MAKE_UPPERCASE                                   ; fc94    d4 9d d9     . . .
+    call nc,MAKE_UPPERCASE                                     ; fc94    d4 9d d9     . . .
     cp 052h                                                    ; fc97    fe 52     . R
     jr z,lfca5h                                                ; fc99    28 0a     ( .
     cp 049h                                                    ; fc9b    fe 49     . I
@@ -9238,7 +9236,7 @@ lfc87h:
 lfca5h:
     call TXT_OUTPUT                                            ; fca5    cd 5a bb     . Z .
     call PRINT_CR_LF                                           ; fca8    cd 7d d9     . } .
-    jp SET_FLAG_TO_EQUAL                                                  ; fcab    c3 14 da     . . .
+    jp SET_FLAG_TO_EQUAL                                       ; fcab    c3 14 da     . . .
 lfcaeh:
     call TXT_OUTPUT                                            ; fcae    cd 5a bb     . Z .
     call PRINT_CR_LF                                           ; fcb1    cd 7d d9     . } .
@@ -9246,7 +9244,7 @@ lfcaeh:
 lfcb7h:
     call TXT_OUTPUT                                            ; fcb7    cd 5a bb     . Z .
     call PRINT_CR_LF                                           ; fcba    cd 7d d9     . } .
-    jp SET_FLAG_TO_LESS_THAN                                                  ; fcbd    c3 0f da     . . .
+    jp SET_FLAG_TO_LESS_THAN                                   ; fcbd    c3 0f da     . . .
 
 if DEBUG=1
     ;Extensions turned on in debug mode
@@ -9310,51 +9308,48 @@ Token_Array:
     defb 'alias',0 ;&8A
 
 RODOS_MSGS_ARRAY:
-    defb 05ch                                                  ; Starts with a slash for some reason (probably because this is error 0)
+    defb 05ch                                                    ; Starts with a slash for some reason (probably because this is error 0)
     defb T_Too_many,T_parameters,05ch                            ; Error 1
-    defb T_bad,8,T_file,'name',05ch                           ; Error 2 - Two tokens in a row lead to double spacing, delete one
+    defb T_bad,8,T_file,'name',05ch                              ; Error 2 - Two tokens in a row lead to double spacing, delete one
     defb 'Wrong number of',T_parameters,05ch                     ; Error 3
     defb T_bad,'dir',05ch                                        ; Error 4
-    defb T_bad,'character!',05ch                                ; Error 5
+    defb T_bad,'character!',05ch                                 ; Error 5
     defb T_Unknown,'command',05ch                                ; Error 6
-    defb 'Access denied',05ch                                  ; Error 7
-    defb ' ',T_not,'found',05ch                                     ; Error 8
-    defb 'No match.',05ch                                      ; Error 9
-    defb T_Disc,'full!',05ch                                    ; Error 10
-    defb 'AMSDOS ?',05ch                                       ; Error 11
-    defb 'Warning *** CPM ROM missing ***',05ch                ; Error 12
-    defb 'Dir already exists!',05ch                           ; Error 13
+    defb 'Access denied',05ch                                    ; Error 7
+    defb ' ',T_not,'found',05ch                                  ; Error 8
+    defb 'No match.',05ch                                        ; Error 9
+    defb T_Disc,'full!',05ch                                     ; Error 10
+    defb 'AMSDOS ?',05ch                                         ; Error 11
+    defb 'Warning *** CPM ROM missing ***',05ch                  ; Error 12
+    defb 'Dir already exists!',05ch                              ; Error 13
     defb T_bad,'drive',05ch                                      ; Error 14
-    defb T_Unknown,T_file,'system!',05ch                          ; Error 15
-    defb 'Input',T_file,T_not,'open',05ch                            ; Error 16
-    defb 'Output',T_file,'already open',05ch                       ; Error 17
-    defb ' reborn!',05ch                                      ; Error 18
-    defb ' already exists!',05ch                              ; Error 19
-    defb  T_bad,'format specified',05ch                           ; Error 20
-    defb 'Corrupted disc',T_error,05ch                               ; Error 21
-    defb T_Disc,T_not,8,T_formatted,'!',05ch                           ; Error 22
+    defb T_Unknown,T_file,'system!',05ch                         ; Error 15
+    defb 'Input',T_file,T_not,'open',05ch                        ; Error 16
+    defb 'Output',T_file,'already open',05ch                     ; Error 17
+    defb ' reborn!',05ch                                         ; Error 18
+    defb ' already exists!',05ch                                 ; Error 19
+    defb  T_bad,'format specified',05ch                          ; Error 20
+    defb 'Corrupted disc',T_error,05ch                           ; Error 21
+    defb T_Disc,T_not,8,T_formatted,'!',05ch                     ; Error 22
     defb T_bad,'file',05ch                                       ; Error 23
-    defb 'Directory ',T_not,'empty!',05ch                          ; Error 24
-    defb 'Cant link to a linked',T_file,'!',05ch                   ; Error 25
-    defb T_bad,T_alias,' defined',05ch                              ; Error 26
-    defb T_Too_many,T_alias,'es!',05ch                              ; Error 27
-    defb T_Disc,'read',T_error,05ch                                    ; Error 28
-    defb T_Disc,'write',T_error,05ch                                   ; Error 29
-    defb T_Disc,'tracking ',T_error,05ch                                ; Error 30
+    defb 'Directory ',T_not,'empty!',05ch                        ; Error 24
+    defb 'Cant link to a linked',T_file,'!',05ch                 ; Error 25
+    defb T_bad,T_alias,' defined',05ch                           ; Error 26
+    defb T_Too_many,T_alias,'es!',05ch                           ; Error 27
+    defb T_Disc,'read',T_error,05ch                              ; Error 28
+    defb T_Disc,'write',T_error,05ch                             ; Error 29
+    defb T_Disc,'tracking ',T_error,05ch                         ; Error 30
     defb T_Disc,'Missing',05ch                                   ; Error 31
     defb T_Disc,'fault',05ch                                     ; Error 32
     defb T_Disc,'write protected',05ch                           ; Error 33 - Last error message of this table
-if DEBUG=1
-    defb 'Format Complete!',05ch
-endif
 MSG_ESCAPE:
     defb 'Escape',05ch
 MSG_DISC_CHANGED:
     defb T_Disc,'changed !',05ch
 MSG_FILE_EXISTS_ASK:
     defb '{File exists. Erase, Backup, or Quit ?'
-    defb 008h                                                  ; ff39    08     .
-    defb 000h                                                  ; ff3a    00     .
+    defb 008h                                                    ; ff39    08     .
+    defb 000h                                                    ; ff3a    00     .
 MSG_DRIVE:
     defb 'Drive :',0
 MSG_BYTES_FREE:
@@ -9364,8 +9359,8 @@ MSG_DISK_ALREADY_FORMATTED:
 MSG_RETRY_IGNORE_CANCEL:
     defb 'Retry, Ignore or Cancel? ',0
 VERSION_MSG:
-    defb 00fh                                                  ; ff95    0f     .
-    defb 002h                                                  ; ff96    02     .
+    defb 00fh                                                    ; ff95    0f     .
+    defb 002h                                                    ; ff96    02     .
     ;Saves having to update the version all over the place
 if DEBUG=1
         ;Throw a warning this is the debug version
