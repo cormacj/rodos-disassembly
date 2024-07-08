@@ -7991,6 +7991,7 @@ STORE_BOOT_STRING:
     ;If the string is >100 characters cap it at 100.
     cp 100
     jr c,MAX_NOT_REACHED
+    ;The string was >100 so set the string length at 100.
     ld a,100
 MAX_NOT_REACHED:
     pop bc                                                     ; f494    c1     .
