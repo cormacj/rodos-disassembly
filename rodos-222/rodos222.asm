@@ -1299,7 +1299,7 @@ lc71ch:
     ld (hl),d                                                  ; c741    72     r
     inc hl                                                     ; c742    23     #
     push hl                                                    ; c743    e5     .
-    call sub_da80h                                             ; c744    cd 80 da     . . .
+    call sub_PREP_STRING_TO_HL                                 ; c744    cd 80 da     . . .
     ld c,b                                                     ; c747    48     H
     pop de                                                     ; c748    d1     .
     ld a,c                                                     ; c749    79     y
@@ -2178,7 +2178,7 @@ RSX_EXEC:
     and a                                                      ; ccfc    a7     .
     call z,PROMPT_ENTER_NAME                                   ; ccfd    cc dc d8     . . .
 lcd00h:
-    call sub_da80h                                             ; cd00    cd 80 da     . . .
+    call sub_PREP_STRING_TO_HL                                 ; cd00    cd 80 da     . . .
     call sub_d882h                                             ; cd03    cd 82 d8     . . .
     call CAS_IN_OPEN                                           ; cd06    cd 77 bc     . w .
     jr nc,lcd33h                                               ; cd09    30 28     0 (
@@ -2289,7 +2289,7 @@ RSX_COPY:
     ld (0bf20h),hl                                             ; cdda    22 20 bf     "   .
     ld a,b                                                     ; cddd    78     x
     ld (0bf22h),a                                              ; cdde    32 22 bf     2 " .
-    call sub_da80h                                             ; cde1    cd 80 da     . . .
+    call sub_PREP_STRING_TO_HL                                 ; cde1    cd 80 da     . . .
     ld (0bf23h),hl                                             ; cde4    22 23 bf     " # .
     ld a,b                                                     ; cde7    78     x
     ld (0bf25h),a                                              ; cde8    32 25 bf     2 % .
@@ -2539,7 +2539,7 @@ RSX_CAT:
 lcfa3h:
     cp 001h                                                    ; cfa3    fe 01     . .
     jp nz,MSG_WRONG_PARAMETER_AMT                              ; cfa5    c2 97 fb     . . .
-    call sub_da80h                                             ; cfa8    cd 80 da     . . .
+    call sub_PREP_STRING_TO_HL                                 ; cfa8    cd 80 da     . . .
     ld a,b                                                     ; cfab    78     x
     cp 011h                                                    ; cfac    fe 11     . .
     jp nc,MSG_UNKNOWN_FILE_SYSTEM                              ; cfae    d2 c6 fb     . . .
@@ -2762,7 +2762,7 @@ RSX_INFO:
     jp nc,MSG_TOO_MANY_PARAMETERS                              ; d164    d2 9f fb     . . .
     and a                                                      ; d167    a7     .
     jr z,ld198h                                                ; d168    28 2e     ( .
-    call sub_da80h                                             ; d16a    cd 80 da     . . .
+    call sub_PREP_STRING_TO_HL                                 ; d16a    cd 80 da     . . .
     ld (0bee0h),hl                                             ; d16d    22 e0 be     " . .
     ld a,b                                                     ; d170    78     x
     ld (0bee2h),a                                              ; d171    32 e2 be     2 . .
@@ -2868,7 +2868,7 @@ RSX_LIST:
     ld b,a                                                     ; d22c    47     G
     and a                                                      ; d22d    a7     .
     jr z,ld233h                                                ; d22e    28 03     ( .
-    call sub_da80h                                             ; d230    cd 80 da     . . .
+    call sub_PREP_STRING_TO_HL                                 ; d230    cd 80 da     . . .
 ld233h:
     call sub_d882h                                             ; d233    cd 82 d8     . . .
     call CAS_IN_OPEN                                           ; d236    cd 77 bc     . w .
@@ -2895,7 +2895,7 @@ RSX_DUMP:
     ld b,a                                                     ; d25d    47     G
     and a                                                      ; d25e    a7     .
     jr z,ld265h                                                ; d25f    28 04     ( .
-    call sub_PREP_STRING_PARAM                                 ; d261    cd 85 da     . . .
+    call sub_PREP_STRING_TO_DE                                 ; d261    cd 85 da     . . .
     ex de,hl                                                   ; d264    eb     .
 ld265h:
     call sub_d882h                                             ; d265    cd 82 d8     . . .
@@ -3292,7 +3292,7 @@ RSX_DIR:
     pop af                                                     ; d506    f1     .
     and a                                                      ; d507    a7     .
     jp z,ld68ch                                                ; d508    ca 8c d6     . . .
-    call sub_da80h                                             ; d50b    cd 80 da     . . .
+    call sub_PREP_STRING_TO_HL                                 ; d50b    cd 80 da     . . .
     call sub_dabah                                             ; d50e    cd ba da     . . .
     ret nz                                                     ; d511    c0     .
     ld hl,0bef8h                                               ; d512    21 f8 be     ! . .
@@ -3379,7 +3379,7 @@ RSX_REN:
     ld a,002h                                                  ; d5b3    3e 02     > .
     jp ld689h                                                  ; d5b5    c3 89 d6     . . .
 ld5b8h:
-    call sub_da80h                                             ; d5b8    cd 80 da     . . .
+    call sub_PREP_STRING_TO_HL                                 ; d5b8    cd 80 da     . . .
     push ix                                                    ; d5bb    dd e5     . .
     ld ix,0bef0h                                               ; d5bd    dd 21 f0 be     . ! . .
     call sub_edb6h                                             ; d5c1    cd b6 ed     . . .
@@ -3387,7 +3387,7 @@ ld5b8h:
     ret nz                                                     ; d5c6    c0     .
     inc ix                                                     ; d5c7    dd 23     . #
     inc ix                                                     ; d5c9    dd 23     . #
-    call sub_da80h                                             ; d5cb    cd 80 da     . . .
+    call sub_PREP_STRING_TO_HL                                 ; d5cb    cd 80 da     . . .
     ld ix,0bee0h                                               ; d5ce    dd 21 e0 be     . ! . .
     ld e,(iy+WS_DRIVE_NUMBER)                                  ; d5d2    fd 5e 04     . ^ .
     push de                                                    ; d5d5    d5     .
@@ -3487,7 +3487,7 @@ RSX_ERA:
     ld (hl),052h                                               ; d67c    36 52     6 R
     inc hl                                                     ; d67e    23     #
     ld (hl),0c1h                                               ; d67f    36 c1     6 .
-    call sub_da80h                                             ; d681    cd 80 da     . . .
+    call sub_PREP_STRING_TO_HL                                 ; d681    cd 80 da     . . .
     call sub_dabah                                             ; d684    cd ba da     . . .
 ld687h:
     ld a,001h                                                  ; d687    3e 01     > .
@@ -3503,7 +3503,7 @@ ld696h:
     pop af                                                     ; d696    f1     .
     jp MSG_CANT_FIND_AMSDOS                                    ; d697    c3 b6 fb     . . .
 ld69ah:
-    call sub_da80h                                             ; d69a    cd 80 da     . . .
+    call sub_PREP_STRING_TO_HL                                 ; d69a    cd 80 da     . . .
     ld ix,0bee0h                                               ; d69d    dd 21 e0 be     . ! . .
     call sub_edb6h                                             ; d6a1    cd b6 ed     . . .
     ret nz                                                     ; d6a4    c0     .
@@ -3638,7 +3638,7 @@ ld782h:
 DO_LOGICAL_DRIVE:
     inc ix                                                     ; d787    dd 23     . #
     inc ix                                                     ; d789    dd 23     . #
-    call sub_PREP_STRING_PARAM                                 ; d78b    cd 85 da     . . .
+    call sub_PREP_STRING_TO_DE                                 ; d78b    cd 85 da     . . .
     ;Returns B=Length of string and DE=location of string
     dec ix                                                     ; d78e    dd 2b     . +
     dec ix                                                     ; d790    dd 2b     . +
@@ -3716,7 +3716,7 @@ RSX_DRIVE:
     jr z,DO_LOGICAL_DRIVE                                      ; d7d6    28 af     ( .
     and a                                                      ; d7d8    a7     .
     jp z,MSG_WRONG_PARAMETER_AMT                               ; d7d9    ca 97 fb     . . .
-    call sub_PREP_STRING_PARAM                                 ; d7dc    cd 85 da     . . .
+    call sub_PREP_STRING_TO_DE                                 ; d7dc    cd 85 da     . . .
     ld a,b                                                     ; d7df    78     x
     cp 001h                                                    ; d7e0    fe 01     . .
     jp nz,MSG_BAD_DRIVE                                        ; d7e2    c2 c2 fb     . . .
@@ -4125,7 +4125,7 @@ lda18h:
     ret                                                        ; da1a    c9     .
 sub_da1bh:
     call sub_da62h                                             ; da1b    cd 62 da     . b .
-    call sub_PREP_STRING_PARAM                                 ; da1e    cd 85 da     . . .
+    call sub_PREP_STRING_TO_DE                                 ; da1e    cd 85 da     . . .
 sub_da21h:
     ld a,b                                                     ; da21    78     x
     cp 002h                                                    ; da22    fe 02     . .
@@ -4183,18 +4183,26 @@ sub_da6ah:
     ld a,b                                                     ; da7d    78     x
     scf                                                        ; da7e    37     7
     ret                                                        ; da7f    c9     .
-sub_da80h:
-    call sub_PREP_STRING_PARAM                                 ; da80    cd 85 da     . . .
+sub_PREP_STRING_TO_HL:
+    ; Entry:
+    ;   IX = pointer to parameter address
+    ;
+    ; Exit:
+    ;     B  = Length of string parameter
+    ;     HL = Location of string
+    ;   So ld a,(hl) would read the first character of the string
+
+    call sub_PREP_STRING_TO_DE                                 ; da80    cd 85 da     . . .
     ex de,hl                                                   ; da83    eb     .
     ret                                                        ; da84    c9     .
 
-sub_PREP_STRING_PARAM:
-    ;Entry:
-    ;IX = pointer to parameter address
+sub_PREP_STRING_TO_DE:
+    ; Entry:
+    ;   IX = pointer to parameter address
     ;
-    ;Exit:
-    ;     B=Length of string parameter
-    ;        DE=Location of string
+    ; Exit:
+    ;     B  = Length of string parameter
+    ;     DE = Location of string
     ;   So ld a,(de) would read the first character of the string
 
     ;So HL=parameter address
@@ -5046,7 +5054,7 @@ sub_df23h:
 ldf2ah:
     cp 002h                                                    ; df2a    fe 02     . .
     jp nc,MSG_TOO_MANY_PARAMETERS                              ; df2c    d2 9f fb     . . .
-    call sub_da80h                                             ; df2f    cd 80 da     . . .
+    call sub_PREP_STRING_TO_HL                                 ; df2f    cd 80 da     . . .
     ld de,08000h                                               ; df32    11 00 80     . . .
     call CAS_OUT_OPEN                                          ; df35    cd 8c bc     . . .
     ret nc                                                     ; df38    d0     .
@@ -7586,7 +7594,7 @@ RSX_CLI:
     jr z,lf222h                                                ; f202    28 1e     ( .
     call ld8f7h                                                ; f204    cd f7 d8     . . .
     push hl                                                    ; f207    e5     .
-    call sub_da80h                                             ; f208    cd 80 da     . . .
+    call sub_PREP_STRING_TO_HL                                 ; f208    cd 80 da     . . .
     ld a,b                                                     ; f20b    78     x
     and a                                                      ; f20c    a7     .
     jp z,ld51ah                                                ; f20d    ca 1a d5     . . .
@@ -7976,8 +7984,15 @@ STORE_BOOT_STRING:
     ret z                                                      ; f48d    c8     .
     dec b                                                      ; f48e    05     .
     push bc                                                    ; f48f    c5     .
-    call sub_da80h                                             ; f490    cd 80 da     . . .
+    call sub_PREP_STRING_TO_HL                                 ; f490    cd 80 da     . . .
+    ;b=string Length
+    ;hl=string Location
     ld a,b                                                     ; f493    78     x
+    ;If the string is >100 characters cap it at 100.
+    cp 100
+    jr c,MAX_NOT_REACHED
+    ld a,100
+MAX_NOT_REACHED:
     pop bc                                                     ; f494    c1     .
     inc ix                                                     ; f495    dd 23     . #
     inc ix                                                     ; f497    dd 23     . #
@@ -7987,7 +8002,7 @@ STORE_BOOT_STRING:
     ret z                                                      ; f49d    c8     .
     push bc                                                    ; f49e    c5
 
-    ; Next part takes the command parameter from |ZAP and stores it in the buffers
+    ; Next part takes the command parameter from |ZAP or |ROMS and stores it in the buffers
     ; Orginally this next line read: ld de,0bec0h
     ; That clashed with the zap,rom functions.
     ; I've reverted this (for now) to the BE80 which worked well in v2.13
@@ -8711,7 +8726,7 @@ RSX_LOAD:
     jr z,lf981h                                                ; f95c    28 23     ( #
     cp 003h                                                    ; f95e    fe 03     . .
     jr z,lf970h                                                ; f960    28 0e     ( .
-    call sub_da80h                                             ; f962    cd 80 da     . . .
+    call sub_PREP_STRING_TO_HL                                 ; f962    cd 80 da     . . .
     call CAS_IN_OPEN                                           ; f965    cd 77 bc     . w .
     ret nc                                                     ; f968    d0     .
     ex de,hl                                                   ; f969    eb     .
@@ -8723,13 +8738,13 @@ lf970h:
     inc ix                                                     ; f972    dd 23     . #
     call sub_d1c4h                                             ; f974    cd c4 d1     . . .
     push hl                                                    ; f977    e5     .
-    call sub_da80h                                             ; f978    cd 80 da     . . .
+    call sub_PREP_STRING_TO_HL                                 ; f978    cd 80 da     . . .
     call CAS_IN_OPEN                                           ; f97b    cd 77 bc     . w .
     pop hl                                                     ; f97e    e1     .
     jr lf96ah                                                  ; f97f    18 e9     . .
 lf981h:
     call sub_fa37h                                             ; f981    cd 37 fa     . 7 .
-    call sub_da80h                                             ; f984    cd 80 da     . . .
+    call sub_PREP_STRING_TO_HL                                 ; f984    cd 80 da     . . .
     call CAS_IN_OPEN                                           ; f987    cd 77 bc     . w .
     jr nc,lf9bdh                                               ; f98a    30 31     0 1
     ld hl,04000h                                               ; f98c    21 00 40     ! . @
@@ -8745,7 +8760,7 @@ RSX_SAVE:
     cp 002h                                                    ; f99d    fe 02     . .
     jr nz,lf9c7h                                               ; f99f    20 26       &
     call sub_fa37h                                             ; f9a1    cd 37 fa     . 7 .
-    call sub_da80h                                             ; f9a4    cd 80 da     . . .
+    call sub_PREP_STRING_TO_HL                                 ; f9a4    cd 80 da     . . .
     call CAS_OUT_OPEN                                          ; f9a7    cd 8c bc     . . .
     jr nc,lf9bdh                                               ; f9aa    30 11     0 .
     ld hl,04000h                                               ; f9ac    21 00 40     ! . @
