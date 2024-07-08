@@ -1,6 +1,8 @@
 RODOS 2.22 -
 - Fixed: |BGET randomly returned a number of 27 instead of the actual data. The CAS IN CHAR patch code
-  was reverted to the v2.01 code at the end. See https://github.com/cormacj/rodos-disassembly/issues/1 
+  was reverted to the v2.01 code at the end. See https://github.com/cormacj/rodos-disassembly/issues/1
+- Fixed: Limit the length of the |ROM and |ZAP startup string to 100 characters to avoid a buffer overflow.
+  See: https://github.com/cormacj/rodos-disassembly/issues/7
 
 RODOS 2.21 - June 2024 - Bugs fixes
 - Put the |OPT,10 code back in that was lost in v2.17.

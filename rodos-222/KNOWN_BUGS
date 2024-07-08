@@ -1,12 +1,3 @@
 RODOS v2.23 KNOWN BUGS
 ----------------------
-There are a few bugs I've discovered working through the code.
-
-|ZAP,|ROMS
-    The start up string functionality as documented in:
-        |ZAP,rom_number,...,"startup" and |ROMS, rom_number [,rom_number]...,"start up string"
-    errors after 100 characters.
-
-    Test command:
-    This will break if the string parameter exceeds 100 characters.
-    `|zap,12,"12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"`
+- If you are in a subdirectory on C: and reformat C: then the folder continues to exist until you change out of it. This doesn't occur on A: Ref: https://github.com/cormacj/rodos-disassembly/issues/4

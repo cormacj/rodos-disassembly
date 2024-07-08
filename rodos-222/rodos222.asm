@@ -7988,12 +7988,15 @@ STORE_BOOT_STRING:
     ;b=string Length
     ;hl=string Location
     ld a,b                                                     ; f493    78     x
+    ;--------------------------------------------------------
+    ;Ref: https://github.com/cormacj/rodos-disassembly/issues/7
     ;If the string is >100 characters cap it at 100.
     cp 100
     jr c,MAX_NOT_REACHED
     ;The string was >100 so set the string length at 100.
     ld a,100
 MAX_NOT_REACHED:
+    ;--------------------------------------------------------
     pop bc                                                     ; f494    c1     .
     inc ix                                                     ; f495    dd 23     . #
     inc ix                                                     ; f497    dd 23     . #
