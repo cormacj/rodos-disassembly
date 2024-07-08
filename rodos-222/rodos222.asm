@@ -15,8 +15,8 @@ org    0c000h
 ;Define version details
 ;This allows for more easy porting of code to v2.20
 ROM_MAJOR: equ 2
-ROM_MARK: equ 2
-ROM_MOD: equ 2
+ROM_MARK:  equ 2
+ROM_MOD:   equ 2
 ;---------------------------------------------------------------------------------------------------
 
 ;---------------------------------------------------------------------------------------------------
@@ -29,7 +29,7 @@ POST_BOOT_MSG: equ 0xbec1                                   ; This location is o
 ;BOOT_CMD_AREA: equ 0bec0h   ;v2.19 setting                 ; This is for forwards compatibility with the bugfix for V2.20
 BOOT_CMD_AREA: equ 0xbf30 ;v2.20 bugfix
 ROM_SELECT_DESELECT_RELOCATED: equ 0xbec0
-DISC_NUMBERS:   equ 0xbe00 ;The drive numbers are held here, eg 0=A, etc
+DISC_NUMBERS:       equ 0xbe00 ;The drive numbers are held here, eg 0=A, etc
 
 ;RODOS error message store
 DISK_ERROR_MESSAGE_FLAG: equ 0xbe78
@@ -5452,8 +5452,8 @@ le242h:
     ld ix,0bef0h                                               ; e246    dd 21 f0 be     . ! . .
     call IX_STORE_DISC                                         ; e24a    cd 01 e9     . . .
     ;Next bit stows "IN"
-    ld (ix+006h),049h                                          ; e24d    dd 36 06 49     . 6 . I
-    ld (ix+007h),0ceh                                          ; e251    dd 36 07 ce     . 6 . .
+    ld (ix+006h),'I'                                           ; e24d    dd 36 06 49     . 6 . I
+    ld (ix+007h),'N'+080h                                      ; e251    dd 36 07 ce     . 6 . .
     ld hl,0bef0h                                               ; e255    21 f0 be     ! . .
     call EXECUTE_RSX_COMMAND                                   ; e258    cd e8 c3     . . .
     jp nc,MSG_CANT_FIND_AMSDOS                                 ; e25b    d2 b6 fb     . . .
@@ -7895,7 +7895,8 @@ lf3f0h:
     jr lf454h                                                  ; f3fb    18 57     . W
 sub_f3fdh:
     ld a,(iy+WS_CPM_ROM_NUMBER)                                ; f3fd    fd 7e 01     . ~ .
-    ;ROM number is rom id+&30, so drop this back to a usable slot
+    ; The stored CP/M ROM number is rom id+&30,
+    ; so drop this back to a usable slot
     sub 030h                                                   ; f400    d6 30     . 0
     ld ix,0bef2h                                               ; f402    dd 21 f2 be     . ! . .
     ld (ix+000h),a                                             ; f406    dd 77 00     . w .
@@ -7986,13 +7987,13 @@ STORE_BOOT_STRING:
     ret z                                                      ; f49d    c8     .
     push bc                                                    ; f49e    c5
 
-    ;Next part takes the command parameter from |ZAP and stores it in the buffers
-    ;Orginally this next line read: ld de,0bec0h
-    ;That clashed with the zap,rom functions.
-    ;I've reverted this (for now) to the BE80 which worked well in v2.13
-    ;BOOT_CMD_AREA is the destination buffer
-    ;HL is the string parameter
-    ;A is the length of the string
+    ; Next part takes the command parameter from |ZAP and stores it in the buffers
+    ; Orginally this next line read: ld de,0bec0h
+    ; That clashed with the zap,rom functions.
+    ; I've reverted this (for now) to the BE80 which worked well in v2.13
+    ; BOOT_CMD_AREA is the destination buffer
+    ; HL is the string parameter
+    ; A is the length of the string
 
     ld de,BOOT_CMD_AREA                                        ; f49f    11 c0 be     . . .
     ld c,a                                                     ; f4a2    4f     O
