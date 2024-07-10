@@ -218,7 +218,7 @@ RSX_JUMPS:
     jp RSX_COPY                                                ; c0b4    c3 bd cd     . . .
     if DEBUG=1
         jp RSX_WS
-        jp RSX_MSG
+        jp RSX_CLEAR_ERROR
     endif
    ;See page 27 of the RODOS Manual for more details about how to use these hidden commands.
     jp RSX_HIDDEN_04                                           ; c0b7    c3 cb c7     . . .
@@ -295,7 +295,7 @@ RSX_NAMES:
 
 if DEBUG=1
     defb 'W', 'S' + 0x80
-    defb 'MS', 'G' + 0x80
+    defb 'CLEAR.ERRO', 'R' + 0x80
 endif
 
     ;See page 27 of the RODOS Manul for more details about how to use these next commands
@@ -9286,17 +9286,22 @@ RSX_WS:
     inc hl
     ld (hl),d ;pass workspace loc back to variable
     ret
-RSX_MSG:
-    ;code to validate messages after tokenisation
-    ld b,33
-    r1:
-        ld a,b
-        push bc
-        call ERROR_HANDLER
-        call KM_WAIT_KEY
-        pop bc
-        djnz r1
-        ret
+RSX_CLEAR_ERROR:
+    ;Clear the error location
+    ld a,255
+    ld (0xbe6d),a
+    ret
+; RSX_MSG:
+;     ;code to validate messages after tokenisation
+;     ld b,33
+;     r1:
+;         ld a,b
+;         push bc
+;         call ERROR_HANDLER
+;         call KM_WAIT_KEY
+;         pop bc
+;         djnz r1
+;         ret
 endif
 ;---------------------------------------------------------------------------------------------------
 ;List of Tokens and what they equate to.
