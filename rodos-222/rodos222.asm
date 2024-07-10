@@ -32,7 +32,8 @@ ROM_SELECT_DESELECT_RELOCATED: equ 0xbec0
 DISC_NUMBERS:       equ 0xbe00 ;The drive numbers are held here, eg 0=A, etc
 
 ;RODOS error message store
-DISK_ERROR_MESSAGE_FLAG: equ 0xbe78
+DISK_ERROR_MESSAGE_FLAG: equ 0xbe78 ; Flag Enable/Disable Error Messages
+ERROR_CODE_STORE:        equ 0xbe6d ; RODOS stores error message codes at this location
 
 ;Standard CPC BIOS call locations
 RESET_ENTRY_RST_0:  equ 0x0000
@@ -9060,7 +9061,7 @@ lfb51h:
 ERROR_HANDLER:
     ;Error number in A
     ld b,a                                                     ; fb6a    47     G
-    ld (0be6dh),a                                              ; fb6b    32 6d be     2 m .
+    ld (ERROR_CODE_STORE),a                                    ; fb6b    32 6d be     2 m .
     ld hl,RODOS_MSGS_ARRAY                                     ; fb6e    21 c0 fc     ! . .
 lfb71h:
     ld a,(hl)                                                  ; fb71    7e     ~
@@ -9288,8 +9289,8 @@ RSX_WS:
     ret
 RSX_CLEAR_ERROR:
     ;Clear the error location
-    ld a,255
-    ld (0xbe6d),a
+    ld a,255 ;Per the manual 255 is a no error
+    ld (ERROR_CODE_STORE),a
     ret
 ; RSX_MSG:
 ;     ;code to validate messages after tokenisation
