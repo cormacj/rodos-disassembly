@@ -18,7 +18,7 @@ However, despite its advanced features, RODOS never gained much of a foothold. T
 
 Romantic Robot was one of the longest-established CPC software companies, founded by Alexander Goldscheider. Their best-known product was the Multiface II, but the company also produced some serious software and even games. Romantic Robot produced Multifaces for the Spectrum, Amiga and ST, as well as the CPC. The company also sold classical music CDs.
 
-Mathew Edwards, programmer of the Romantic Robot game Wriggler, spent a couple years perfecting Rodos - an impressive feat which he managed single handedly.
+Matthew Edwards, programmer of the Romantic Robot game Wriggler, spent a couple years perfecting Rodos - an impressive feat which he managed single handedly.
 
 The RODOS system is best thought of as two seperate entities within a single 16k ROM. On one side you have RODOS- a powerful disk operating system which runs hand in glove with Amsdos - and on the other RECS (Rom Extended Command System), which gives extra operating system commands. RODOS and RRECS provide the user with extra bar commands Both systems work with or without the other.
 
