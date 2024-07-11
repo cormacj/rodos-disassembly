@@ -9312,7 +9312,7 @@ endif
 ;I tokenised the words to gain space. For readability I've made EQU so its still readable.
 ;V2.19 - 60 bytes available in ROM
 ;V2.21 - 135 bytes available after tokenised (and opt 10 & 11 fixes)
-;V2.22 - 129 Bytes
+;V2.22 - 134 bytes available after "open","already" tokenised (and 27 data error fix)
 
 T_Disc: equ 081h
 T_error: equ 082h
@@ -9325,6 +9325,7 @@ T_parameters: equ 088h
 T_Unknown: equ 089h
 T_alias: equ 08Ah
 T_open: equ 08Bh
+T_already: equ 08Ch
 
 Token_Array:
     db 0
@@ -9339,6 +9340,7 @@ Token_Array:
     defb 'Unknown ',0 ;&89
     defb 'alias',0 ;&8A
     defb 'open',0 ;&8B
+    defb 'already',0 ;&8C
 
 RODOS_MSGS_ARRAY:
     defb 05ch                                                    ; Starts with a slash for some reason (probably because this is error 0)
@@ -9360,7 +9362,7 @@ RODOS_MSGS_ARRAY:
     defb 'Input',T_file,T_not,T_open,05ch                        ; Error 16
     defb 'Output',T_file,'already ',T_open,05ch                  ; Error 17
     defb ' reborn!',05ch                                         ; Error 18
-    defb ' already exists!',05ch                                 ; Error 19
+    defb ' ',T_already,' exists!',05ch                           ; Error 19
     defb  T_bad,'format specified',05ch                          ; Error 20
     defb 'Corrupted disc',T_error,05ch                           ; Error 21
     defb T_Disc,T_not,8,T_formatted,'!',05ch                     ; Error 22
@@ -9375,10 +9377,13 @@ RODOS_MSGS_ARRAY:
     defb T_Disc,'Missing',05ch                                   ; Error 31
     defb T_Disc,'fault',05ch                                     ; Error 32
     defb T_Disc,'write protected',05ch                           ; Error 33 - Last error message of this table
+
 MSG_ESCAPE:
     defb 'Escape',05ch
+
 MSG_DISC_CHANGED:
     defb T_Disc,'changed !',05ch
+
 MSG_FILE_EXISTS_ASK:
     defb '{File exists. Erase, Backup, or Quit ?'
     defb 008h                                                    ; ff39    08     .
@@ -9388,7 +9393,7 @@ MSG_DRIVE:
 MSG_BYTES_FREE:
     defb '{Bytes free = ',0
 MSG_DISK_ALREADY_FORMATTED:
-    defb '{',T_Disc,'already',T_formatted,', REFORMAT Y/N ?',8,0
+    defb '{',T_Disc,T_already,T_formatted,', REFORMAT Y/N ?',8,0
 MSG_RETRY_IGNORE_CANCEL:
     defb 'Retry, Ignore or Cancel? ',0
 VERSION_MSG:
