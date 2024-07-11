@@ -1526,7 +1526,7 @@ lc89fh:
     push hl                                                    ; c8ab    e5     .
     ld a,(DISK_ERROR_MESSAGE_FLAG)                             ; c8ac    3a 78 be     : x .
     and a                                                      ; c8af    a7     .
-    jp nz,lda18h                                               ; c8b0    c2 18 da     . . .
+    jp nz,SET_CARRY_FLAG                                       ; c8b0    c2 18 da     . . .
     bit 0,(iy+00dh)                                            ; c8b3    fd cb 0d 46     . . . F
     call z,sub_da91h                                           ; c8b7    cc 91 da     . . .
     bit 7,b                                                    ; c8ba    cb 78     . x
@@ -3280,6 +3280,7 @@ RSX_DIR:
     jp nz,ld51ah                                               ; d4ec    c2 1a d5     . . .
     cp 081h                                                    ; d4ef    fe 81     . .
     jr z,ld51ch                                                ; d4f1    28 29     ( )
+    ;Call |DIR from the CPM rom
     ld hl,0bef8h                                               ; d4f3    21 f8 be     ! . .
     ld a,(iy+WS_CPM_ROM_NUMBER)                                ; d4f6    fd 7e 01     . ~ .
     ld (hl),a                                                  ; d4f9    77     w
@@ -3369,14 +3370,15 @@ RSX_REN:
     cp 081h                                                    ; d59f    fe 81     . .
     jr z,ld5b8h                                                ; d5a1    28 15     ( .
     ld hl,0bef0h                                               ; d5a3    21 f0 be     ! . .
+    ;Call |REN from the CPM rom
     ld a,(iy+WS_CPM_ROM_NUMBER)                                ; d5a6    fd 7e 01     . ~ .
     ld (hl),a                                                  ; d5a9    77     w
     inc hl                                                     ; d5aa    23     #
-    ld (hl),052h                                               ; d5ab    36 52     6 R
+    ld (hl),'R'                                                ; d5ab    36 52     6 R
     inc hl                                                     ; d5ad    23     #
-    ld (hl),045h                                               ; d5ae    36 45     6 E
+    ld (hl),'E'                                                ; d5ae    36 45     6 E
     inc hl                                                     ; d5b0    23     #
-    ld (hl),0ceh                                               ; d5b1    36 ce     6 .
+    ld (hl),'N' + 0x80                                         ; d5b1    36 ce     6 .
     ld a,002h                                                  ; d5b3    3e 02     > .
     jp ld689h                                                  ; d5b5    c3 89 d6     . . .
 ld5b8h:
@@ -3480,14 +3482,15 @@ RSX_ERA:
     cp 081h                                                    ; d66d    fe 81     . .
     jr z,ld69ah                                                ; d66f    28 29     ( )
     ld hl,0bef0h                                               ; d671    21 f0 be     ! . .
+    ;Call |ERA from the CPM rom
     ld a,(iy+WS_CPM_ROM_NUMBER)                                ; d674    fd 7e 01     . ~ .
     ld (hl),a                                                  ; d677    77     w
     inc hl                                                     ; d678    23     #
-    ld (hl),045h                                               ; d679    36 45     6 E
+    ld (hl),'E'                                                ; d679    36 45     6 E
     inc hl                                                     ; d67b    23     #
-    ld (hl),052h                                               ; d67c    36 52     6 R
+    ld (hl),'R'                                                ; d67c    36 52     6 R
     inc hl                                                     ; d67e    23     #
-    ld (hl),0c1h                                               ; d67f    36 c1     6 .
+    ld (hl),'A' + 0x80                                               ; d67f    36 c1     6 .
     call sub_PREP_STRING_TO_HL                                 ; d681    cd 80 da     . . .
     call sub_dabah                                             ; d684    cd ba da     . . .
 ld687h:
@@ -3995,9 +3998,10 @@ DISPLAY_MSG:
     cp 080h
     jr nc,Token_Handler
 DISPLAY_NEXT:
+    ;Is it a \
     cp 05ch                                                    ; d96d    fe 5c     . \
     jr z,ld97ch                                                ; d96f    28 0b     ( .
-    cp 07bh                                                    ; d971    fe 7b     . {
+    cp '{'                                                     ; d971    fe 7b     . {
     call z,PRINT_CR_ONLY                                       ; d973    cc 83 d9     . . .
     call TXT_OUTPUT                                            ; d976    cd 5a bb     . Z .
     inc hl                                                     ; d979    23     #
@@ -4120,7 +4124,8 @@ SET_FLAG_TO_EQUAL:
     ld a,095h                                                  ; da14    3e 95     > .
     cp a                                                       ; da16    bf     .
     ret                                                        ; da17    c9     .
-lda18h:
+SET_CARRY_FLAG:
+    ;Carry flag set, A=0
     xor a                                                      ; da18    af     .
     scf                                                        ; da19    37     7
     ret                                                        ; da1a    c9     .
@@ -5264,7 +5269,6 @@ sub_e0cfh:
 
 ;=======================================================================
 RSX_RMDIR:
-;TODO: added code at this point breaks cat
 ;=======================================================================
     cp 002h                                                    ; e0d2    fe 02     . .
     jp nc,MSG_TOO_MANY_PARAMETERS                              ; e0d4    d2 9f fb     . . .
@@ -5729,9 +5733,9 @@ le478h:
     cp 02dh                                                    ; e48a    fe 2d     . -
     jr nz,le478h                                               ; e48c    20 ea
     ;next bit stows ".IN"       .
-    ld (ix-001h),02eh                                          ; e48e    dd 36 ff 2e     . 6 . .
-    ld (ix+000h),049h                                          ; e492    dd 36 00 49     . 6 . I
-    ld (ix+001h),0ceh                                          ; e496    dd 36 01 ce     . 6 . .
+    ld (ix-001h),'.'                                           ; e48e    dd 36 ff 2e     . 6 . .
+    ld (ix+000h),'I'                                           ; e492    dd 36 00 49     . 6 . I
+    ld (ix+001h),'N' + 0x80                                    ; e496    dd 36 01 ce     . 6 . .
     ld (0bee2h),hl                                             ; e49a    22 e2 be     " . .
     ld a,b                                                     ; e49d    78     x
     ld (0bee4h),a                                              ; e49e    32 e4 be     2 . .
@@ -5740,8 +5744,8 @@ le4a3h:
     ld ix,0bef0h                                               ; e4a3    dd 21 f0 be     . ! . .
     call IX_STORE_DISC                                         ; e4a7    cd 01 e9     . . .
     ;Next bit stows "IN"
-    ld (ix+006h),049h                                          ; e4aa    dd 36 06 49     . 6 . I
-    ld (ix+007h),0ceh                                          ; e4ae    dd 36 07 ce     . 6 . .
+    ld (ix+006h),'I'                                           ; e4aa    dd 36 06 49     . 6 . I
+    ld (ix+007h),'N' + 0x80                                    ; e4ae    dd 36 07 ce     . 6 . .
 le4b2h:
     ld hl,0bef0h                                               ; e4b2    21 f0 be     ! . .
     call EXECUTE_RSX_COMMAND                                   ; e4b5    cd e8 c3     . . .
@@ -8487,13 +8491,13 @@ sub_f798h:
 lf7afh:
     call sub_ed38h                                             ; f7af    cd 38 ed     . 8 .
 lf7b2h:
-    jp nz,lda18h                                               ; f7b2    c2 18 da     . . .
+    jp nz,SET_CARRY_FLAG                                               ; f7b2    c2 18 da     . . .
     call sub_c5ffh                                             ; f7b5    cd ff c5     . . .
     jp nz,SET_FLAG_TO_LESS_THAN                                ; f7b8    c2 0f da     . . .
     set 3,(iy+WS_CASE_SENSITIVITY)                             ; f7bb    fd cb 41 de     . . A .
     ld a,(iy+014h)                                             ; f7bf    fd 7e 14     . ~ .
     and a                                                      ; f7c2    a7     .
-    jp z,lda18h                                                ; f7c3    ca 18 da     . . .
+    jp z,SET_CARRY_FLAG                                                ; f7c3    ca 18 da     . . .
     push bc                                                    ; f7c6    c5     .
     push hl                                                    ; f7c7    e5     .
     push ix                                                    ; f7c8    dd e5     . .
@@ -8568,7 +8572,7 @@ lf829h:
     ret nc                                                     ; f84f    d0     .
     inc c                                                      ; f850    0c     .
     call sub_f868h                                             ; f851    cd 68 f8     . h .
-    jp c,lda18h                                                ; f854    da 18 da     . . .
+    jp c,SET_CARRY_FLAG                                                ; f854    da 18 da     . . .
     ret                                                        ; f857    c9     .
 sub_f858h:
     ld b,000h                                                  ; f858    06 00     . .
@@ -8619,7 +8623,7 @@ lf893h:
     set 3,(iy+WS_CASE_SENSITIVITY)                             ; f8a6    fd cb 41 de     . . A .
     ld a,(iy+014h)                                             ; f8aa    fd 7e 14     . ~ .
     and a                                                      ; f8ad    a7     .
-    jp z,lda18h                                                ; f8ae    ca 18 da     . . .
+    jp z,SET_CARRY_FLAG                                                ; f8ae    ca 18 da     . . .
     push ix                                                    ; f8b1    dd e5     . .
     push hl                                                    ; f8b3    e5     .
     push bc                                                    ; f8b4    c5     .
@@ -8843,7 +8847,6 @@ sub_fa18h:
     ;Less than 3 is too few.
     cp 003h                                                    ; fa1d    fe 03     . .
     jp c,MSG_WRONG_PARAMETER_AMT                               ; fa1f    da 97 fb     . . .
-
 
     ld l,(ix+002h)                                             ; fa22    dd 6e 02     . n .
     ld h,(ix+003h)                                             ; fa25    dd 66 03     . f .
@@ -9227,7 +9230,7 @@ lfc67h:
     ld l,a                                                     ; fc67    6f     o
     ld a,(DISK_ERROR_MESSAGE_FLAG)                             ; fc68    3a 78 be     : x .
     and a                                                      ; fc6b    a7     .
-    jp nz,lda18h                                               ; fc6c    c2 18 da     . . .
+    jp nz,SET_CARRY_FLAG                                               ; fc6c    c2 18 da     . . .
 ERROR_HANDLER_RELAY_PROCESS:
     bit 0,(iy+00dh)                                            ; fc6f    fd cb 0d 46     . . . F
     jr nz,lfcb7h                                               ; fc73    20 42       B
@@ -9261,7 +9264,7 @@ lfca5h:
 lfcaeh:
     call TXT_OUTPUT                                            ; fcae    cd 5a bb     . Z .
     call PRINT_CR_LF                                           ; fcb1    cd 7d d9     . } .
-    jp lda18h                                                  ; fcb4    c3 18 da     . . .
+    jp SET_CARRY_FLAG                                                  ; fcb4    c3 18 da     . . .
 lfcb7h:
     call TXT_OUTPUT                                            ; fcb7    cd 5a bb     . Z .
     call PRINT_CR_LF                                           ; fcba    cd 7d d9     . } .
@@ -9309,6 +9312,8 @@ endif
 ;I tokenised the words to gain space. For readability I've made EQU so its still readable.
 ;V2.19 - 60 bytes available in ROM
 ;V2.21 - 135 bytes available after tokenised (and opt 10 & 11 fixes)
+;V2.22 - 129 Bytes
+
 T_Disc: equ 081h
 T_error: equ 082h
 T_file: equ 083h
@@ -9319,6 +9324,7 @@ T_not: equ 087h
 T_parameters: equ 088h
 T_Unknown: equ 089h
 T_alias: equ 08Ah
+T_open: equ 08Bh
 
 Token_Array:
     db 0
@@ -9332,6 +9338,7 @@ Token_Array:
     defb ' parameters',0 ;&88
     defb 'Unknown ',0 ;&89
     defb 'alias',0 ;&8A
+    defb 'open',0 ;&8B
 
 RODOS_MSGS_ARRAY:
     defb 05ch                                                    ; Starts with a slash for some reason (probably because this is error 0)
@@ -9350,8 +9357,8 @@ RODOS_MSGS_ARRAY:
     defb 'Dir already exists!',05ch                              ; Error 13
     defb T_bad,'drive',05ch                                      ; Error 14
     defb T_Unknown,T_file,'system!',05ch                         ; Error 15
-    defb 'Input',T_file,T_not,'open',05ch                        ; Error 16
-    defb 'Output',T_file,'already open',05ch                     ; Error 17
+    defb 'Input',T_file,T_not,T_open,05ch                        ; Error 16
+    defb 'Output',T_file,'already ',T_open,05ch                  ; Error 17
     defb ' reborn!',05ch                                         ; Error 18
     defb ' already exists!',05ch                                 ; Error 19
     defb  T_bad,'format specified',05ch                          ; Error 20
@@ -9385,8 +9392,8 @@ MSG_DISK_ALREADY_FORMATTED:
 MSG_RETRY_IGNORE_CANCEL:
     defb 'Retry, Ignore or Cancel? ',0
 VERSION_MSG:
-    defb 00fh                                                    ; ff95    0f     .
-    defb 002h                                                    ; ff96    02     .
+    ;Control Code for pen ink bright cyan (2)
+    defb 15,2                                                    ; ff95    0f 02     . .
     ;Saves having to update the version all over the place
 if DEBUG=1
         ;Throw a warning this is the debug version
@@ -9395,8 +9402,8 @@ endif
     defb ' RODOS V',ROM_MAJOR+48,'.',ROM_MARK+48,ROM_MOD+48,' '
     defb 0a4h ;copyright symbol                                ; ffa4    a4     .
     defb ' Romantic Robot U.K. Ltd.{{'
-    defb 00fh                                                  ; ffc0    0f     .
-    defb 001h                                                  ; ffc1    01     .
+    ;Control code for pen ink to bright yellow (1)
+    defb 15,1                                                  ; ffc0    0f 01  . .
     defb 0                                                     ; Need a zero here to end the string
 
 ; Debug code I added to dump what was happening in buffers
