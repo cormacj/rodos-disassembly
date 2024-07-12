@@ -2155,7 +2155,7 @@ RSX_LS:
     and a                                                      ; ccce    a7     .
     jp nz,MSG_TOO_MANY_PARAMETERS                              ; cccf    c2 9f fb     . . .
     call PRINT_CR_LF                                           ; ccd2    cd 7d d9     . } .
-    call sub_da62h                                             ; ccd5    cd 62 da     . b .
+    call CURRENT_DRIVE_SET_TO_PREVIOUS                         ; ccd5    cd 62 da     . b .
     call sub_d9a0h                                             ; ccd8    cd a0 d9     . . .
     ret nc                                                     ; ccdb    d0     .
     cp 081h                                                    ; ccdc    fe 81     . .
@@ -2221,7 +2221,7 @@ RSX_ACCESS:
     inc ix                                                     ; cd45    dd 23     . #
     inc ix                                                     ; cd47    dd 23     . #
     ld (iy+002h),a                                             ; cd49    fd 77 02     . w .
-    call sub_da1bh                                             ; cd4c    cd 1b da     . . .
+    call SWAP_DRIVE_AND_PREP_STRING                            ; cd4c    cd 1b da     . . .
     ret nz                                                     ; cd4f    c0     .
     call sub_da6ah                                             ; cd50    cd 6a da     . j .
     ret nc                                                     ; cd53    d0     .
@@ -2296,7 +2296,7 @@ RSX_COPY:
     ld (0bf25h),a                                              ; cde8    32 25 bf     2 % .
     and a                                                      ; cdeb    a7     .
     jr z,lce4ah                                                ; cdec    28 5c     ( \
-    call sub_da1bh                                             ; cdee    cd 1b da     . . .
+    call SWAP_DRIVE_AND_PREP_STRING                            ; cdee    cd 1b da     . . .
     ex de,hl                                                   ; cdf1    eb     .
     ld ix,0bf10h                                               ; cdf2    dd 21 10 bf     . ! . .
     call sub_edb6h                                             ; cdf6    cd b6 ed     . . .
@@ -2769,7 +2769,7 @@ RSX_INFO:
     ld (0bee2h),a                                              ; d171    32 e2 be     2 . .
     and a                                                      ; d174    a7     .
     jp z,ld1a4h                                                ; d175    ca a4 d1     . . .
-    call sub_da1bh                                             ; d178    cd 1b da     . . .
+    call SWAP_DRIVE_AND_PREP_STRING                            ; d178    cd 1b da     . . .
     ex de,hl                                                   ; d17b    eb     .
 ld17ch:
     ld ix,0bed0h                                               ; d17c    dd 21 d0 be     . ! . .
@@ -2787,7 +2787,7 @@ ld198h:
     ld hl,0bed0h                                               ; d198    21 d0 be     ! . .
     ld (hl),02ah                                               ; d19b    36 2a     6 *
     ld b,001h                                                  ; d19d    06 01     . .
-    call sub_da62h                                             ; d19f    cd 62 da     . b .
+    call CURRENT_DRIVE_SET_TO_PREVIOUS                         ; d19f    cd 62 da     . b .
     jr ld17ch                                                  ; d1a2    18 d8     . .
 ld1a4h:
     ld hl,(0bee0h)                                             ; d1a4    2a e0 be     * . .
@@ -3267,12 +3267,12 @@ RSX_DIR:
     cp 002h                                                    ; d4ce    fe 02     . .
     jp nc,MSG_TOO_MANY_PARAMETERS                              ; d4d0    d2 9f fb     . . .
     push af                                                    ; d4d3    f5     .
-    call sub_da62h                                             ; d4d4    cd 62 da     . b .
+    call CURRENT_DRIVE_SET_TO_PREVIOUS                         ; d4d4    cd 62 da     . b .
     call sub_e374h                                             ; d4d7    cd 74 e3     . t .
     pop af                                                     ; d4da    f1     .
     push af                                                    ; d4db    f5     .
     and a                                                      ; d4dc    a7     .
-    call nz,sub_da1bh                                          ; d4dd    c4 1b da     . . .
+    call nz,SWAP_DRIVE_AND_PREP_STRING                                          ; d4dd    c4 1b da     . . .
     jp nz,ld51ah                                               ; d4e0    c2 1a d5     . . .
     call sub_d9a0h                                             ; d4e3    cd a0 d9     . . .
     jp nc,ld51ah                                               ; d4e6    d2 1a d5     . . .
@@ -3311,7 +3311,7 @@ ld51ch:
     pop af                                                     ; d528    f1     .
     and a                                                      ; d529    a7     .
     jp z,le1d7h                                                ; d52a    ca d7 e1     . . .
-    call sub_da1bh                                             ; d52d    cd 1b da     . . .
+    call SWAP_DRIVE_AND_PREP_STRING                            ; d52d    cd 1b da     . . .
     ld a,b                                                     ; d530    78     x
     and a                                                      ; d531    a7     .
     jp z,le1d7h                                                ; d532    ca d7 e1     . . .
@@ -3333,12 +3333,16 @@ ld51ch:
 ;=======================================================================
 RSX_USER:
 ;=======================================================================
+    ;We need less than 2 parameters
     cp 002h                                                    ; d54d    fe 02     . .
+    ;If we got more, throw an error
     jp nc,MSG_TOO_MANY_PARAMETERS                              ; d54f    d2 9f fb     . . .
     and a                                                      ; d552    a7     .
-    jr z,ld558h                                                ; d553    28 03     ( .
+    ;If no parameter, we do |user,0
+    jr z,NO_USER_SPECIFIED                                     ; d553    28 03     ( .
+    ;Otherwise load the requested user
     ld a,(ix+000h)                                             ; d555    dd 7e 00     . ~ .
-ld558h:
+NO_USER_SPECIFIED:
     ld (iy+WS_RODOS_USER_NUMBER_LOW),a                         ; d558    fd 77 4e     . w N
     ld (iy+WS_RODOS_USER_NUMBER_HIGH),0ffh                     ; d55b    fd 36 4f ff     . 6 O .
     and 00fh                                                   ; d55f    e6 0f     . .
@@ -3360,9 +3364,11 @@ ld558h:
 ;=======================================================================
 RSX_REN:
 ;=======================================================================
+    ;We need less than 2 parameters
     cp 002h                                                    ; d58f    fe 02     . .
+    ;If we got more, throw an error
     jp nz,MSG_WRONG_PARAMETER_AMT                              ; d591    c2 97 fb     . . .
-    call sub_da1bh                                             ; d594    cd 1b da     . . .
+    call SWAP_DRIVE_AND_PREP_STRING                            ; d594    cd 1b da     . . .
     ret nz                                                     ; d597    c0     .
     call sub_d9a0h                                             ; d598    cd a0 d9     . . .
     ret nc                                                     ; d59b    d0     .
@@ -3474,7 +3480,7 @@ RSX_ERA:
     jp nc,MSG_TOO_MANY_PARAMETERS                              ; d65b    d2 9f fb     . . .
     and a                                                      ; d65e    a7     .
     call z,PROMPT_ENTER_NAME                                   ; d65f    cc dc d8     . . .
-    call sub_da1bh                                             ; d662    cd 1b da     . . .
+    call SWAP_DRIVE_AND_PREP_STRING                            ; d662    cd 1b da     . . .
     ret nz                                                     ; d665    c0     .
     call sub_d9a0h                                             ; d666    cd a0 d9     . . .
     ret nc                                                     ; d669    d0     .
@@ -3743,7 +3749,7 @@ PROCESS_DRIVE_CHANGE:
     ld a,(iy+WS_CURRENT_DRIVE_LETTER)                          ; d809    fd 7e 03     . ~ .
     ld (iy+WS_PREVIOUS_DRIVE_LETTER),a                         ; d80c    fd 77 13     . w .
     ld (iy+WS_CD_HOME_DRIVE_LETTER),a                          ; d80f    fd 77 43     . w C
-    call sub_da62h                                             ; d812    cd 62 da     . b .
+    call CURRENT_DRIVE_SET_TO_PREVIOUS                         ; d812    cd 62 da     . b .
     ld a,(iy+005h)                                             ; d815    fd 7e 05     . ~ .
     ld (iy+WS_CD_HOME_TRACK),a                                 ; d818    fd 77 44     . w D
     ld a,(iy+006h)                                             ; d81b    fd 7e 06     . ~ .
@@ -4129,8 +4135,8 @@ SET_CARRY_FLAG:
     xor a                                                      ; da18    af     .
     scf                                                        ; da19    37     7
     ret                                                        ; da1a    c9     .
-sub_da1bh:
-    call sub_da62h                                             ; da1b    cd 62 da     . b .
+SWAP_DRIVE_AND_PREP_STRING:
+    call CURRENT_DRIVE_SET_TO_PREVIOUS                         ; da1b    cd 62 da     . b .
     call sub_PREP_STRING_TO_DE                                 ; da1e    cd 85 da     . . .
 sub_da21h:
     ld a,b                                                     ; da21    78     x
@@ -4169,12 +4175,12 @@ lda47h:
     ld (iy+006h),a                                             ; da5d    fd 77 06     . w .
     pop af                                                     ; da60    f1     .
     ret                                                        ; da61    c9     .
-sub_da62h:
+CURRENT_DRIVE_SET_TO_PREVIOUS:
     ld a,(iy+WS_PREVIOUS_DRIVE_LETTER)                         ; da62    fd 7e 13     . ~ .
     ld (iy+WS_CURRENT_DRIVE_LETTER),a                          ; da65    fd 77 03     . w .
     jr lda47h                                                  ; da68    18 dd     . .
 sub_da6ah:
-    call sub_da1bh                                             ; da6a    cd 1b da     . . .
+    call SWAP_DRIVE_AND_PREP_STRING                            ; da6a    cd 1b da     . . .
     ret nz                                                     ; da6d    c0     .
     push de                                                    ; da6e    d5     .
     push bc                                                    ; da6f    c5     .
@@ -4347,7 +4353,7 @@ RSX_FORMAT:
     jp z,ldd25h                                                ; db63    ca 25 dd     . % .
     jp nc,MSG_TOO_MANY_PARAMETERS                              ; db66    d2 9f fb     . . .
     ld c,000h                                                  ; db69    0e 00     . .
-    ;Did we get four paramters?
+    ;Did we get four parameters?
     cp 004h                                                    ; db6b    fe 04     . .
     jr c,ldb77h                                                ; db6d    38 08     8 .
     ld c,(ix+000h)                                             ; db6f    dd 4e 00     . N .
@@ -4436,6 +4442,7 @@ sub_dc04h:
     dec e                                                      ; dc07    1d     .
     ret                                                        ; dc08    c9     .
 ldc09h:
+;I'm pretty sure this is data, not code
     inc bc                                                     ; dc09    03     .
     ld b,009h                                                  ; dc0a    06 09     . .
     inc c                                                      ; dc0c    0c     .
@@ -4652,6 +4659,7 @@ FIRST_SECTOR:
     db 0c1h ; Data Format
     db 08bh ; RODOS Side 2
 
+    ; Original disassembly was this code:
     ; ld bc,08141h                                               ; dd8d    01 41 81     . A .
     ; pop bc                                                     ; dd90    c1     .
     ; adc a,e                                                    ; dd91    8b     .
@@ -5096,7 +5104,7 @@ RSX_MKDIR:
     jp nc,MSG_WRONG_PARAMETER_AMT                              ; df66    d2 97 fb     . . .
     and a                                                      ; df69    a7     .
     call z,PROMPT_ENTER_NAME                                   ; df6a    cc dc d8     . . .
-    call sub_da1bh                                             ; df6d    cd 1b da     . . .
+    call SWAP_DRIVE_AND_PREP_STRING                            ; df6d    cd 1b da     . . .
     ret nz                                                     ; df70    c0     .
     call sub_da6ah                                             ; df71    cd 6a da     . j .
     ret nc                                                     ; df74    d0     .
@@ -5249,7 +5257,7 @@ RSX_LINK:
     call z,sub_e0cfh                                           ; e0aa    cc cf e0     . . .
     ld a,l                                                     ; e0ad    7d     }
     ld (0befdh),a                                              ; e0ae    32 fd be     2 . .
-    call sub_da62h                                             ; e0b1    cd 62 da     . b .
+    call CURRENT_DRIVE_SET_TO_PREVIOUS                         ; e0b1    cd 62 da     . b .
     call sub_ec09h                                             ; e0b4    cd 09 ec     . . .
     ret nz                                                     ; e0b7    c0     .
     ld de,0ffeeh                                               ; e0b8    11 ee ff     . . .
@@ -5402,7 +5410,7 @@ le1b9h:
     jp nz,SET_FLAG_TO_LESS_THAN                                               ; e1c0    c2 0f da     . . .
     push de                                                    ; e1c3    d5     .
     call sub_e374h                                             ; e1c4    cd 74 e3     . t .
-    call sub_da62h                                             ; e1c7    cd 62 da     . b .
+    call CURRENT_DRIVE_SET_TO_PREVIOUS                         ; e1c7    cd 62 da     . b .
     call sub_d9a0h                                             ; e1ca    cd a0 d9     . . .
     pop de                                                     ; e1cd    d1     .
     ret nc                                                     ; e1ce    d0     .
@@ -5619,7 +5627,7 @@ le380h:
     call z,PRINT_ENTER_NAME                                    ; e389    cc be d8     . . .
     ld (0bee2h),hl                                             ; e38c    22 e2 be     " . .
     ld (0bee4h),a                                              ; e38f    32 e4 be     2 . .
-    call sub_da62h                                             ; e392    cd 62 da     . b .
+    call CURRENT_DRIVE_SET_TO_PREVIOUS                         ; e392    cd 62 da     . b .
     ld de,0000fh                                               ; e395    11 0f 00     . . .
     add ix,de                                                  ; e398    dd 19     . .
     ld de,(0bee2h)                                             ; e39a    ed 5b e2 be     . [ . .
@@ -5887,6 +5895,8 @@ le5b6h:
     call sub_e5f0h                                             ; e5d8    cd f0 e5     . . .
     pop bc                                                     ; e5db    c1     .
     ld d,a                                                     ; e5dc    57     W
+
+    ;---------------------------------------------------------------
     ;This is the code from v2.01
     ;This replaces the code below to fix https://github.com/cormacj/rodos-disassembly/issues/1
     ;tl;dr - The old code randomly returned 27 rather than the value from the open file/
@@ -5897,9 +5907,11 @@ le5b6h:
     POP        DE
     POP        HL
     RET
-    ;*see above*
-    ;BUG: somewhere about here is the cause of the 27/0x1b error return issue
-    ;This code causes errors.
+    ;---------------------------------------------------------------
+
+    ;FIXED: *see above*
+    ; This next set of comments are the original code from 2.19
+    ; This code causes errors.
     ;Lets understand what its trying to do:
     ; Coming in A contains the value from here:
     ; ld l,(ix-006h)                                             ; e5bd    dd 6e fa     . n .
@@ -6085,7 +6097,6 @@ le711h:
     ld bc,07fc0h                                               ; e71b    01 c0 7f     . . 
     out (c),c                                                  ; e71e    ed 49     . I
 le720h:
-;TODO: Changes between here and le7a6h break saving basic files
     ld l,(ix+01ah)                                             ; e720    dd 6e 1a     . n .
     ld h,(ix+01bh)                                             ; e723    dd 66 1b     . f .
     jp SET_FLAG_TO_GREATER_THAN                                ; e726    c3 0a da     . . .
@@ -6111,7 +6122,7 @@ le729h:
     pop ix                                                     ; e754    dd e1     . .
     ld de,001f8h                                               ; e756    11 f8 01     . . .
     add ix,de                                                  ; e759    dd 19     . .
-    call sub_da62h                                             ; e75b    cd 62 da     . b .
+    call CURRENT_DRIVE_SET_TO_PREVIOUS                         ; e75b    cd 62 da     . b .
     ld de,(0bee2h)                                             ; e75e    ed 5b e2 be     . [ . .
     ld a,(0bee4h)                                              ; e762    3a e4 be     : . .
     ld b,a                                                     ; e765    47     G
@@ -8419,7 +8430,7 @@ lf70bh:
     ld (0bf13h),a                                              ; f716    32 13 bf     2 . .
     ret nz                                                     ; f719    c0     .
     call lf6feh                                                ; f71a    cd fe f6     . . .
-    call sub_da62h                                             ; f71d    cd 62 da     . b .
+    call CURRENT_DRIVE_SET_TO_PREVIOUS                         ; f71d    cd 62 da     . b .
     ret nz                                                     ; f720    c0     .
     cp 008h                                                    ; f721    fe 08     . .
     jr nc,lf751h                                               ; f723    30 2c     0 ,
@@ -8429,7 +8440,7 @@ lf70bh:
     bit 5,a                                                    ; f730    cb 6f     . o
     jr nz,lf751h                                               ; f732    20 1d       .
     ld (iy+WS_PREVIOUS_DRIVE_LETTER),001h                      ; f734    fd 36 13 01     . 6 . .
-    call sub_da62h                                             ; f738    cd 62 da     . b .
+    call CURRENT_DRIVE_SET_TO_PREVIOUS                         ; f738    cd 62 da     . b .
     set 0,(iy+00dh)                                            ; f73b    fd cb 0d c6     . . . .
     call sub_cab5h                                             ; f73f    cd b5 ca     . . .
     res 0,(iy+00dh)                                            ; f742    fd cb 0d 86     . . . .
@@ -8985,9 +8996,9 @@ sub_faa0h:
     xor a                                                      ; fae7    af     .
     ret                                                        ; fae8    c9     .
 lfae9h:
-    db 0c0h
+    db 0c0h ;Default Bank number (used at startup)
 lfaeah:
-    ;CPC Standard Disk (178k) disk format definition (maybe?)
+    ;CPC Bank Numbers
     db 0c4h,0c5h,0c6h,0c7h,0cch,0cdh,0ceh,0cfh
     db 0d4h,0d5h,0d6h,0d7h,0dch,0ddh,0deh,0dfh
     db 0e4h,0e5h,0e6h,0e7h,0ech,0edh,0eeh,0efh
