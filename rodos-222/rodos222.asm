@@ -4397,14 +4397,18 @@ ldba2h:
     ld (iy+WS_DRIVE_NUMBER),a                                  ; dbbe    fd 77 04     . w .
     cp 008h                                                    ; dbc1    fe 08     . .
     jr nz,ldbd7h                                               ; dbc3    20 12       .
+    ;If its not a RAM disk skip to ldbd7h
+    ;--- Convert RAM to Tracks
+    ;Each ram bank equals 3 tracks
     ld e,(iy+WS_EXPANSION_RAM_COUNT)                           ; dbc5    fd 5e 0b     . ^ .
     bit 7,(iy+WS_START_PRBUFF_BANK)                            ; dbc8    fd cb 0c 7e     . . . ~
     call z,sub_dc04h                                           ; dbcc    cc 04 dc     . . .
     dec e                                                      ; dbcf    1d     .
-    ld hl,ldc09h                                               ; dbd0    21 09 dc     ! . .
+    ld hl,BANKS_TO_TRACKS_LOOKUP                               ; dbd0    21 09 dc     ! . .
     ld d,000h                                                  ; dbd3    16 00     . .
     add hl,de                                                  ; dbd5    19     .
     ld b,(hl)                                                  ; dbd6    46     F
+    ;--- Done
 ldbd7h:
     ld a,b                                                     ; dbd7    78     x
     ld (iy+00fh),a                                             ; dbd8    fd 77 0f     . w .
@@ -4438,34 +4442,15 @@ sub_dc04h:
     ld e,(iy+WS_START_PRBUFF_BANK)                             ; dc04    fd 5e 0c     . ^ .
     dec e                                                      ; dc07    1d     .
     ret                                                        ; dc08    c9     .
-ldc09h:
-;I'm pretty sure this is data, not code
-    inc bc                                                     ; dc09    03     .
-    ld b,009h                                                  ; dc0a    06 09     . .
-    inc c                                                      ; dc0c    0c     .
-    djnz ldc22h                                                ; dc0d    10 13     . .
-    ld d,019h                                                  ; dc0f    16 19     . .
-    inc e                                                      ; dc11    1c     .
-    jr nz,$+37                                                 ; dc12    20 23       #
-    ld h,029h                                                  ; dc14    26 29     & )
-    inc l                                                      ; dc16    2c     ,
-    jr nc,ldc4ch                                               ; dc17    30 33     0 3
-    ld (hl),039h                                               ; dc19    36 39     6 9
-    inc a                                                      ; dc1b    3c     <
-    ld b,b                                                     ; dc1c    40     @
-    ld b,e                                                     ; dc1d    43     C
-    ld b,(hl)                                                  ; dc1e    46     F
-    ld c,c                                                     ; dc1f    49     I
-    ld c,h                                                     ; dc20    4c     L
-    ld d,b                                                     ; dc21    50     P
-ldc22h:
-    ld d,e                                                     ; dc22    53     S
-    ld d,(hl)                                                  ; dc23    56     V
-    ld e,c                                                     ; dc24    59     Y
-    ld e,h                                                     ; dc25    5c     \
-    ld h,b                                                     ; dc26    60     `
-    ld h,e                                                     ; dc27    63     c
-    ld h,(hl)                                                  ; dc28    66     f
+BANKS_TO_TRACKS_LOOKUP:
+    ;Xref: dbd3
+    ;Ram banks to tracks lookup for ramdisk
+    defb 0x3,0x6,0x9,0xC,0xF,0x12,0x15,0x18,0x1B
+    defb 0x1E,0x21,0x24,0x27,0x2A,0x2D,0x30,0x33
+    defb 0x36,0x39,0x3C,0x3F,0x42,0x45,0x48,0x4B
+    defb 0x4E,0x51,0x54,0x57,0x5A,0x5D,0x60,0x63
+    defb 0x66
+
 ldc29h:
     ld e,(iy+002h)                                             ; dc29    fd 5e 02     . ^ .
     ld d,000h                                                  ; dc2c    16 00     . .
