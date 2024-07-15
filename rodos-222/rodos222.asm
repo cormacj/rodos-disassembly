@@ -217,6 +217,7 @@ RSX_JUMPS:
     jp RSX_CLI                                                 ; c0ae    c3 fc f1     . . .
     jp RSX_ACCESS                                              ; c0b1    c3 36 cd     . 6 .
     jp RSX_COPY                                                ; c0b4    c3 bd cd     . . .
+    jp RSX_RODOS_OFF
     if DEBUG=1
         jp RSX_WS
         jp RSX_CLEAR_ERROR
@@ -293,6 +294,7 @@ RSX_NAMES:
     defb 'D', 'O' + 0x80                                       ; DO
     defb 'ACCES', 'S' + 0x80                                   ; ACCESS
     defb 'COP', 'Y' + 0x80                                     ; COPY
+    defb 'RODOS.OF', 'F' + 0x80                                ; RODOS.OFF
 if DEBUG=1
     defb 'W', 'S' + 0x80
     defb 'CLEAR.ERRO', 'R' + 0x80
@@ -3650,7 +3652,7 @@ DO_LOGICAL_DRIVE:
     dec ix                                                     ; d78e    dd 2b     . +
     dec ix                                                     ; d790    dd 2b     . +
 
-    ;If lenght of paramter>1 then print "Bad Drive"
+    ;If length of parameter>1 then print "Bad Drive"
     ld a,b                                                     ; d792    78     x
     cp 001h                                                    ; d793    fe 01     . .
     jp nz,MSG_BAD_DRIVE                                        ; d795    c2 c2 fb     . . .
@@ -7910,6 +7912,32 @@ sub_f3fdh:
     ld b,a                                                     ; f40f    47     G
     ret                                                        ; f410    c9     .
 ;=======================================================================
+RUN_DISK_PTR:
+    db 9 ;string length
+    dw STR_RUN_DISC ;pointer to string
+;=======================================================================
+RSX_RODOS_OFF:
+;=======================================================================
+    ;This is an equivalent to |zap,<rodos rom>,"message"
+    ;We'll build IX out to pretend we're using |ZAP as we're just going to fall through to that
+    ;If nothing is passed its just going to assume its |rodos.off,RUN"Disc
+    ;First: At most only one parameter
+    cp 02h
+    jp nc,MSG_TOO_MANY_PARAMETERS
+    ;Too many parameters: Error
+    cp 01h
+    jr nc,MSG_PASSED_ALREADY
+    ;If we have a parameter, we can skip the next part
+    ld hl,RUN_DISK_PTR
+    ld (ix+0),l
+    ld (ix+1),h
+    ;That bit just pushes, the RUN"DISC as a parameter
+MSG_PASSED_ALREADY:
+    ld a,(iy+WS_RODOS_ROM_NUMBER) ;Grab the RODOS rom number
+    ld (ix+2),a ;Store it for |ZAP
+    ld a,3 ;Finally, setup A as a parameter count for |ZAP
+
+;=======================================================================
 RSX_ZAP:
 ;=======================================================================
     cp 010h                                                    ; f411    fe 10     . .
@@ -9301,7 +9329,7 @@ endif
 ;I tokenised the words to gain space. For readability I've made EQU so its still readable.
 ;V2.19 - 60 bytes available in ROM
 ;V2.21 - 135 bytes available after tokenised (and opt 10 & 11 fixes)
-;V2.22 - 134 bytes available after "open","already" tokenised (and 27 data error fix)
+;V2.22 - 101 bytes available after "open","already" tokenised (and 27 data error fix), and adding rodos.off
 
 T_Disc: equ 081h
 T_error: equ 082h
