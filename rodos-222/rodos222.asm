@@ -293,7 +293,6 @@ RSX_NAMES:
     defb 'D', 'O' + 0x80                                       ; DO
     defb 'ACCES', 'S' + 0x80                                   ; ACCESS
     defb 'COP', 'Y' + 0x80                                     ; COPY
-
 if DEBUG=1
     defb 'W', 'S' + 0x80
     defb 'CLEAR.ERRO', 'R' + 0x80
@@ -872,6 +871,7 @@ SETUP_ENTER_KEY_STRINGS:
 ; BLOCK 'STR_CLI_RUN_DISK' (start 0xc4be end 0xc4cb)
 STR_CLI_RUN_DISK_start:
   defb '|CLI',13
+STR_RUN_DISC:
   defb 'RUN',34,'DISC',13                                      ;  aka RUN"DISC<cr>
 
 
@@ -7909,7 +7909,6 @@ sub_f3fdh:
     ld a,001h                                                  ; f40d    3e 01     > .
     ld b,a                                                     ; f40f    47     G
     ret                                                        ; f410    c9     .
-
 ;=======================================================================
 RSX_ZAP:
 ;=======================================================================
