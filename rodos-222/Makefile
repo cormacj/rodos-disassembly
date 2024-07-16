@@ -8,7 +8,7 @@ help:
 	$(info make run - Build and run the rom in Caprice32)
 	$(info make release - generate a zip file suitable for uploading)
 
-releasefiles=README.md KNOWN_BUGS CHANGELOG Release/rodos$(version).rom Release/rodos$(version)-debug.rom
+releasefiles=README.md KNOWN_BUGS TESTING.md CHANGELOG Release/rodos$(version).rom Release/rodos$(version)-debug.rom
 
 ifndef debug
 rodos=debug_off.asm rodos${version}.asm
@@ -36,6 +36,7 @@ runa:
 
 release:
 		#rm -v Release/* &&
+		cp *.md Release/
 		./z80make -v -o Release/rodos$(version).rom debug_off.asm rodos${version}.asm && ./validate-size.sh Release/rodos$(version).rom && zip -v -j Release/rodos$(version).zip ${releasefiles} && echo "Release made!"
 		./z80make -v -o Release/rodos$(version)-debug.rom debug_on.asm rodos${version}.asm && ./validate-size.sh Release/rodos$(version)-debug.rom && zip -v -j Release/rodos$(version).zip ${releasefiles} && echo "Debug Release made!"
 
