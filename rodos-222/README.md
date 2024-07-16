@@ -1,6 +1,21 @@
  # rodos-2.22
-This is a work in progress of bugfixes from RODOS v2.19.
+This version has been tested and all commands are working as documented.
+
 Development work is tracked here: https://github.com/cormacj/rodos-disassembly
+
+**New**
+
+A new command has been added: `|RODOS.OFF`
+
+`|RODOS.OFF,<option command>`: If a program needs all the memory and RODOS isn't giving it enough, then |RODOS.OFF will turn off the RODOS rom and reboot with the passed command. If no command is passed then it will use RUN"DISC on startup.
+
+Examples:
+
+`|RODOS.OFF` - reboot with RODOS turned off, and RUN"DISC on startup
+
+`|RODOS.OFF,"RUN"+CHR$(34)+"GAME"` - reboot with RODOS turned off, and RUN"GAME on startup
+
+`|RODOS.OFF,""` - reboot with RODOS turned off, and don't run anything on startup.
 
 **Fixes**
 

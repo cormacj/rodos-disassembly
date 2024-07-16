@@ -1,0 +1,19 @@
+RODOS 2.22 -
+- New: |RODOS.OFF,<option command> If a program needs all the memory and RODOS isn't giving it enough,
+  then |RODOS.OFF will turn off the RODOS rom and reboot with RUN"DISC (or the command passed) on startup.
+- Fixed: |BGET randomly returned a number of 27 instead of the actual data. The CAS IN CHAR patch code
+  was reverted to the v2.01 code at the end. See https://github.com/cormacj/rodos-disassembly/issues/1
+- Fixed: Limit the length of the |ROM and |ZAP startup string to 100 characters to avoid a buffer overflow.
+  See: https://github.com/cormacj/rodos-disassembly/issues/7
+
+RODOS 2.21 - June 2024 - Bugs fixes
+- Put the |OPT,10 code back in that was lost in v2.17.
+- Corrected |OPT,11 so that it uses the correct drive parameter
+-
+RODOS 2.20 - November, 2023 - New Patched Version
+- Fixed a bug where |zap,12,"print"+chr$(34)+"Rom 12 turned off"+chr$(13) would not work as documented.
+  This was being overwritten by relocated code, meaning on reboot it was displaying garbage.
+  I've moved the command buffer for |zap and |rom from 0xbec0 to 0xbf20 to correct this bug.
+  Bonus for this is that the possible command length has changed from 31 (in V2.13) to 100 now.
+
+RODOS 2.19 - Last known official release

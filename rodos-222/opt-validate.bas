@@ -63,8 +63,7 @@ st(5)="|OPT 5"+fail$
 590 |OPT,10,5:b=PEEK(&BE48):|OPT,10,1:a=PEEK(&BE48):IF a=b THEN PRINT "Error: OPT 10 didn't change":rtest(10)="|OPT 10"+fail$
 600 |OPT,11,5:b=PEEK(&BE4B):|OPT,11,1:a=PEEK(&BE4B):IF a=b THEN PRINT "Error: OPT 11 didn't change":rtest(11)="|OPT 11"+fail$
 610 REM Note that opt 12 has a default of &faff
-620 |OPT,12,&FAFE:b=FNp1(work%+WSEXTRADRIVEPORTLOW):|OPT,12,&FAFF:b=FNp1(work%+WSEXTRADRIVEPORTLOW):IF a=b THEN PRINT "Error: OPT 12
-630 PRINT "Not sure |Opt 13 updates anything"
+620 |OPT,12,&FAFE:b=FNp1(work%+WSEXTRADRIVEPORTLOW):|OPT,12,&FAFF:b=FNp1(work%+WSEXTRADRIVEPORTLOW):IF a=b THEN PRINT "Error: OPT 12"+fail$
 640 |OPT,13,0:b=FNc(WSCASESENSITIVITY):|OPT,13,255:b=FNc(WSCASESENSITIVITY):IF a=b THEN PRINT "Error: OPT 13 didn't change":rtest(13
 )="|OPT 13"+fail$
 650 |OPT,14,10:b=PEEK(&BE49):|OPT,14,18:a=PEEK(&BE49):IF a=b THEN PRINT "Error: OPT 14 didn't change":rtest(14)="|OPT 14"+fail$

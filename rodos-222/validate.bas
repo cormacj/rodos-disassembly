@@ -18,7 +18,7 @@ print #9,"|opt,6,255"
 closeout
 |exec,"exectest"
 if fne<>255 then rtest$(rnum)="|EXEC tests reported error code "+str$(Fne)+fail$ else rtest$(rnum)="|EXEC tests passed: "+pass$
-print rtest$(rnum):call &bb18
+print rtest$(rnum)
 |cls
 rem ---- test 0 -----
 rem do this before formatting C:
@@ -54,7 +54,7 @@ rtest$(rnum)="|FORMAT tests:"+pass$
 rem Print "Copying files from A: to C:"
 rem |copy,"C:","A:*.*"
 Print "Copying files from B: to C:"
-|copy,"C:","B:*.*"
+|copy,"C:","A:*.*"
 if fne<>255 then rtest$(rnum)="|FORMAT and |COPY tests reported error code "+str$(Fne)+fail$ else rtest$(rnum)="|FORMAT and |COPY tests passed: "+pass$
 |c:|cat
 if a=0 then print "Hit any key...":call &bb18
@@ -67,8 +67,9 @@ print "Making a 'validate' folder on C:"
 |c:|mkdir,"C:validate"
 if fne<>255 then rtest$(rnum)="|MKDIR tests reported error code "+str$(Fne)+fail$ else rtest$(rnum)="|MKDIR tests passed: "+pass$
 |c:|cd,"validate"
+rnum=rnum+1
 print "Copying files to C:"
-|copy,"C:","B:*.*"
+|copy,"C:","A:*.*"
 rtest$(rnum)="|COPY tests:"+pass$
 if a=0 then Print "Press any key...":while inkey$="":wend
 rem ---- test 3 -----
@@ -202,7 +203,6 @@ Print "TDUMP test..."
 |tdump
 if fne<>255 then rtest$(rnum)="|TDUMP tests reported error code "+str$(Fne)+fail$ else rtest$(rnum)="|TDUMP tests passed: "+pass$
 if a=0 then Print "Press any key...":while inkey$="":wend
-
 rem ---- display test results-----
 |cls
 for a=0 to rnum:print rtest$(a):Next
