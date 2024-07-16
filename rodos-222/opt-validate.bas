@@ -46,27 +46,22 @@
 460 FOR a=1 TO 14:rtest$(a)="|OPT "+STR$(a)+pass$
 470 NEXT
 480 PRINT "Now validating |OPT"
-490 |OPT,1,0:b=FNc(WSLOADINGMESSAGES):|OPT,1,255:a=FNc(WSLOADINGMESSAGES):IF a=b THEN "Error: Print OPT 1 didn't change":rtest(1)="|
-OPT 1"+fail$
-500 |OPT,2,0:b=FNc(WSCASESENSITIVITY):|OPT,2,255:a=FNc(WSCASESENSITIVITY):IF a=b THEN "Error: Print OPT 2 didn't change":rtest(2)="|
-OPT 2"+fail$
+490 |OPT,1,0:b=FNc(WSLOADINGMESSAGES):|OPT,1,255:a=FNc(WSLOADINGMESSAGES):IF a=b THEN "Error: Print OPT 1 didn't change":rtest$(1)="|OPT 1"+fail$
+500 |OPT,2,0:b=FNc(WSCASESENSITIVITY):|OPT,2,255:a=FNc(WSCASESENSITIVITY):IF a=b THEN "Error: Print OPT 2 didn't change":rtest$(2)="|OPT 2"+fail$
 510 REM in the next section CAS NOISY on a 6128 is &b118. On a 464 is &b800
 520 |OPT,3,255:b=PEEK(&B118):|OPT,3,0:a=PEEK(&B118):IF a=b THEN PRINT "Error: Print OPT 3 didn't change":rtest$(3)="|OPT 3"+fail$
-530 |OPT,4,0:b=FNc(WSOVERWRITEFILE):|OPT,4,2:a=FNc(WSOVERWRITEFILE):IF a=b THEN PRINT "Error: OPT 4 didn't change":rtest(4)="|OPT 4"
-+fail$
-540 |OPT,5,16:b=FNc(WSDISKERRORRETRYCOUNT):|OPT,5,12:a=FNc(WSDISKERRORRETRYCOUNT):IF a=b THEN PRINT "Error: OPT 5 didn't change":rte
-st(5)="|OPT 5"+fail$
-550 |OPT,6,0:b=PEEK(&BE78):|OPT,6,255:a=PEEK(&BE78):IF a=b THEN PRINT "Error: OPT 6 didn't change":rtest(6)="|OPT 6"+fail$
-560 |OPT,7,30:b=PEEK(&BE44):|OPT,7,80:a=PEEK(&BE44):IF a=b THEN PRINT "Error: OPT 7 didn't change":rtest(7)="|OPT 7"+fail$
-570 |OPT,8,50*7:b=FNp1(&BE46):|OPT,8,60*7:a=FNp1(&BE46):IF a=b THEN PRINT "Error: OPT 8 didn't change":rtest(8)="|OPT 8"+fail$
-580 |OPT,9,12:b=PEEK(&BE4A):|OPT,9,18:a=PEEK(&BE4A):IF a=b THEN PRINT "Error: OPT 9 didn't change":rtest(9)="|OPT 9"+fail$
-590 |OPT,10,5:b=PEEK(&BE48):|OPT,10,1:a=PEEK(&BE48):IF a=b THEN PRINT "Error: OPT 10 didn't change":rtest(10)="|OPT 10"+fail$
-600 |OPT,11,5:b=PEEK(&BE4B):|OPT,11,1:a=PEEK(&BE4B):IF a=b THEN PRINT "Error: OPT 11 didn't change":rtest(11)="|OPT 11"+fail$
+530 |OPT,4,0:b=FNc(WSOVERWRITEFILE):|OPT,4,2:a=FNc(WSOVERWRITEFILE):IF a=b THEN PRINT "Error: OPT 4 didn't change":rtest$(4)="|OPT 4"+fail$
+540 |OPT,5,16:b=FNc(WSDISKERRORRETRYCOUNT):|OPT,5,12:a=FNc(WSDISKERRORRETRYCOUNT):IF a=b THEN PRINT "Error: OPT 5 didn't change":rtest$(5)="|OPT 5"+fail$
+550 |OPT,6,0:b=PEEK(&BE78):|OPT,6,255:a=PEEK(&BE78):IF a=b THEN PRINT "Error: OPT 6 didn't change":rtest$(6)="|OPT 6"+fail$
+560 |OPT,7,30:b=PEEK(&BE44):|OPT,7,80:a=PEEK(&BE44):IF a=b THEN PRINT "Error: OPT 7 didn't change":rtest$(7)="|OPT 7"+fail$
+570 |OPT,8,50*7:b=FNp1(&BE46):|OPT,8,60*7:a=FNp1(&BE46):IF a=b THEN PRINT "Error: OPT 8 didn't change":rtest$(8)="|OPT 8"+fail$
+580 |OPT,9,12:b=PEEK(&BE4A):|OPT,9,18:a=PEEK(&BE4A):IF a=b THEN PRINT "Error: OPT 9 didn't change":rtest$(9)="|OPT 9"+fail$
+590 |OPT,10,5:b=PEEK(&BE48):|OPT,10,1:a=PEEK(&BE48):IF a=b THEN PRINT "Error: OPT 10 didn't change":rtest$(10)="|OPT 10"+fail$
+600 |OPT,11,5:b=PEEK(&BE4B):|OPT,11,1:a=PEEK(&BE4B):IF a=b THEN PRINT "Error: OPT 11 didn't change":rtest$(11)="|OPT 11"+fail$
 610 REM Note that opt 12 has a default of &faff
-620 |OPT,12,&FAFE:b=FNp1(work%+WSEXTRADRIVEPORTLOW):|OPT,12,&FAFF:b=FNp1(work%+WSEXTRADRIVEPORTLOW):IF a=b THEN PRINT "Error: OPT 12"+fail$
-640 |OPT,13,0:b=FNc(WSCASESENSITIVITY):|OPT,13,255:b=FNc(WSCASESENSITIVITY):IF a=b THEN PRINT "Error: OPT 13 didn't change":rtest(13
-)="|OPT 13"+fail$
-650 |OPT,14,10:b=PEEK(&BE49):|OPT,14,18:a=PEEK(&BE49):IF a=b THEN PRINT "Error: OPT 14 didn't change":rtest(14)="|OPT 14"+fail$
+620 |OPT,12,&FAFE:b=FNp1(work%+WSEXTRADRIVEPORTLOW):|OPT,12,&FAFF:b=FNp1(work%+WSEXTRADRIVEPORTLOW):IF a=b THEN PRINT "Error: OPT 12 didn't change":rtest$(12)="|OPT 12"+fail$
+640 |OPT,13,0:b=FNc(WSCASESENSITIVITY):|OPT,13,255:b=FNc(WSCASESENSITIVITY):IF a=b THEN PRINT "Error: OPT 13 didn't change":rtest$(13)="|OPT 13"+fail$
+650 |OPT,14,10:b=PEEK(&BE49):|OPT,14,18:a=PEEK(&BE49):IF a=b THEN PRINT "Error: OPT 14 didn't change":rtest$(14)="|OPT 14"+fail$
 660 PRINT "|Opt done!"
 670 FOR a=1 TO 14:PRINT rtest$(a):NEXT
 680 END
