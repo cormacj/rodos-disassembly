@@ -222,7 +222,7 @@ RSX_JUMPS:
         jp RSX_WS
         jp RSX_CLEAR_ERROR
     endif
-   ;See page 27 of the RODOS Manual for more details about how to use these hidden commands.
+    ;See page 27 of the RODOS Manual for more details about how to use these hidden commands.
     jp RSX_HIDDEN_04                                           ; c0b7    c3 cb c7     . . .
     jp RSX_HIDDEN_05                                           ; c0ba    c3 aa c7     . . .
     jp RSX_HIDDEN_06                                           ; c0bd    c3 06 c9     . . .
@@ -904,8 +904,6 @@ RSX_HELP:
 ;=======================================================================
     cp 002h                                                    ; c4f5    fe 02     . .
     jp nc,MSG_TOO_MANY_PARAMETERS                              ; c4f7    d2 9f fb     . . .
-    ld a,081h
-    call Token_Handler
     and a                                                      ; c4fa    a7     .
     jr z,lc550h                                                ; c4fb    28 53     ( S
     call PRINT_CR_LF                                           ; c4fd    cd 7d d9     . } .
@@ -2723,10 +2721,10 @@ ld122h:
     ld hl,(0bee2h)                                             ; d125    2a e2 be     * . .
     ld a,(0bee4h)                                              ; d128    3a e4 be     : . .
     ld b,a                                                     ; d12b    47     G
-    ld a,022h                                                  ; d12c    3e 22     > "
+    ld a,'"'                                                   ; d12c    3e 22     > "
     call TXT_OUTPUT                                            ; d12e    cd 5a bb     . Z .
     call sub_d13ch                                             ; d131    cd 3c d1     . < .
-    ld a,022h                                                  ; d134    3e 22     > "
+    ld a,'"'                                                   ; d134    3e 22     > "
     call TXT_OUTPUT                                            ; d136    cd 5a bb     . Z .
     jp PRINT_CR_LF                                             ; d139    c3 7d d9     . } .
 sub_d13ch:
@@ -2952,7 +2950,7 @@ sub_d2c3h:
     call TXT_OUTPUT                                            ; d2c5    cd 5a bb     . Z .
     ld a,(ix+012h)                                             ; d2c8    dd 7e 12     . ~ .
     and 00fh                                                   ; d2cb    e6 0f     . .
-    add a,024h                                                 ; d2cd    c6 24     . $
+    add a,'$'                                                  ; d2cd    c6 24     . $
     call TXT_OUTPUT                                            ; d2cf    cd 5a bb     . Z .
     ld a,020h                                                  ; d2d2    3e 20     >
     call TXT_OUTPUT                                            ; d2d4    cd 5a bb     . Z .
@@ -2962,7 +2960,7 @@ sub_d2c3h:
     call sub_d93ah                                             ; d2e0    cd 3a d9     . : .
     ld a,020h                                                  ; d2e3    3e 20     >
     call TXT_OUTPUT                                            ; d2e5    cd 5a bb     . Z .
-    ld a,02bh                                                  ; d2e8    3e 2b     > +
+    ld a,'+'                                                   ; d2e8    3e 2b     > +
     call TXT_OUTPUT                                            ; d2ea    cd 5a bb     . Z .
     ld l,(ix+013h)                                             ; d2ed    dd 6e 13     . n .
     ld h,(ix+014h)                                             ; d2f0    dd 66 14     . f .
@@ -2976,10 +2974,11 @@ ld2fdh:
     call sub_d93ah                                             ; d2fe    cd 3a d9     . : .
     ld a,l                                                     ; d301    7d     }
     call sub_d93ah                                             ; d302    cd 3a d9     . : .
+    ;Now print 2 spaces
     ld a,020h                                                  ; d305    3e 20     >
     call TXT_OUTPUT                                            ; d307    cd 5a bb     . Z .
     call TXT_OUTPUT                                            ; d30a    cd 5a bb     . Z .
-    ld a,078h                                                  ; d30d    3e 78     > x
+    ld a,'x'                                                   ; d30d    3e 78     > x
     call TXT_OUTPUT                                            ; d30f    cd 5a bb     . Z .
     ld a,(ix+01bh)                                             ; d312    dd 7e 1b     . ~ .
     call sub_d93ah                                             ; d315    cd 3a d9     . : .
@@ -2988,10 +2987,11 @@ ld2fdh:
     ld a,(ix+012h)                                             ; d31e    dd 7e 12     . ~ .
     and 001h                                                   ; d321    e6 01     . .
     jp z,PRINT_CR_LF                                           ; d323    ca 7d d9     . } .
+    ;Print two spaces
     ld a,020h                                                  ; d326    3e 20     >
     call TXT_OUTPUT                                            ; d328    cd 5a bb     . Z .
     call TXT_OUTPUT                                            ; d32b    cd 5a bb     . Z .
-    ld a,050h                                                  ; d32e    3e 50     > P
+    ld a,'P'                                                   ; d32e    3e 50     > P
     call TXT_OUTPUT                                            ; d330    cd 5a bb     . Z .
     jp PRINT_CR_LF                                             ; d333    c3 7d d9     . } .
 
@@ -3004,8 +3004,9 @@ RSX_TITLE:
     call z,PROMPT_ENTER_NAME                                   ; d33c    cc dc d8     . . .
     call sub_da6ah                                             ; d33f    cd 6a da     . j .
     ld a,b                                                     ; d342    78     x
+    ;max 16 characters for a title
     cp 011h                                                    ; d343    fe 11     . .
-    jp nc,MSG_BAD_FILE_NAME                                    ; d345    d2 8e fb     . . .
+    jp nc,MSG_BAD_TITLE                                        ; d345    d2 8e fb     . . .
     push hl                                                    ; d348    e5     .
     push bc                                                    ; d349    c5     .
     call sub_ef86h                                             ; d34a    cd 86 ef     . . .
@@ -3016,6 +3017,7 @@ RSX_TITLE:
     inc hl                                                     ; d351    23     #
     push bc                                                    ; d352    c5     .
     push hl                                                    ; d353    e5     .
+    ;Prep with 16 spaces (no title)
     ld b,010h                                                  ; d354    06 10     . .
 ld356h:
     ld (hl),020h                                               ; d356    36 20     6
@@ -3657,7 +3659,7 @@ DO_LOGICAL_DRIVE:
     cp 001h                                                    ; d793    fe 01     . .
     jp nz,MSG_BAD_DRIVE                                        ; d795    c2 c2 fb     . . .
 
-    ;So this section loads (de) into A. If A>ascii(a) then uppercase it (ascii(a)-32) and look for a range between A and I
+    ;This section loads (de) into A. If A>ascii(a) then uppercase it (ascii(a)-32) and look for a range between A and I
     ld a,(de)                                                  ; d798    1a     .
     cp 'a'                                                     ; d799    fe 61     . a
     call nc,MAKE_UPPERCASE                                     ; d79b    d4 9d d9     . . .
@@ -3666,9 +3668,8 @@ DO_LOGICAL_DRIVE:
     cp 'I'                                                     ; d7a3    fe 49     . I
     jp nc,MSG_BAD_DRIVE                                        ; d7a5    d2 c2 fb     . . .
 
-
+    ;Take a range of letters starting at A and convert into numbers starting at 0
     sub 'A'                                                   ; d7a8    d6 41     . A
-    ;So take a range of letters starting at A and convert into numbers starting at 0
     ld e,a                                                     ; d7aa    5f     _
     ld d,000h                                                  ; d7ab    16 00     . .
     ld hl,DISC_NUMBERS                                         ; d7ad    21 00 be     ! . .
@@ -3988,8 +3989,9 @@ Token_Handler_loop:
     ld a,(hl)
     inc hl
     cp 0
-    jr nz,Token_Handler_loop
-    djnz Token_Handler_loop
+    jr nz,Token_Handler_loop ;Read through the string until we hit zero
+    djnz Token_Handler_loop ; Dec B and do the next message
+    ;We've found our message, now use the DISPLAY_MSG routine to print it.
     call DISPLAY_MSG
     pop hl ;Return back to where we left off
     inc hl
@@ -3998,14 +4000,16 @@ Token_Handler_loop:
 DISPLAY_MSG:
     ld a,(hl)                                                  ; d96a    7e     ~
     and a                                                      ; d96b    a7     .
+    ;Quit if zero
     ret z                                                      ; d96c    c8     .
     ;If a character >0x80 is found then consider it a token and call the lookup routine
     cp 080h
     jr nc,Token_Handler
 DISPLAY_NEXT:
-    ;Is it a \
+    ;Is it a \? If so end of string
     cp 05ch                                                    ; d96d    fe 5c     . \
     jr z,ld97ch                                                ; d96f    28 0b     ( .
+    ;'{' Means printing CR/LF
     cp '{'                                                     ; d971    fe 7b     . {
     call z,PRINT_CR_ONLY                                       ; d973    cc 83 d9     . . .
     call TXT_OUTPUT                                            ; d976    cd 5a bb     . Z .
@@ -4021,7 +4025,7 @@ PRINT_CR_LF:
 
 PRINT_CR_ONLY:
 ;print CR, but LF is optional
-;This exits with a=0xa (ascii 10)
+;This exits with a=0xa (ascii 10) aka LF
     ld a,00dh                                                  ; d983    3e 0d     > .
     call TXT_OUTPUT                                            ; d985    cd 5a bb     . Z .
     ld a,00ah                                                  ; d988    3e 0a     > .
@@ -4236,9 +4240,9 @@ sub_da91h:
     call DISPLAY_MSG                                           ; da96    cd 6a d9     . j .
     ld a,d                                                     ; da99    7a     z
     call sub_d90fh                                             ; da9a    cd 0f d9     . . .
-    ld a,02fh                                                  ; da9d    3e 2f     > /
+    ld a,'/'                                                   ; da9d    3e 2f     > /
     call TXT_OUTPUT                                            ; da9f    cd 5a bb     . Z .
-    ld a,026h                                                  ; daa2    3e 26     > &
+    ld a,'&'                                                   ; daa2    3e 26     > &
     call TXT_OUTPUT                                            ; daa4    cd 5a bb     . Z .
     ld a,c                                                     ; daa7    79     y
     call sub_d93ah                                             ; daa8    cd 3a d9     . : .
@@ -5429,7 +5433,7 @@ le1e9h:
     call PRINT_STRING                                          ; e200    cd 92 d8     . . .
     call PRINT_CR_LF                                           ; e203    cd 7d d9     . } .
     call sub_e26fh                                             ; e206    cd 6f e2     . o .
-    jp nz,SET_FLAG_TO_GREATER_THAN                                               ; e209    c2 0a da     . . .
+    jp nz,SET_FLAG_TO_GREATER_THAN                             ; e209    c2 0a da     . . .
     ld hl,MSG_BYTES_FREE                                       ; e20c    21 43 ff     ! C .
     call DISPLAY_MSG                                           ; e20f    cd 6a d9     . j .
     call sub_0f0d0h                                            ; e212    cd d0 f0     . . .
@@ -5443,14 +5447,16 @@ le1e9h:
     pop hl                                                     ; e223    e1     .
     bit 0,l                                                    ; e224    cb 45     . E
     jr z,le232h                                                ; e226    28 0a     ( .
-    ld a,02eh                                                  ; e228    3e 2e     > .
+    ;Print ".5"
+    ld a,'.'                                                   ; e228    3e 2e     > .
     call TXT_OUTPUT                                            ; e22a    cd 5a bb     . Z .
-    ld a,035h                                                  ; e22d    3e 35     > 5
+    ld a,'5'                                                   ; e22d    3e 35     > 5
     call TXT_OUTPUT                                            ; e22f    cd 5a bb     . Z .
 le232h:
+    ;Print " K"
     ld a,020h                                                  ; e232    3e 20     >
     call TXT_OUTPUT                                            ; e234    cd 5a bb     . Z .
-    ld a,04bh                                                  ; e237    3e 4b     > K
+    ld a,'K'                                                   ; e237    3e 4b     > K
     call TXT_OUTPUT                                            ; e239    cd 5a bb     . Z .
     call PRINT_CR_LF                                           ; e23c    cd 7d d9     . } .
     jp SET_FLAG_TO_GREATER_THAN                                ; e23f    c3 0a da     . . .
@@ -5514,24 +5520,24 @@ le29dh:
     cp 02ch                                                    ; e2b5    fe 2c     . ,
     jr nz,le2cah                                               ; e2b7    20 11       .
     ;Print "Dir" one letter at a time
-    ld a,044h                                                  ; e2b9    3e 44     > D
+    ld a,'D'                                                   ; e2b9    3e 44     > D
     call TXT_OUTPUT                                            ; e2bb    cd 5a bb     . Z .
-    ld a,069h                                                  ; e2be    3e 69     > i
+    ld a,'i'                                                   ; e2be    3e 69     > i
     call TXT_OUTPUT                                            ; e2c0    cd 5a bb     . Z .
-    ld a,072h                                                  ; e2c3    3e 72     > r
+    ld a,'r'                                                   ; e2c3    3e 72     > r
     call TXT_OUTPUT                                            ; e2c5    cd 5a bb     . Z .
     jr le2e8h                                                  ; e2c8    18 1e     . .
 le2cah:
     bit 0,c                                                    ; e2ca    cb 41     . A
-    ld a,052h                                                  ; e2cc    3e 52     > R
+    ld a,'R'                                                   ; e2cc    3e 52     > R
     call z,SET_A_TO_020H                                       ; e2ce    cc 0d df     . . .
     call TXT_OUTPUT                                            ; e2d1    cd 5a bb     . Z .
     bit 1,c                                                    ; e2d4    cb 49     . I
-    ld a,057h                                                  ; e2d6    3e 57     > W
+    ld a,'W'                                                   ; e2d6    3e 57     > W
     call z,SET_A_TO_020H                                       ; e2d8    cc 0d df     . . .
     call TXT_OUTPUT                                            ; e2db    cd 5a bb     . Z .
     bit 2,c                                                    ; e2de    cb 51     . Q
-    ld a,058h                                                  ; e2e0    3e 58     > X
+    ld a,'X'                                                   ; e2e0    3e 58     > X
     call nz,SET_A_TO_020H                                      ; e2e2    c4 0d df     . . .
     call TXT_OUTPUT                                            ; e2e5    cd 5a bb     . Z .
 le2e8h:
@@ -5579,23 +5585,23 @@ sub_e32ch:
     cp l                                                       ; e344    bd     .
     jp z,PRINT_CR_LF                                           ; e345    ca 7d d9     . } .
 le348h:
-    ld a,028h                                                  ; e348    3e 28     > (
+    ld a,'('                                                   ; e348    3e 28     > (
     call TXT_OUTPUT                                            ; e34a    cd 5a bb     . Z .
     ld a,l                                                     ; e34d    7d     }
     push de                                                    ; e34e    d5     .
     call sub_d90fh                                             ; e34f    cd 0f d9     . . .
     pop de                                                     ; e352    d1     .
-    ld a,029h                                                  ; e353    3e 29     > )
+    ld a,')'                                                   ; e353    3e 29     > )
     call TXT_OUTPUT                                            ; e355    cd 5a bb     . Z .
     jp PRINT_CR_LF                                             ; e358    c3 7d d9     . } .
 le35bh:
-    ld a,073h                                                  ; e35b    3e 73     > s
+    ld a,'s'                                                   ; e35b    3e 73     > s
     call TXT_OUTPUT                                            ; e35d    cd 5a bb     . Z .
-    ld a,079h                                                  ; e360    3e 79     > y
+    ld a,'y'                                                   ; e360    3e 79     > y
     call TXT_OUTPUT                                            ; e362    cd 5a bb     . Z .
-    ld a,073h                                                  ; e365    3e 73     > s
+    ld a,'s'                                                  ; e365    3e 73     > s
     call TXT_OUTPUT                                            ; e367    cd 5a bb     . Z .
-    ld a,020h                                                  ; e36a    3e 20     >
+    ld a,' '                                                  ; e36a    3e 20     >
     call TXT_OUTPUT                                            ; e36c    cd 5a bb     . Z .
     ld l,(iy+WS_DRIVE_NUMBER)                                  ; e36f    fd 6e 04     . n .
     jr le348h                                                  ; e372    18 d4     . .
@@ -5726,7 +5732,7 @@ le478h:
     dec b                                                      ; e489    05     .
     cp 02dh                                                    ; e48a    fe 2d     . -
     jr nz,le478h                                               ; e48c    20 ea
-    ;next bit stows ".IN"       .
+    ;next bit stows ".IN"
     ld (ix-001h),'.'                                           ; e48e    dd 36 ff 2e     . 6 . .
     ld (ix+000h),'I'                                           ; e492    dd 36 00 49     . 6 . I
     ld (ix+001h),'N' + 0x80                                    ; e496    dd 36 01 ce     . 6 . .
@@ -7542,7 +7548,7 @@ sub_f1adh:
     call ld8f7h                                                ; f1af    cd f7 d8     . . .
     ex de,hl                                                   ; f1b2    eb     .
 lf1b3h:
-    ld a,05fh                                                  ; f1b3    3e 5f     > _
+    ld a,'_'                                                   ; f1b3    3e 5f     > _
     call TXT_OUTPUT                                            ; f1b5    cd 5a bb     . Z .
     call KM_WAIT_CHAR                                          ; f1b8    cd 06 bb     . . .
     call DELETE_CHAR                                           ; f1bb    cd 8b d9     . . .
@@ -7617,7 +7623,7 @@ lf222h:
     call sub_f246h                                             ; f22e    cd 46 f2     . F .
     jr lf222h                                                  ; f231    18 ef     . .
 sub_f233h:
-    ld a,07ch                                                  ; f233    3e 7c     > |
+    ld a,'|'                                                   ; f233    3e 7c     > |
     call TXT_OUTPUT                                            ; f235    cd 5a bb     . Z .
     call sub_f1adh                                             ; f238    cd ad f1     . . .
     cp 0fch                                                    ; f23b    fe fc     . .
@@ -9100,6 +9106,9 @@ MAKE_A_BEEP:
     jp TXT_OUTPUT                                              ; fb8a    c3 5a bb     . Z .
 lfb8dh:
     ret nc                                                     ; fb8d    d0     .
+MSG_BAD_TITLE:
+    ld a,34
+    JP ERROR_HANDLER
 MSG_BAD_FILE_NAME:
     ld a,002h                                                  ; fb8e    3e 02     > .
     jp ERROR_HANDLER                                           ; fb90    c3 6a fb     . j .
@@ -9329,34 +9338,54 @@ endif
 ;I tokenised the words to gain space. For readability I've made EQU so its still readable.
 ;V2.19 - 60 bytes available in ROM
 ;V2.21 - 135 bytes available after tokenised (and opt 10 & 11 fixes)
-;V2.22 - 101 bytes available after "open","already" tokenised (and 27 data error fix), and adding rodos.off
+;V2.22 - 81 bytes available after "open","already" tokenised (and 27 data error fix), proper title error, and adding rodos.off
 
-T_Disc: equ 081h
-T_error: equ 082h
-T_file: equ 083h
-T_bad: equ 084h
-T_Too_many: equ 085h
-T_formatted: equ 086h
-T_not: equ 087h
-T_parameters: equ 088h
-T_Unknown: equ 089h
-T_alias: equ 08Ah
-T_open: equ 08Bh
-T_already: equ 08Ch
 
 Token_Array:
-    db 0
+;The format here is a variable name that maintains the readability
+;and then the token string terminated by zero.
+;Typically I call the variables "T_something" just to reinforce that
+;its a token and to reduce the change of a variable name clash
+;The tokens numbers are between &80 and &90. If you need more tokens
+;past &90 then update the limit check in "Token_Handler"
+;I could save a byte per token if I used a +&80 terminator rather than 0
+
+    db 0 ;Token 80h doesn't exist
+
+    T_Disc: equ 081h
     defb 'Disc ',0  ;&81
+
+    T_error: equ 082h
     defb ' error',0 ;&82
+
+    T_file: equ 083h
     defb ' file ',0 ;&83
+
+    T_bad: equ 084h
     defb 'Bad ',0 ;&84
+
+    T_Too_many: equ 085h
     defb 'Too many ',0 ;&85
+
+    T_formatted: equ 086h
     defb ' formatted',0 ;&86
+
+    T_not: equ 087h
     defb 'not ',0 ;&87
+
+    T_parameters: equ 088h
     defb ' parameters',0 ;&88
+
+    T_Unknown: equ 089h
     defb 'Unknown ',0 ;&89
+
+    T_alias: equ 08Ah
     defb 'alias',0 ;&8A
+
+    T_open: equ 08Bh
     defb 'open',0 ;&8B
+
+    T_already: equ 08Ch
     defb 'already',0 ;&8C
 
 RODOS_MSGS_ARRAY:
@@ -9394,7 +9423,7 @@ RODOS_MSGS_ARRAY:
     defb T_Disc,'Missing',05ch                                   ; Error 31
     defb T_Disc,'fault',05ch                                     ; Error 32
     defb T_Disc,'write protected',05ch                           ; Error 33 - Last error message of this table
-
+    defb 'Title too long',05ch                                   ; Error 34 - New for v2.22
 MSG_ESCAPE:
     defb 'Escape',05ch
 
