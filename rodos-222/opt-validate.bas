@@ -34,7 +34,7 @@
 340 WSCDHOMESECTOR=           69:REM Home sector for |CD
 350 WSKMTESTKEYVALUE=        70:REM HL Value from KMTESTKEY on boot
 360 WSRODOSUSERNUMBERLOW=    78:REM RODOS User number (0 to 255). Rodos supports 0-65535 but only 0-255 are supported
-370 WSRODOSUSERNUMBERHIGH=   79:REM RODOS User number (current reserved, set to 255). Rodos supports 0-65535 but only 0-255 are supp
+370 WSRODOSUSERNUMBERHIGH=   79:REM RODOS User number (current reserved, set to 255). Rodos supports 0-65535 but only 0-255 are supported
 380 WSEXTRADRIVEPORTLOW=     88:REM Extra external disk drives port number (0-65535) low byte
 390 WSEXTRADRIVEPORTHIGH=    89:REM Extra external disk drives port number (0-65535) high byte
 400 WSORIGINALTXTOUTPUT=      90:REM Original contents of TXTOUTUT (&bb5a-&bb5c)
