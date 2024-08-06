@@ -9497,14 +9497,14 @@ VERSION_MSG:
     ;Saves having to update the version all over the place
 if DEBUG=1
         ;Throw a warning this is the debug version
-        defb '*debug*'
+        defb '*dbg*'
 endif
     defb ' RODOS V',ROM_MAJOR+48,'.',ROM_MARK+48,ROM_MOD+48,' '
     defb 0a4h ;copyright symbol                                ; ffa4    a4     .
     defb ' Romantic Robot U.K. Ltd.{{'
     ;Control code for pen ink to bright yellow (1)
     defb 15,1                                                  ; ffc0    0f 01  . .
-;    defb 0                                                     ; Need a zero here to end the string
+    defb 0                                                     ; Need a zero here to end the string
 
 ; Debug code I added to dump what was happening in buffers
 ; DUMP_BUFFER:
