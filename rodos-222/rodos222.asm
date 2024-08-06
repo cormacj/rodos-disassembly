@@ -895,7 +895,7 @@ CHECK_FOR_CPM_ROM:
     ld (iy+WS_CPM_ROM_NUMBER),a                                ; c4eb    fd 77 01     . w .
     ret                                                        ; c4ee    c9     .
 lc4efh:
-    add a,030h                                                 ; c4ef    c6 30     . 0
+    add a,'0'                                                  ; c4ef    c6 30     . 0
     ld (iy+WS_CPM_ROM_NUMBER),a                                ; c4f1    fd 77 01     . w .
     ret                                                        ; c4f4    c9     .
 
@@ -983,8 +983,10 @@ sub_c581h:
     call DISPLAY_MSG                                           ; c585    cd 6a d9     . j .
     pop bc                                                     ; c588    c1     .
     ld a,c                                                     ; c589    79     y
-    add a,030h                                                 ; c58a    c6 30     . 0
-    cp 03ah                                                    ; c58c    fe 3a     . :
+    ;Convert number to ascii
+    add a,'0'                                                  ; c58a    c6 30     . 0
+    ;Did we exceed 9? ('9'+1=':')
+    cp ':'                                                     ; c58c    fe 3a     . :
     push af                                                    ; c58e    f5     .
     call c,sub_c5ebh                                           ; c58f    dc eb c5     . . .
     pop af                                                     ; c592    f1     .
@@ -2903,9 +2905,9 @@ ld265h:
     ld hl,(0bef8h)                                             ; d26c    2a f8 be     * . .
 ld26fh:
     ld a,h                                                     ; d26f    7c     |
-    call sub_d93ah                                             ; d270    cd 3a d9     . : .
+    call PRINT_HEX_NUMBER                                             ; d270    cd 3a d9     . : .
     ld a,l                                                     ; d273    7d     }
-    call sub_d93ah                                             ; d274    cd 3a d9     . : .
+    call PRINT_HEX_NUMBER                                             ; d274    cd 3a d9     . : .
     ld a,020h                                                  ; d277    3e 20     >
     call TXT_OUTPUT                                            ; d279    cd 5a bb     . Z .
     ld b,010h                                                  ; d27c    06 10     . .
@@ -2916,7 +2918,7 @@ ld281h:
 ld286h:
     ld (de),a                                                  ; d286    12     .
     inc de                                                     ; d287    13     .
-    call sub_d93ah                                             ; d288    cd 3a d9     . : .
+    call PRINT_HEX_NUMBER                                             ; d288    cd 3a d9     . : .
     inc hl                                                     ; d28b    23     #
     ld a,020h                                                  ; d28c    3e 20     >
     call TXT_OUTPUT                                            ; d28e    cd 5a bb     . Z .
@@ -2955,9 +2957,9 @@ sub_d2c3h:
     ld a,020h                                                  ; d2d2    3e 20     >
     call TXT_OUTPUT                                            ; d2d4    cd 5a bb     . Z .
     ld a,(ix+016h)                                             ; d2d7    dd 7e 16     . ~ .
-    call sub_d93ah                                             ; d2da    cd 3a d9     . : .
+    call PRINT_HEX_NUMBER                                             ; d2da    cd 3a d9     . : .
     ld a,(ix+015h)                                             ; d2dd    dd 7e 15     . ~ .
-    call sub_d93ah                                             ; d2e0    cd 3a d9     . : .
+    call PRINT_HEX_NUMBER                                             ; d2e0    cd 3a d9     . : .
     ld a,020h                                                  ; d2e3    3e 20     >
     call TXT_OUTPUT                                            ; d2e5    cd 5a bb     . Z .
     ld a,'+'                                                   ; d2e8    3e 2b     > +
@@ -2971,9 +2973,9 @@ sub_d2c3h:
     ld h,(ix+019h)                                             ; d2fa    dd 66 19     . f .
 ld2fdh:
     ld a,h                                                     ; d2fd    7c     |
-    call sub_d93ah                                             ; d2fe    cd 3a d9     . : .
+    call PRINT_HEX_NUMBER                                             ; d2fe    cd 3a d9     . : .
     ld a,l                                                     ; d301    7d     }
-    call sub_d93ah                                             ; d302    cd 3a d9     . : .
+    call PRINT_HEX_NUMBER                                             ; d302    cd 3a d9     . : .
     ;Now print 2 spaces
     ld a,020h                                                  ; d305    3e 20     >
     call TXT_OUTPUT                                            ; d307    cd 5a bb     . Z .
@@ -2981,9 +2983,9 @@ ld2fdh:
     ld a,'x'                                                   ; d30d    3e 78     > x
     call TXT_OUTPUT                                            ; d30f    cd 5a bb     . Z .
     ld a,(ix+01bh)                                             ; d312    dd 7e 1b     . ~ .
-    call sub_d93ah                                             ; d315    cd 3a d9     . : .
+    call PRINT_HEX_NUMBER                                             ; d315    cd 3a d9     . : .
     ld a,(ix+01ah)                                             ; d318    dd 7e 1a     . ~ .
-    call sub_d93ah                                             ; d31b    cd 3a d9     . : .
+    call PRINT_HEX_NUMBER                                             ; d31b    cd 3a d9     . : .
     ld a,(ix+012h)                                             ; d31e    dd 7e 12     . ~ .
     and 001h                                                   ; d321    e6 01     . .
     jp z,PRINT_CR_LF                                           ; d323    ca 7d d9     . } .
@@ -3923,7 +3925,7 @@ ld92eh:
 ld936h:
     add hl,de                                                  ; d936    19     .
     jp TXT_OUTPUT                                              ; d937    c3 5a bb     . Z .
-sub_d93ah:
+PRINT_HEX_NUMBER:
     push af                                                    ; d93a    f5     .
     sra a                                                      ; d93b    cb 2f     . /
     sra a                                                      ; d93d    cb 2f     . /
@@ -4245,7 +4247,7 @@ sub_da91h:
     ld a,'&'                                                   ; daa2    3e 26     > &
     call TXT_OUTPUT                                            ; daa4    cd 5a bb     . Z .
     ld a,c                                                     ; daa7    79     y
-    call sub_d93ah                                             ; daa8    cd 3a d9     . : .
+    call PRINT_HEX_NUMBER                                             ; daa8    cd 3a d9     . : .
     ld a,020h                                                  ; daab    3e 20     >
     call TXT_OUTPUT                                            ; daad    cd 5a bb     . Z .
     pop de                                                     ; dab0    d1     .
@@ -7928,6 +7930,11 @@ RSX_RODOS_OFF:
     ;We'll build IX out to pretend we're using |ZAP as we're just going to fall through to that
     ;If nothing is passed its just going to assume its |rodos.off,RUN"Disc
     ;First: At most only one parameter
+    jr nz,GOT_ARG
+    ;No arg make ix too close to ROM area.
+    ;Lets give ourselves a little room
+    ld ix,0bffch
+GOT_ARG:
     cp 02h
     jp nc,MSG_TOO_MANY_PARAMETERS
     ;Too many parameters: Error
@@ -7941,7 +7948,7 @@ RSX_RODOS_OFF:
 MSG_PASSED_ALREADY:
     ld a,(iy+WS_RODOS_ROM_NUMBER) ;Grab the RODOS rom number
     ld (ix+2),a ;Store it for |ZAP
-    ld a,3 ;Finally, setup A as a parameter count for |ZAP
+    ld a,2 ;Finally, setup A as a parameter count for |ZAP
 
 ;=======================================================================
 RSX_ZAP:
@@ -9298,33 +9305,34 @@ lfcb7h:
 
 if DEBUG=1
     ;Extensions turned on in debug mode
-    PrintNumInA:
-        push af
-        push af
-        and 0F0h
-        rrca
-        rrca
-        rrca
-        rrca
-        call PrintNibble
-        pop af
-        and 0Fh
-        call PrintNibble
-        ld a,' '
-        call TXT_OUTPUT
-        ;CALL KM_WAIT_KEY
-        pop af
-        ret
-    PrintNibble:
-        add a, '0' ; Convert to ASCII
-        cp '9' + 1 ; Check if the result is greater than '9'
-        jr c, PrintCharacter ; Jump to PrintCharacter if less than or equal to '9'
-        add a, 'A' - '9' - 1 ; Adjust for characters 'A' to 'F'
-
-    PrintCharacter:
-        call TXT_OUTPUT
-    ;        call KM_WAIT_KEY
-        ret ; Return from subroutine
+    ;I've aliased my debug routine to use the code for number printing that already existed.
+    PrintNumInA: equ PRINT_HEX_NUMBER
+    ;     push af
+    ;     push af
+    ;     and 0F0h
+    ;     rrca
+    ;     rrca
+    ;     rrca
+    ;     rrca
+    ;     call PrintNibble
+    ;     pop af
+    ;     and 0Fh
+    ;     call PrintNibble
+    ;     ld a,' '
+    ;     call TXT_OUTPUT
+    ;     ;CALL KM_WAIT_KEY
+    ;     pop af
+    ;     ret
+    ; PrintNibble:
+    ;     add a, '0' ; Convert to ASCII
+    ;     cp '9' + 1 ; Check if the result is greater than '9'
+    ;     jr c, PrintCharacter ; Jump to PrintCharacter if less than or equal to '9'
+    ;     add a, 'A' - '9' - 1 ; Adjust for characters 'A' to 'F'
+    ;
+    ; PrintCharacter:
+    ;     call TXT_OUTPUT
+    ; ;        call KM_WAIT_KEY
+    ;     ret ; Return from subroutine
     ;
     ; ; CALL_TESTER:
     ; ;     call lc234h
@@ -9350,7 +9358,6 @@ if DEBUG=1
 RSX_WS:
     cp 001h                                                    ; d54d    fe 02     . .
     jp nz,MSG_WRONG_PARAMETER_AMT                              ; d54f    d2 9f fb     . . .
-
     ;Return Workspace address in HL
     ;Usage: work%=0:|WS,work%
     ld e,(ix+0)
@@ -9477,10 +9484,10 @@ MSG_ESCAPE:
     defb 'Escape',05ch
 
 MSG_DISC_CHANGED:
-    defb T_Disc,'changed !',05ch
+    defb T_Disc,'changed!',05ch
 
 MSG_FILE_EXISTS_ASK:
-    defb '{File exists. Erase, Backup, or Quit ?'
+    defb '{File exists. Erase, Backup, or Quit?'
     defb 008h                                                    ; ff39    08     .
     defb 000h                                                    ; ff3a    00     .
 MSG_DRIVE:
@@ -9488,7 +9495,7 @@ MSG_DRIVE:
 MSG_BYTES_FREE:
     defb '{Bytes free = ',0
 MSG_DISK_ALREADY_FORMATTED:
-    defb '{',T_Disc,T_already,T_formatted,', REFORMAT Y/N ?',8,0
+    defb '{',T_Disc,T_already,T_formatted,', REFORMAT Y/N?',8,0
 MSG_RETRY_IGNORE_CANCEL:
     defb 'Retry, Ignore or Cancel? ',0
 VERSION_MSG:
@@ -9505,39 +9512,6 @@ endif
     ;Control code for pen ink to bright yellow (1)
     defb 15,1                                                  ; ffc0    0f 01  . .
     defb 0                                                     ; Need a zero here to end the string
-
-; Debug code I added to dump what was happening in buffers
-; DUMP_BUFFER:
-;     push hl
-;     push bc
-;     ;ld hl,POST_BOOT_MSG
-;     ld hl, 0xbe00 ;XXXX
-;     ;ld hl,0x9603
-;     ld b,0ah
-; Bufloop:
-;     ld a,(hl)
-;     push hl
-;     push af
-;     and 0F0h
-;     rrca
-;     rrca
-;     rrca
-;     rrca
-;     call PrintNibble
-;     pop af
-;     and 0Fh
-;     call PrintNibble
-;     ld a,' '
-;     call TXT_OUTPUT
-;     pop hl
-;     inc hl
-;     djnz Bufloop
-;     call KM_WAIT_KEY
-;     pop bc
-;     pop hl
-;
-; ret
-; ;
 
 ;Now we pad with zeros to make the ROM the correct size
 zz_END_OF_ROM_CODE:

@@ -13,13 +13,14 @@ if [ -z "$1" ]; then
     echo "Please supply a z80 assembly file"
     exit 255
 else
-    tmpfile=`mktemp -p .`
+    #tmpfile=`mktemp -p .`
+    tmpfile="labels.txt"
 
     z80asm -L $1 $2 $3 $4 $5 2>$tmpfile
     if [ $? -gt 0 ]; then
         grep -vi equ  $tmpfile
         echo "z80asm error $?"
-	rm $tmpfile
+	    #rm $tmpfile
         exit 1
     fi
 
@@ -29,5 +30,5 @@ else
 
     #echo "a"$msg
     [[ $romend -lt 0xc000 ]] && do_error || show_space;echo "Compiled successfully"
-    rm $tmpfile
+    #rm $tmpfile
 fi
