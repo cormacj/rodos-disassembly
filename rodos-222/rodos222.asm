@@ -9298,6 +9298,55 @@ lfcb7h:
 
 if DEBUG=1
     ;Extensions turned on in debug mode
+    PrintNumInA:
+        push af
+        push af
+        and 0F0h
+        rrca
+        rrca
+        rrca
+        rrca
+        call PrintNibble
+        pop af
+        and 0Fh
+        call PrintNibble
+        ld a,' '
+        call TXT_OUTPUT
+        ;CALL KM_WAIT_KEY
+        pop af
+        ret
+    PrintNibble:
+        add a, '0' ; Convert to ASCII
+        cp '9' + 1 ; Check if the result is greater than '9'
+        jr c, PrintCharacter ; Jump to PrintCharacter if less than or equal to '9'
+        add a, 'A' - '9' - 1 ; Adjust for characters 'A' to 'F'
+
+    PrintCharacter:
+        call TXT_OUTPUT
+    ;        call KM_WAIT_KEY
+        ret ; Return from subroutine
+    ;
+    ; ; CALL_TESTER:
+    ; ;     call lc234h
+    ; ;     ret
+    ;  DEBUG:
+    ;     push af
+    ;     push bc
+    ;     push de
+    ;     push hl
+    ; ;    call DUMP_BUFFER
+    ; ;    ld a,(0xbc09)
+    ; ;    call PrintNumInA
+    ;     ld a,'Q'
+    ;     call 0bb5dh
+    ;     pop hl
+    ;     pop de
+    ;     pop bc
+    ;     pop af
+    ; ;    call RESET_INTERNAL_VARIABLES_TO_DEFAULT
+    ;     call sub_deb0h
+    ;     ret
+
 RSX_WS:
     cp 001h                                                    ; d54d    fe 02     . .
     jp nz,MSG_WRONG_PARAMETER_AMT                              ; d54f    d2 9f fb     . . .
@@ -9455,7 +9504,7 @@ endif
     defb ' Romantic Robot U.K. Ltd.{{'
     ;Control code for pen ink to bright yellow (1)
     defb 15,1                                                  ; ffc0    0f 01  . .
-    defb 0                                                     ; Need a zero here to end the string
+;    defb 0                                                     ; Need a zero here to end the string
 
 ; Debug code I added to dump what was happening in buffers
 ; DUMP_BUFFER:
@@ -9489,56 +9538,6 @@ endif
 ;
 ; ret
 ; ;
-if DEBUG=1
-    PrintNumInA:
-        push af
-        push af
-        and 0F0h
-        rrca
-        rrca
-        rrca
-        rrca
-        call PrintNibble
-        pop af
-        and 0Fh
-        call PrintNibble
-        ld a,' '
-        call TXT_OUTPUT
-        ;CALL KM_WAIT_KEY
-        pop af
-        ret
-    PrintNibble:
-        add a, '0' ; Convert to ASCII
-        cp '9' + 1 ; Check if the result is greater than '9'
-        jr c, PrintCharacter ; Jump to PrintCharacter if less than or equal to '9'
-        add a, 'A' - '9' - 1 ; Adjust for characters 'A' to 'F'
-
-    PrintCharacter:
-        call TXT_OUTPUT
-    ;        call KM_WAIT_KEY
-        ret ; Return from subroutine
-    ;
-    ; ; CALL_TESTER:
-    ; ;     call lc234h
-    ; ;     ret
-    ;  DEBUG:
-    ;     push af
-    ;     push bc
-    ;     push de
-    ;     push hl
-    ; ;    call DUMP_BUFFER
-    ; ;    ld a,(0xbc09)
-    ; ;    call PrintNumInA
-    ;     ld a,'Q'
-    ;     call 0bb5dh
-    ;     pop hl
-    ;     pop de
-    ;     pop bc
-    ;     pop af
-    ; ;    call RESET_INTERNAL_VARIABLES_TO_DEFAULT
-    ;     call sub_deb0h
-    ;     ret
-endif
 
 ;Now we pad with zeros to make the ROM the correct size
 zz_END_OF_ROM_CODE:
