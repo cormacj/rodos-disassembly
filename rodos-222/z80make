@@ -6,7 +6,7 @@ do_error() {
     }
 
 show_space() {
-    grep "zz_END_OF_ROM_CODE" $tmpfile |awk -F "$" '{print "0x"$2}'|awk -n -F "$" '{print 0xffff-$1" bytes remaining in rom"}'
+    grep "zz_END_OF_ROM_CODE" $tmpfile |awk -F "$" '{print "0x"$2}'|awk -n -F "$" '{print $1;if ($1 == 0x0000) print "No More Space in ROM"; else print 0xffff-$1" bytes remaining in rom"}'
 }
 
 if [ -z "$1" ]; then
@@ -24,10 +24,11 @@ else
     fi
 
     #|| err=$?;grep -v equ $tmpfile; exit $err
-
-    romend=`grep "zz_END_OF_ROM_CODE" $tmpfile |awk -F "$" '{print "0x"$2}'`
+    #Note: If zz_END_OF_ROM_CODE is $0000 then we are perfectly sized. If thats the case we'll make romend=0x10000 just to make bash happy.
+    romend=`grep "zz_END_OF_ROM_CODE" $tmpfile |awk -F "$" '{if ($2=="0000") print "0x1"$2; else print "0x"$2}'`
 
     echo $msg
+    echo $romend
     [[ $romend -lt 0xc000 ]] && do_error || show_space;echo "Compiled successfully"
     rm $tmpfile
 fi
