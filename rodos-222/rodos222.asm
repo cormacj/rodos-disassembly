@@ -9,6 +9,11 @@
 ; z80dasm 1.1.6
 ; command line: z80dasm -b blockfile.txt -g 0xc000 -S Firmware_labels.txt -s syms.txt -r default -l -t -v RODOS219.ROM
 
+;V2.19 - 60 bytes available in ROM
+;V2.21 - 135 bytes available after tokenised (and opt 10 & 11 fixes)
+;V2.22 - 81 bytes available after "open","already" tokenised (and 27 data error fix), proper title error, and adding rodos.off
+
+
 org    0c000h
 
 ;---------------------------------------------------------------------------------------------------
@@ -7929,15 +7934,18 @@ RSX_RODOS_OFF:
     ;This is an equivalent to |zap,<rodos rom>,"message"
     ;We'll build IX out to pretend we're using |ZAP as we're just going to fall through to that
     ;If nothing is passed its just going to assume its |rodos.off,RUN"Disc
-    ;First: At most only one parameter
+    ;Do we have no arguments passed?
     jr nz,GOT_ARG
-    ;No arg make ix too close to ROM area.
-    ;Lets give ourselves a little room
+    ;If no argument is passed IX=0xBFFE and thats too close to ROM area.
+    ;That means that where we store the RODOS ROM number can't be written.
+    ;So... with that in mind, lets give ourselves a little room
+    ;REF: https://github.com/cormacj/rodos-disassembly/issues/13
     ld ix,0bffch
 GOT_ARG:
+    ;First: At most only one parameter
     cp 02h
     jp nc,MSG_TOO_MANY_PARAMETERS
-    ;Too many parameters: Error
+    ;Too many parameters? Error
     cp 01h
     jr nc,MSG_PASSED_ALREADY
     ;If we have a parameter, we can skip the next part
@@ -7948,8 +7956,8 @@ GOT_ARG:
 MSG_PASSED_ALREADY:
     ld a,(iy+WS_RODOS_ROM_NUMBER) ;Grab the RODOS rom number
     ld (ix+2),a ;Store it for |ZAP
-    ld a,2 ;Finally, setup A as a parameter count for |ZAP
-
+    ld a,2 ;Finally, setup A as a parameter count
+    ;Now we fall through to |ZAP
 ;=======================================================================
 RSX_ZAP:
 ;=======================================================================
@@ -9307,53 +9315,6 @@ if DEBUG=1
     ;Extensions turned on in debug mode
     ;I've aliased my debug routine to use the code for number printing that already existed.
     PrintNumInA: equ PRINT_HEX_NUMBER
-    ;     push af
-    ;     push af
-    ;     and 0F0h
-    ;     rrca
-    ;     rrca
-    ;     rrca
-    ;     rrca
-    ;     call PrintNibble
-    ;     pop af
-    ;     and 0Fh
-    ;     call PrintNibble
-    ;     ld a,' '
-    ;     call TXT_OUTPUT
-    ;     ;CALL KM_WAIT_KEY
-    ;     pop af
-    ;     ret
-    ; PrintNibble:
-    ;     add a, '0' ; Convert to ASCII
-    ;     cp '9' + 1 ; Check if the result is greater than '9'
-    ;     jr c, PrintCharacter ; Jump to PrintCharacter if less than or equal to '9'
-    ;     add a, 'A' - '9' - 1 ; Adjust for characters 'A' to 'F'
-    ;
-    ; PrintCharacter:
-    ;     call TXT_OUTPUT
-    ; ;        call KM_WAIT_KEY
-    ;     ret ; Return from subroutine
-    ;
-    ; ; CALL_TESTER:
-    ; ;     call lc234h
-    ; ;     ret
-    ;  DEBUG:
-    ;     push af
-    ;     push bc
-    ;     push de
-    ;     push hl
-    ; ;    call DUMP_BUFFER
-    ; ;    ld a,(0xbc09)
-    ; ;    call PrintNumInA
-    ;     ld a,'Q'
-    ;     call 0bb5dh
-    ;     pop hl
-    ;     pop de
-    ;     pop bc
-    ;     pop af
-    ; ;    call RESET_INTERNAL_VARIABLES_TO_DEFAULT
-    ;     call sub_deb0h
-    ;     ret
 
 RSX_WS:
     cp 001h                                                    ; d54d    fe 02     . .
@@ -9392,9 +9353,6 @@ endif
 ;---------------------------------------------------------------------------------------------------
 ;List of Tokens and what they equate to.
 ;I tokenised the words to gain space. For readability I've made EQU so its still readable.
-;V2.19 - 60 bytes available in ROM
-;V2.21 - 135 bytes available after tokenised (and opt 10 & 11 fixes)
-;V2.22 - 81 bytes available after "open","already" tokenised (and 27 data error fix), proper title error, and adding rodos.off
 
 
 Token_Array:
