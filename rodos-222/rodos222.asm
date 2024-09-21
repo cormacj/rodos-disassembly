@@ -3369,7 +3369,6 @@ NO_USER_SPECIFIED:
     ld (ix+000h),a                                             ; d585    dd 77 00     . w .
     ld (ix+001h),000h                                          ; d588    dd 36 01 00     . 6 . .
     jp ld687h                                                  ; d58c    c3 87 d6     . . .
-
 ;=======================================================================
 RSX_REN:
 ;=======================================================================
@@ -3930,6 +3929,7 @@ ld92eh:
 ld936h:
     add hl,de                                                  ; d936    19     .
     jp TXT_OUTPUT                                              ; d937    c3 5a bb     . Z .
+
 PRINT_HEX_NUMBER:
     push af                                                    ; d93a    f5     .
     sra a                                                      ; d93b    cb 2f     . /
@@ -3946,6 +3946,7 @@ sub_d947h:
 ld94fh:
     add a,030h                                                 ; d94f    c6 30     . 0
     jp TXT_OUTPUT                                              ; d951    c3 5a bb     . Z .
+
 ROM_SELECT_DESELECT:
     ;This function is never directly called.
     ;This gets relocated at sub_RELOCATE_ROM_SELECT_DESELECT, and all the calls are made to the
