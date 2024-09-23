@@ -226,6 +226,7 @@ RSX_JUMPS:
     if DEBUG=1
         jp RSX_WS
         jp RSX_CLEAR_ERROR
+        jp RSX_MSG
     endif
     ;See page 27 of the RODOS Manual for more details about how to use these hidden commands.
     jp RSX_HIDDEN_04                                           ; c0b7    c3 cb c7     . . .
@@ -303,6 +304,7 @@ RSX_NAMES:
 if DEBUG=1
     defb 'W', 'S' + 0x80
     defb 'CLEAR.ERRO', 'R' + 0x80
+    defb 'MS', 'G' + 0x80
 endif
 
     ;See page 27 of the RODOS Manul for more details about how to use these next commands
@@ -9339,17 +9341,17 @@ RSX_CLEAR_ERROR:
     ld a,255 ;Per the manual 255 is a no error
     ld (ERROR_CODE_STORE),a
     ret
-; RSX_MSG:
-;     ;code to validate messages after tokenisation
-;     ld b,33
-;     r1:
-;         ld a,b
-;         push bc
-;         call ERROR_HANDLER
-;         call KM_WAIT_KEY
-;         pop bc
-;         djnz r1
-;         ret
+RSX_MSG:
+    ;code to validate messages after tokenisation
+    ld b,34
+    r1:
+        ld a,b
+        push bc
+        call ERROR_HANDLER
+        call KM_WAIT_KEY
+        pop bc
+        djnz r1
+        ret
 endif
 ;---------------------------------------------------------------------------------------------------
 ;List of Tokens and what they equate to.
@@ -9437,7 +9439,7 @@ RODOS_MSGS_ARRAY:
     defb T_Disc,'tracking ',T_error,05ch                         ; Error 30
     defb T_Disc,'Missing',05ch                                   ; Error 31
     defb T_Disc,'fault',05ch                                     ; Error 32
-    defb T_Disc,'write protected',05ch                           ; Error 33 - Last error message of this table
+    defb T_Disc,'write protected',05ch                           ; Error 33 - Last error message of this table (pre v2.22)
     defb 'Title too long',05ch                                   ; Error 34 - New for v2.22
 MSG_ESCAPE:
     defb 'Escape',05ch
@@ -9463,7 +9465,7 @@ VERSION_MSG:
     ;Saves having to update the version all over the place
 if DEBUG=1
         ;Throw a warning this is the debug version
-        defb '*dbg*'
+        defb '*debug*'
 endif
     defb ' RODOS V',ROM_MAJOR+48,'.',ROM_MARK+48,ROM_MOD+48,' '
     defb 0a4h ;copyright symbol                                ; ffa4    a4     .

@@ -8,7 +8,14 @@ help:
 	$(info make run - Build and run the rom in Caprice32)
 	$(info make release - generate a zip file suitable for uploading)
 
-releasefiles=README.md KNOWN_BUGS TESTING.md CHANGELOG Release/rodos$(version).rom Release/rodos$(version)-debug.rom
+releasefiles=README.md KNOWN_BUGS TESTING.md CHANGELOG rodos$(version).rom
+testingfiles=README.md KNOWN_BUGS TESTING.md CHANGELOG rodos$(version)-debug.rom *.dsk
+sourcefiles=rodos222.asm debug_on.asm debug_off.asm Makefile validate-size.sh z80make
+
+RELEASE_DIR=Release
+TESTING_DIR=$(RELEASE_DIR)/Testing
+DEBUG_DIR=$(RELEASE_DIR)/Debug
+SOURCE_DIR=$(RELEASE_DIR)/Source
 
 ifndef debug
 rodos=debug_off.asm rodos${version}.asm
@@ -35,10 +42,16 @@ runa:
 		./z80make ${rodos} && cp a.bin ~/Amstrad/ROM/ && arnold --diska ~/Amstrad/blankdisc.dsk --diskb ~/Amstrad/rodosval.dsk
 
 release:
-		#rm -v Release/* &&
-		cp *.md Release/
+		rm -rf $(RELEASE_DIR)
+		mkdir -pv $(RELEASE_DIR)
+		mkdir -pv $(DEBUG_DIR)
+		mkdir -pv $(SOURCE_DIR)
+		for u in $(testingfiles); do echo $$u; cp $$u $(RELEASE_DIR); done
+		# cp *.md Release/
+		# cp Rodos\ validation\ code.dsk Release/testing
 		./z80make -v -o Release/rodos$(version).rom debug_off.asm rodos${version}.asm && ./validate-size.sh Release/rodos$(version).rom && zip -v -j Release/rodos$(version).zip ${releasefiles} && echo "Release made!"
-		./z80make -v -o Release/rodos$(version)-debug.rom debug_on.asm rodos${version}.asm && ./validate-size.sh Release/rodos$(version)-debug.rom && zip -v -j Release/rodos$(version).zip ${releasefiles} && echo "Debug Release made!"
+		# ./z80make -v -o Release/rodos$(version)-debug.rom debug_on.asm rodos${version}.asm && ./validate-size.sh Release/rodos$(version)-debug.rom && zip -v -j Release/rodos$(version)-debug.zip ${testingfiles} && echo "Debug Release made!"
 
 clean:
-		rm -f a.bin new.txt original.txt tmp*
+		rm -f a.bin rodos*.rom new.txt original.txt tmp*
+		rm -rf $(RELEASE_DIR)

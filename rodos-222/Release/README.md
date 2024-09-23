@@ -1,7 +1,21 @@
  # rodos-2.22
 This version has been tested and all commands are working as documented.
 
-Development work is tracked here: https://github.com/cormacj/rodos-disassembly
+**About**
+
+Full details about the ROM and it's history can be found at [RODOS on the CPCWiki.eu website](https://www.cpcwiki.eu/index.php/RODOS)
+
+The development work is tracked [here on github](https://github.com/cormacj/rodos-disassembly)
+
+I'm considering this a major release, although I'm not jumping the versioning that much. This release fixes all the bugs I've been able to identify and find. It also includes one new quality-of-life `|RODOS.OFF` (documented below).
+
+I'm also including my debug ROM build and testing code with this release.
+
+**Future**
+
+I'm not planning on introducing any more features, but if I find bugs (or someone reports one) I'll fix those. Please use the [issues tracker](https://github.com/cormacj/rodos-disassembly/issues) to report those.
+
+I do plan on continuing to document the code when I get time.
 
 **New**
 
@@ -21,7 +35,12 @@ Examples:
 
 Since V2.21:
 
-    Fixed an issue where |point or |bget would randomly return 27 rather than the expected data.
+* A new command has been added: `|RODOS.OFF`
+
+* Fixed an issue where |point or |bget would randomly return 27 rather than the expected data.
+
+* Fixed: |BGET randomly returned a number of 27 instead of the actual data. The CAS IN CHAR patch code was reverted to the v2.01 code at the end. See https://github.com/cormacj/rodos-disassembly/issues/1
+* Fixed: Limit the length of the |ROM and |ZAP startup string to 100 characters to avoid a buffer overflow. See: https://github.com/cormacj/rodos-disassembly/issues/7
 
 Since V2.20:
 
