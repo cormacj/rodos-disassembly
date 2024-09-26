@@ -3140,7 +3140,6 @@ UPDATE_DRIVE_PARAM:
 
 OPT_10:
 ;Head load delay in ms (default=1)
-;This is supposed to update &BE4C
     cp 00ah                                                    ; d404    fe 0a     . .
     jr nz,OPT_11
     ld hl,0be48h

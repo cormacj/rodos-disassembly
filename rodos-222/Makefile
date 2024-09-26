@@ -2,6 +2,25 @@ MAKEFLAGS += --silent
 
 version=222
 
+releasefiles=README.md KNOWN_BUGS CHANGELOG rodos$(version).rom
+debugfiles=README.md KNOWN_BUGS TESTING.md CHANGELOG rodos$(version)-debug.rom *.dsk
+sourcefiles=CHANGELOG debug_off.asm debug_on.asm dum.py KNOWN_BUGS Makefile opt-validate.bas README.md rodos222.asm TESTING.md THANKS validate.bas validate-size.sh z80make
+
+#This is the known good baseline rom for checking against changes.
+KNOWN_GOOD=Known-Good-RODOS222.ROM
+
+WORKING_DIR=Release
+DEBUG_DIR=$(WORKING_DIR)/Debug
+SOURCE_DIR=$(WORKING_DIR)/Source
+RELEASE_DIR=$(WORKING_DIR)/Release
+
+BUILDFILE=rodos-$(version).rom
+ifndef debug
+rodos=debug_off.asm rodos${version}.asm
+else
+rodos=debug_on.asm rodos${version}.asm
+BUILDFILE=rodos-$(version)-debug.ROM
+endif
 
 help:
 	$(info make validate  - check to see if the working asm file compiles to a binary match with RODOS219)
@@ -12,38 +31,23 @@ help:
 	$(info make runa - Build and run the rom in arnold)
 	$(info make release - generate a zip file suitable for uploading)
 
-releasefiles=README.md KNOWN_BUGS CHANGELOG rodos$(version).rom
-debugfiles=README.md KNOWN_BUGS TESTING.md CHANGELOG rodos$(version)-debug.rom *.dsk
-sourcefiles=CHANGELOG debug_off.asm debug_on.asm dum.py KNOWN_BUGS Makefile opt-validate.bas README.md rodos222.asm TESTING.md THANKS validate.bas validate-size.sh z80make
-
-WORKING_DIR=Release
-DEBUG_DIR=$(WORKING_DIR)/Debug
-SOURCE_DIR=$(WORKING_DIR)/Source
-RELEASE_DIR=$(WORKING_DIR)/Release
-
-ifndef debug
-rodos=debug_off.asm rodos${version}.asm
-else
-rodos=debug_on.asm rodos${version}.asm
-endif
-
 validate:
-		./z80make -v ${rodos} && ./validate-size.sh a.bin
+		./z80make -v -o $(BUILDFILE) ${rodos} && ./validate-size.sh $(BUILDFILE)
 
 rom:
-		./z80make -v ${rodos} -o rodos$(version).rom && ./validate-size.sh rodos$(version).rom
+		./z80make -v -o $(BUILDFILE) ${rodos}  && ./validate-size.sh $(BUILDFILE)
 
 fullcompare:
-		./z80make ${rodos} && ./dum.py a.bin -o 0xc000 >new.txt && ./dum.py rodos$(version).rom -o 0c0000 >original.txt && diff -W165 -y original.txt new.txt |less
+		./z80make ${rodos} && ./dum.py $(BUILDFILE) -o 0xc000 >new.txt && ./dum.py $(KNOWN_GOOD) -o 0c0000 >original.txt && diff -W165 -y original.txt new.txt |less
 
 diffs:
-		./z80make ${rodos} && ./dum.py a.bin -o 0xc000 >new.txt && ./dum.py rodos$(version).rom -o 0xc000 >original.txt && diff -s original.txt new.txt
+		./z80make -o $(BUILDFILE) ${rodos} && ./dum.py $(BUILDFILE) -o 0xc000 >new.txt && ./dum.py $(KNOWN_GOOD) -o 0xc000 >original.txt && diff -s original.txt new.txt
 
 run:
-		./z80make ${rodos} && cp a.bin ~/Amstrad/ROM/ && cap32 ~/Amstrad/blankdisc.dsk ~/Amstrad/rodosval.dsk
+		./z80make -o $(BUILDFILE) ${rodos} && cp $(BUILDFILE) ~/Amstrad/ROM/ && cap32 ~/Amstrad/blankdisc.dsk ~/Amstrad/rodosval.dsk
 
 runa:
-		./z80make ${rodos} && cp a.bin ~/Amstrad/ROM/ && arnold --diska ~/Amstrad/blankdisc.dsk --diskb ~/Amstrad/rodosval.dsk
+		./z80make -o $(BUILDFILE) ${rodos} && cp $(BUILDFILE) ~/Amstrad/ROM/ && arnold --diska ~/Amstrad/blankdisc.dsk --diskb ~/Amstrad/rodosval.dsk
 
 release:
 		mkdir -pv $(RELEASE_DIR)
@@ -61,7 +65,7 @@ release:
 		for u in $(sourcefiles); do  cp "$$u" $(SOURCE_DIR); done
 
 clean:
-		rm -f a.bin rodos*.rom new.txt original.txt tmp*
+		rm -f $(BUILDFILE) rodos*.rom new.txt original.txt tmp*
 		rm -rf $(DEBUG_DIR)
 		rm -rf $(SOURCE_DIR)
 		rm -rf $(RELEASE_DIR)
