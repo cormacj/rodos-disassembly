@@ -1,20 +1,28 @@
 #!/usr/bin/env bash
-
+#
+# This code builds the RODOS rom and reports the available byte space left after compilation.
+#
 do_error() {
+    # Report if ROM exceeds &4000 bytes
+    #
     grep "zz_END_OF_ROM_CODE" $tmpfile |awk -F "$" '{print "0x"$2}'|awk -n -F "$" '{print "Exceeded rom size by "$1" bytes\n"}'
     echo "Error: ROM exceeded 0x4000 bytes"; rm $tmpfile; exit 255
     }
 
 show_space() {
+    # Show the available space in the ROM
+    #
     grep "zz_END_OF_ROM_CODE" $tmpfile |awk -F "$" '{print "0x"$2}'|awk -n -F "$" '{if ($1 == 0x0000) print "No More Space in ROM"; else print 0xffff-$1" bytes remaining in rom"}'
 }
 
+# Make sure we have something to assemble.
 if [ -z "$1" ]; then
     echo "Please supply a z80 assembly file"
     exit 255
 else
-    #tmpfile=`mktemp -p .`
-    tmpfile="labels.txt"
+    #Generate a temp file for label reporting
+    tmpfile=`mktemp -p .`
+    #tmpfile="labels.txt"
 
     z80asm -L $1 $2 $3 $4 $5 2>$tmpfile
     if [ $? -gt 0 ]; then
@@ -30,5 +38,5 @@ else
 
     #echo "a"$msg
     [[ $romend -lt 0xc000 ]] && do_error || show_space;echo "Compiled successfully"
-    #rm $tmpfile
+    rm $tmpfile
 fi

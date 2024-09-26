@@ -1,4 +1,7 @@
+MAKEFLAGS += --silent
+
 version=222
+
 
 help:
 	$(info make validate  - check to see if the working asm file compiles to a binary match with RODOS219)
@@ -6,16 +9,17 @@ help:
 	$(info make rom - generate a rodos$(version).rom file and validate it)
 	$(info make fullcompare - If you have a binary difference this puts up a side-by-side diff so you can see where the drift happened)
 	$(info make run - Build and run the rom in Caprice32)
+	$(info make runa - Build and run the rom in arnold)
 	$(info make release - generate a zip file suitable for uploading)
 
-releasefiles=README.md KNOWN_BUGS TESTING.md CHANGELOG rodos$(version).rom
-testingfiles=README.md KNOWN_BUGS TESTING.md CHANGELOG rodos$(version)-debug.rom *.dsk
-sourcefiles=rodos222.asm debug_on.asm debug_off.asm Makefile validate-size.sh z80make
+releasefiles=README.md KNOWN_BUGS CHANGELOG rodos$(version).rom
+debugfiles=README.md KNOWN_BUGS TESTING.md CHANGELOG rodos$(version)-debug.rom *.dsk
+sourcefiles=CHANGELOG debug_off.asm debug_on.asm dum.py KNOWN_BUGS Makefile opt-validate.bas README.md rodos222.asm TESTING.md THANKS validate.bas validate-size.sh z80make
 
-RELEASE_DIR=Release
-TESTING_DIR=$(RELEASE_DIR)/Testing
-DEBUG_DIR=$(RELEASE_DIR)/Debug
-SOURCE_DIR=$(RELEASE_DIR)/Source
+WORKING_DIR=Release
+DEBUG_DIR=$(WORKING_DIR)/Debug
+SOURCE_DIR=$(WORKING_DIR)/Source
+RELEASE_DIR=$(WORKING_DIR)/Release
 
 ifndef debug
 rodos=debug_off.asm rodos${version}.asm
@@ -42,16 +46,22 @@ runa:
 		./z80make ${rodos} && cp a.bin ~/Amstrad/ROM/ && arnold --diska ~/Amstrad/blankdisc.dsk --diskb ~/Amstrad/rodosval.dsk
 
 release:
-		rm -rf $(RELEASE_DIR)
 		mkdir -pv $(RELEASE_DIR)
 		mkdir -pv $(DEBUG_DIR)
 		mkdir -pv $(SOURCE_DIR)
-		for u in $(testingfiles); do echo $$u; cp $$u $(RELEASE_DIR); done
 		# cp *.md Release/
 		# cp Rodos\ validation\ code.dsk Release/testing
-		./z80make -v -o Release/rodos$(version).rom debug_off.asm rodos${version}.asm && ./validate-size.sh Release/rodos$(version).rom && zip -v -j Release/rodos$(version).zip ${releasefiles} && echo "Release made!"
-		# ./z80make -v -o Release/rodos$(version)-debug.rom debug_on.asm rodos${version}.asm && ./validate-size.sh Release/rodos$(version)-debug.rom && zip -v -j Release/rodos$(version)-debug.zip ${testingfiles} && echo "Debug Release made!"
+		echo "----Compiling----"
+		./z80make -v -o rodos$(version).rom debug_off.asm rodos${version}.asm && ./validate-size.sh rodos$(version).rom
+		./z80make -v -o rodos$(version)-debug.rom debug_on.asm rodos${version}.asm && ./validate-size.sh rodos$(version)-debug.rom
+		# zip -v -j Release/rodos$(version).zip ${releasefiles} && echo "Release made!"
+		#  && zip -v -j Release/rodos$(version)-debug.zip ${testingfiles} && echo "Debug Release made!"
+		for u in $(debugfiles); do cp "$$u" $(DEBUG_DIR); done
+		for u in $(releasefiles); do cp "$$u" $(RELEASE_DIR); done
+		for u in $(sourcefiles); do  cp "$$u" $(SOURCE_DIR); done
 
 clean:
 		rm -f a.bin rodos*.rom new.txt original.txt tmp*
+		rm -rf $(DEBUG_DIR)
+		rm -rf $(SOURCE_DIR)
 		rm -rf $(RELEASE_DIR)
