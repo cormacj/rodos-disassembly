@@ -63,7 +63,7 @@ V2.22:
 * A new command has been added: `|RODOS.OFF`
 * Fixed: |POINT or |BGET randomly returned a number of 27 instead of the actual data. The CAS IN CHAR patch code was reverted to the v2.01 code. See https://github.com/cormacj/rodos-disassembly/issues/1
 * Fixed: Limit the length of the |ROM and |ZAP startup string to 100 characters to avoid a buffer overflow. See: https://github.com/cormacj/rodos-disassembly/issues/7
-* |TITLE produces a meaning error message if the title string is too long.
+* |TITLE produces a meaningful error message if the title string is too long.
 
 ## Important Files
 
@@ -74,28 +74,31 @@ rodos222.asm: This is based on the relocatable v2.19 code, with the incremental 
 linux: z80asm and z80dasm
 
 ### Supplemental tools
+`dum.py` - This produces a hex/ascii dump of the rom.
 
-`tools/generate_string_locations.sh`
+`validate-size.sh` - This file checks the size of the file passed as a parameter and makes sure it's exactly 16k. It throws an error if the file exceeds that size.
 
-This uses the linux string utility to search for potentially valid strings and generates output that can be included in the z80asm blockfile. Note: This output does have a lot of false positives and will need to be manually cleaned up.
-
-The output file format is:
-`lc0c3h: start 0xc0c3 end 0xc0cb type bytedata ;db "RODOS RO"`
-
-Usage:
-`./generate_string_locations.sh RODOS219.ROM  >blockfile.txt`
+`z80make` - This script builds the RODOS rom and reports the available byte space left after compilation.
 
 ## COMPILING
-- `make validate` - check to see if the working asm file compiles to a binary match with a known version of the rom
-- `make diffs` - If you have a binary difference this uses a brief diff so you can see where the drift happened
+
+#### Building Commands
 - `make rom` - Makes a rom file and validates its size
-- `make fullcompare` - If you have a binary difference this puts up a side-by-side diff so you can see where the drift happened
-- `make clean` - remove temporary files, built ROMs and releases.
 - `make run` - Build and run the rom in Caprice32
 - `make runa` - Build and run the rom in arnold
-- `make release` - generate a zip file suitable for uploading
+- `make clean` - remove temporary files, built ROMs and releases.
+- `make release` - generate zips file suitable for uploading
+
+#### Debugging Commands
+- `make validate` - check to see if the working asm file compiles to a binary match with a known version of the rom
+- `make diffs` - If you have a binary difference this uses a brief diff so you can see where the drift happened
+- `make fullcompare` - If you have a binary difference this puts up a side-by-side diff so you can see where the drift happened
 
 ### Enabling debug mode
 Add `debug=1` to the make command to build the ROM with debug option included.
 
 Example: `make debug=1 run`
+
+### Updating `make diffs`
+
+`make diffs` compares a build of the latest code against a rom called `Known-Good-RODOS222.ROM`. Copy a new build to that filename and `make diffs` and `make fullcompare` will use that new version as its baseline.
