@@ -1,10 +1,10 @@
-#MAKEFLAGS += --silent
+MAKEFLAGS += --silent
 
 version=222
 
-releasefiles=README.md KNOWN_BUGS THANKS CHANGELOG rodos$(version).rom
-debugfiles=README.md KNOWN_BUGS TESTING.md CHANGELOG rodos$(version)-debug.rom 'DSK Files/blankdisc.dsk' 'DSK Files/RODOS-Validation.dsk'
-sourcefiles=CHANGELOG debug_off.asm debug_on.asm dum.py KNOWN_BUGS Makefile 'Amstrad Basic Files/OPT-VAL.BAS' README.md rodos222.asm TESTING.md THANKS 'Amstrad Basic Files/VALIDATE.BAS' 'Amstrad Basic Files/WRKSPACE.BAS' validate-size.sh z80make
+releasefiles=README.md KNOWN_BUGS THANKS CHANGELOG rodos-$(version).rom ../doc/RODOS\ Manual\ v2.22.pdf
+debugfiles=README.md KNOWN_BUGS TESTING.md CHANGELOG rodos-$(version)-debug.rom 'DSK Files/blankdisc.dsk' 'DSK Files/RODOS-Validation.dsk' ../doc/RODOS\ Manual\ v2.22.pdf
+sourcefiles=CHANGELOG debug_off.asm debug_on.asm dum.py KNOWN_BUGS Makefile 'Amstrad Basic Files/OPT-VAL.BAS' README.md rodos222.asm TESTING.md THANKS 'Amstrad Basic Files/VALIDATE.BAS' 'Amstrad Basic Files/WRKSPACE.BAS' validate-size.sh z80make ../doc/RODOS\ Manual\ v2.22.pdf
 
 #This is the known good baseline rom for checking against changes.
 KNOWN_GOOD=Known-Good-RODOS222.ROM
@@ -66,16 +66,24 @@ release:
 		# cp Rodos\ validation\ code.dsk Release/testing
 		echo "----Compiling----"
 		echo "Making normal ROM..."
-		./z80make -v -o rodos$(version).rom debug_off.asm rodos${version}.asm && ./validate-size.sh rodos$(version).rom
+		./z80make -v -o $(BUILDFILE) debug_off.asm rodos${version}.asm && ./validate-size.sh $(BUILDFILE)
 		echo "Making debug ROM..."
-		./z80make -v -o rodos$(version)-debug.rom debug_on.asm rodos${version}.asm && ./validate-size.sh rodos$(version)-debug.rom
-		# zip -v -j Release/rodos$(version).zip ${releasefiles} && echo "Release made!"
-		#  && zip -v -j Release/rodos$(version)-debug.zip ${testingfiles} && echo "Debug Release made!"
-		echo "Copying files into folders..."
-		for u in $(debugfiles); do cp "$$u" $(DEBUG_DIR); done
-		for u in $(releasefiles); do cp "$$u" $(RELEASE_DIR); done
-		for u in $(sourcefiles); do  cp "$$u" $(SOURCE_DIR); done
-		echo "Done!"
+		./z80make -v -o rodos-$(version)-debug.rom debug_on.asm rodos${version}.asm && ./validate-size.sh rodos-$(version)-debug.rom
+		echo "----Done----\n"
+		echo -n "Copying files into folders"
+		for u in $(debugfiles); do cp "$$u" $(DEBUG_DIR); done && echo -n "."
+		for u in $(releasefiles); do cp "$$u" $(RELEASE_DIR); done && echo -n "."
+		for u in $(sourcefiles); do  cp "$$u" $(SOURCE_DIR); done && echo -n "."
+		echo "done!"
+		echo "Zipping folders"
+		echo -n "Release/rodos-$(version).zip..."; zip -q -j Release/rodos-$(version).zip ${releasefiles} &&  echo " done!"
+		echo -n "Release/rodos-debug-$(version).zip..."; zip -q -j Release/rodos-debug-$(version).zip ${debugfiles} && echo " done!"
+		echo -n "Release/rodos-source$(version).zip..."; zip -q -j Release/rodos-source-$(version).zip ${sourcefiles} && echo " done!"
+		echo -n "Clean up"
+		rm -rf $(DEBUG_DIR) && echo -n "."
+		rm -rf $(SOURCE_DIR) && echo -n "."
+		rm -rf $(RELEASE_DIR) && echo -n "."
+		echo " Done!"
 
 clean:
 		rm -f $(BUILDFILE) rodos*.rom new.txt original.txt tmp*
