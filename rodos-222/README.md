@@ -1,4 +1,5 @@
-# rodos-2.22
+# Current Release: rodos-2.22
+
 This version has been fully tested and all commands are working as documented.
 
 ## About
@@ -92,12 +93,12 @@ linux: z80asm and z80dasm
 #### Debugging Commands
 - `make validate` - check to see if the working asm file compiles to a binary match with a known version of the rom
 - `make diffs` - If you have a binary difference this uses a brief diff so you can see where the drift happened
-- `make fullcompare` - If you have a binary difference this puts up a side-by-side diff so you can see where the drift happened
+- `make fullcompare` - If you have a binary difference this puts up a full side-by-side diff so you can see where the drift happened
 
 ### Enabling debug mode
 Add `debug=1` to the make command to build the ROM with debug option included.
 
-Example: `make debug=1 run`
+Example: `make run debug=1`
 
 ### Updating `make diffs`
 

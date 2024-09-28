@@ -1,4 +1,4 @@
-MAKEFLAGS += --silent
+#MAKEFLAGS += --silent
 
 version=222
 
@@ -8,6 +8,10 @@ sourcefiles=CHANGELOG debug_off.asm debug_on.asm dum.py KNOWN_BUGS Makefile 'Ams
 
 #This is the known good baseline rom for checking against changes.
 KNOWN_GOOD=Known-Good-RODOS222.ROM
+
+CAP32_ROM_FOLDER=~/Amstrad/ROM/
+
+DSK_FOLDER=~/devel/rodos-disassembly/rodos-222/DSK\ Files
 
 OLD_FILE=Original_ROM_File.txt
 NEW_FILE=Current_ROM_File.txt
@@ -49,7 +53,7 @@ diffs:
 		rm $(NEW_FILE)
 		rm $(OLD_FILE)
 run:
-		./z80make -o $(BUILDFILE) ${rodos} && cp $(BUILDFILE) ~/Amstrad/ROM/ && cap32 ~/Amstrad/blankdisc.dsk ~/Amstrad/rodosval.dsk
+		./z80make -o $(CAP32_ROM_FOLDER)$(BUILDFILE) ${rodos} && cp $(BUILDFILE) ~/Amstrad/ROM/ && cap32 $(DSK_FOLDER)/blankdisc.dsk $(DSK_FOLDER)/RODOS-Validation.dsk
 
 runa:
 		./z80make -o $(BUILDFILE) ${rodos} && cp $(BUILDFILE) ~/Amstrad/ROM/ && arnold --diska ~/Amstrad/blankdisc.dsk --diskb ~/Amstrad/rodosval.dsk
