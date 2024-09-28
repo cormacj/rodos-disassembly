@@ -1,5 +1,0 @@
-RODOS v2.22 KNOWN BUGS
-----------------------
-- If you are in a subdirectory on C: and reformat C: then the folder continues to exist until you change out of it.
-  This doesn't occur on A:
-  Reference: https://github.com/cormacj/rodos-disassembly/issues/4
