@@ -1,6 +1,37 @@
 # rodos-disassembly
 
-**About RODOS**
+## About This Project
+
+In 1988 I owned a copy of RODOS v2.17 and liked it a lot, but did find that it was a little buggy.
+
+In 2023 I started using RODOS again and found that the released versions had several bugs, for example, `|OPT,10,1` was completely broken.
+
+I started working on disassembling RODOS v2.19, with the goal to be able to the code to a point where I could make changes and have it compile correctly. Most of the code was simple to decipher, however the ROM had a few gotchas due to how to patched into the AMSDOS calls and its use of RST 20 to make calls.
+
+Once this was figured out, I had code that compiled to a binary match of v2.19, and this allowed me to produce fixes for the broken commands.
+
+This repo now has several versions.
+
+**Older releases should be considered locked and changes won't be accepted for these**.
+
+The versions are:
+### rodos-219
+
+This is the code complete version of the last known release.
+
+### rodos-220
+
+This release fixed the |zap,rom,"string" corruption bug.
+
+### rodos-221
+
+This release corrected `|OPT,10` and `|OPT,11`
+
+### rodos-222
+
+This release
+
+## About RODOS
 
 RODOS was a high-capacity disc operating system released by Romantic Robot, whose main aim was to allow you to make use of the extra capacity on 3.5in discs. It shipped on a single 16k sideways ROM.
 
@@ -14,7 +45,7 @@ Unlike ParaDOS and ROMDOS, RODOS was not a modified version of the original AMSD
 
 However, despite its advanced features, RODOS never gained much of a foothold. This is commonly attributed to the fact that it took up substantially more RAM workspace than AMSDOS, thereby lowering HIMEM and making it incompatible with much software.
 
-**History**
+## History
 
 Romantic Robot was one of the longest-established CPC software companies, founded by Alexander Goldscheider. Their best-known product was the Multiface II, but the company also produced some serious software and even games. Romantic Robot produced Multifaces for the Spectrum, Amiga and ST, as well as the CPC. The company also sold classical music CDs.
 
@@ -35,14 +66,6 @@ RODOS had several releases, and the archived versions are available at the [CPC 
 * v2.19
 
 **About This Project**
-
-In 1988 I owned a copy of RODOS v2.17 and liked it a lot, but did find that it was a little buggy.
-
-In 2023 I started using RODOS again and found that the released versions had several bugs, for example, `|OPT,10,1` was completely broken.
-
-I started working on disassembling RODOS v2.19, with the goal to be able to the code to a point where I could make changes and have it compile correctly. Most of the code was simple to decipher, however the ROM had a few gotchas due to how to patched into the AMSDOS calls and its use of RST 20 to make calls.
-
-Once this was figured out, I had code that compiled to a binary match of v2.19, and this allowed me to produce fixes for the broken commands.
 
 Since then, I've produced the following releases:
 
