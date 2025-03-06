@@ -53,10 +53,10 @@ diffs:
 		rm $(NEW_FILE)
 		rm $(OLD_FILE)
 run:
-		./z80make -o $(CAP32_ROM_FOLDER)$(BUILDFILE) ${rodos} && cp $(BUILDFILE) ~/Amstrad/ROM/ && cap32 $(DSK_FOLDER)/blankdisc.dsk $(DSK_FOLDER)/RODOS-Validation.dsk
+		./z80make -v -o $(CAP32_ROM_FOLDER)$(BUILDFILE) ${rodos} && cap32 $(DSK_FOLDER)/blankdisc.dsk $(DSK_FOLDER)/RODOS-Validation.dsk
 
 runa:
-		./z80make -o $(BUILDFILE) ${rodos} && cp $(BUILDFILE) ~/Amstrad/ROM/ && arnold --diska ~/Amstrad/blankdisc.dsk --diskb ~/Amstrad/rodosval.dsk
+		./z80make -v -o $(BUILDFILE) ${rodos} && cp $(BUILDFILE) ~/Amstrad/ROM/ && arnold --diska ~/Amstrad/blankdisc.dsk --diskb ~/Amstrad/rodosval.dsk
 
 release:
 		mkdir -pv $(RELEASE_DIR)

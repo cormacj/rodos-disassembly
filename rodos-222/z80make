@@ -23,7 +23,7 @@ else
     #Generate a temp file for label reporting
     tmpfile=`mktemp -p .`
     #tmpfile="labels.txt"
-
+    echo "Compiling with: $1 $2 $3 $4 $5"
     z80asm -L $1 $2 $3 $4 $5 2>$tmpfile
     if [ $? -gt 0 ]; then
         grep -vi equ  $tmpfile

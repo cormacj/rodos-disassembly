@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if [ "$1" == "" ]; then
-  echo "Please supply a filename, eg RODOS213.ROM\n"
+  echo "Please supply a filename, eg RODOS213.ROM"
   echo "This is used to generate/annotate a blockfile for z80dasm to stop it decoding strings in the file."
   echo "Note, you'll have to do some manual cleanup on the output."
   exit 1

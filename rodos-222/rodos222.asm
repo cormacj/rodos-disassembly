@@ -9455,7 +9455,7 @@ MSG_DRIVE:
 MSG_BYTES_FREE:
     defb '{Bytes free = ',0
 MSG_DISK_ALREADY_FORMATTED:
-    defb '{',T_Disc,T_already,T_formatted,', REFORMAT Y/N?',8,0
+    defb '{',T_Disc,T_already,T_formatted,', REFORMAT Y/N? ',8,0
 MSG_RETRY_IGNORE_CANCEL:
     defb 'Retry, Ignore or Cancel? ',0
 VERSION_MSG:
