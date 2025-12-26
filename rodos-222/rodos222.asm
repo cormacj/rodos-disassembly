@@ -858,6 +858,7 @@ RODOS_WORKSPACE_KL_FIND_COMMAND:
     jp 0bf00h                                                  ; c48e    c3 00 bf     . . .
 
 SETUP_ENTER_KEY_STRINGS:
+    ;This routine reprograms the Ctrl-Enter key press from RUN" to RUN"DISC
     ld de,0bf00h                                               ; c491    11 00 bf     . . .
     ld hl,STR_CLI_RUN_DISK_start                               ; c494    21 be c4     ! . .
     ld bc,000eh                                                ; c497    01 0e 00     . . .
@@ -886,8 +887,9 @@ STR_RUN_DISC:
 
 CHECK_FOR_CPM_ROM:
 ;RODOS searches for |DIR to see if the AMSDOS rom exists.
-;I patched AMSDOS.ROM and changed DIR to FIR and RODOS threw the
+;I verified this by patching AMSDOS.ROM and changed DIR to FIR and RODOS threw the
 ;"CPM ROM Missing" error message
+;This also causes issues with non-standard AMSDOS replacements.
     ld ix,0bee0h                                               ; c4cc    dd 21 e0 be     . ! . .
     ld (ix+000h),'D'                                           ; c4d0    dd 36 00 44     . 6 . D
     ld (ix+001h),'I'                                           ; c4d4    dd 36 01 49     . 6 . I
@@ -908,11 +910,22 @@ lc4efh:
 
 ;=======================================================================
 RSX_HELP:
+; Usage: |HELP <,optional rom number>
+;   |HELP` alone will list all ROMs in sockets 0-15 with their numbers.
+;
+;   When used with a ROM number, it will list all its bar commands.
+;   For example:
+;
+;   |HELP,1` will list all bar commands on ROM 1.
 ;=======================================================================
+; First check to make sure that there are less that two parameters.
+; If not, print an error message
     cp 002h                                                    ; c4f5    fe 02     . .
     jp nc,MSG_TOO_MANY_PARAMETERS                              ; c4f7    d2 9f fb     . . .
+; If no parameters, go to print everything routine
     and a                                                      ; c4fa    a7     .
     jr z,lc550h                                                ; c4fb    28 53     ( S
+; We have a parameter, so let's print just that ROM
     call PRINT_CR_LF                                           ; c4fd    cd 7d d9     . } .
     call sub_RELOCATE_ROM_SELECT_DESELECT                      ; c500    cd 5e d9     . ^ .
     ld c,(ix+000h)                                             ; c503    dd 4e 00     . N .
@@ -940,7 +953,7 @@ lc523h:
     cp 020h                                                    ; c52d    fe 20     .
     jr c,lc53bh                                                ; c52f    38 0a     8 .
     call TXT_OUTPUT                                            ; c531    cd 5a bb     . Z .
-    call sub_c5ffh                                             ; c534    cd ff c5     . . .
+    call ESC_PAUSE_OR_BREAK                                             ; c534    cd ff c5     . . .
     jp nz,PRINT_CR_LF                                          ; c537    c2 7d d9     . } .
     inc d                                                      ; c53a    14     .
 lc53bh:
@@ -975,7 +988,7 @@ lc55bh:
     ld (0bf0fh),a                                              ; c56b    32 0f bf     2 . .
     call sub_c581h                                             ; c56e    cd 81 c5     . . .
 lc571h:
-    call sub_c5ffh                                             ; c571    cd ff c5     . . .
+    call ESC_PAUSE_OR_BREAK                                             ; c571    cd ff c5     . . .
     ret nz                                                     ; c574    c0     .
     djnz lc55bh                                                ; c575    10 e4     . .
     ret                                                        ; c577    c9     .
@@ -1028,6 +1041,7 @@ lc5bbh:
     ;This next part displays the version number of the roms.
     ;This assumes a ROM will never be v12.123 because it just adds a zero
     ;  to the Mark, Major, Minor numbering.
+    ; This could be an issue for ROMs that don't follow the rules
     add a,'0'                                                  ; c5ca    c6 30     . 0
     call TXT_OUTPUT                                            ; c5cc    cd 5a bb     . Z .
     ld a,'.'                                                   ; c5cf    3e 2e     > .
@@ -1055,11 +1069,12 @@ sub_c5f0h:
     ret                                                        ; c5f9    c9     .
 MSG_ROM:
     defb 'ROM ',0
-sub_c5ffh:
-    call sub_c61dh                                             ; c5ff    cd 1d c6     . . .
+ESC_PAUSE_OR_BREAK:
+    call WAS_ESC_PRESSED                                             ; c5ff    cd 1d c6     . . .
     ret z                                                      ; c602    c8     .
 lc603h:
-    call sub_c61dh                                             ; c603    cd 1d c6     . . .
+    ;Now we loop until we get another key pressed
+    call WAS_ESC_PRESSED                                             ; c603    cd 1d c6     . . .
     jr nz,lc603h                                               ; c606    20 fb       .
 lc608h:
     call KM_READ_CHAR                                          ; c608    cd 09 bb     . . .
@@ -1071,7 +1086,8 @@ lc608h:
     call KM_BREAK_EVENT                                        ; c616    cd 4b bb     . K .
     pop hl                                                     ; c619    e1     .
     jp SET_FLAG_TO_GREATER_THAN                                ; c61a    c3 0a da     . . .
-sub_c61dh:
+WAS_ESC_PRESSED:
+    ; If ESC is pressed, then exit.
     ;042h is the ESC Key
     ld a,042h                                                  ; c61d    3e 42     > B
     push hl                                                    ; c61f    e5     .
@@ -1157,9 +1173,28 @@ sub_c66eh:
 
 ;=======================================================================
 RSX_ALIAS:
+; |ALIAS,new_command_name,old_command_name
+;
+; |ALIAS
+;
+; ## DESCRIPTION
+;
+; The new_command_name will be translated to the old_command_name before it is
+; processed. This allows customisation of ANY bar commands to be anything you
+; want. For example:
+;
+; |ALIAS,"H","HELP 7"
+; |ALIAS,"DEL","ERA TEMP"
+;
+; lets you use `|H` instead of `|HELP,7` and |DEL instead of |ERA,"TEMP"
+;
+; If used without parameters, the command will display all the new command names
+; together with their actual names and parameters.
+;
+
 ;=======================================================================
     and a                                                      ; c676    a7     .
-    jr nz,lc6b5h                                               ; c677    20 3c       <
+    jr nz,CREATE_ALIAS                                               ; c677    20 3c       <
     call sub_c666h                                             ; c679    cd 66 c6     . f .
     ld a,(hl)                                                  ; c67c    7e     ~
     inc hl                                                     ; c67d    23     #
@@ -1205,7 +1240,7 @@ lc6aeh:
     pop hl                                                     ; c6af    e1     .
     call PRINT_CR_LF                                           ; c6b0    cd 7d d9     . } .
     jr lc683h                                                  ; c6b3    18 ce     . .
-lc6b5h:
+CREATE_ALIAS:
     cp 002h                                                    ; c6b5    fe 02     . .
     jp nz,MSG_WRONG_PARAMETER_AMT                              ; c6b7    c2 97 fb     . . .
     ld l,(ix+002h)                                             ; c6ba    dd 6e 02     . n .
@@ -2885,7 +2920,7 @@ ld23ah:
     call CAS_IN_CHAR                                           ; d23a    cd 80 bc     . . .
     jr nc,ld247h                                               ; d23d    30 08     0 .
     call TXT_OUTPUT                                            ; d23f    cd 5a bb     . Z .
-    call sub_c5ffh                                             ; d242    cd ff c5     . . .
+    call ESC_PAUSE_OR_BREAK                                             ; d242    cd ff c5     . . .
     jr z,ld23ah                                                ; d245    28 f3     ( .
 ld247h:
     call CAS_IN_CLOSE                                          ; d247    cd 7a bc     . z .
@@ -2944,7 +2979,7 @@ ld29bh:
     call TXT_OUTPUT                                            ; d2a9    cd 5a bb     . Z .
     djnz ld29bh                                                ; d2ac    10 ed     . .
     call PRINT_CR_LF                                           ; d2ae    cd 7d d9     . } .
-    call sub_c5ffh                                             ; d2b1    cd ff c5     . . .
+    call ESC_PAUSE_OR_BREAK                                             ; d2b1    cd ff c5     . . .
     jr z,ld26fh                                                ; d2b4    28 b9     ( .
 ld2b6h:
     cp 01ah                                                    ; d2b6    fe 1a     . .
@@ -8532,7 +8567,7 @@ sub_f798h:
 lf7afh:
     call sub_ed38h                                             ; f7af    cd 38 ed     . 8 .
     jp nz,SET_CARRY_FLAG                                       ; f7b2    c2 18 da     . . .
-    call sub_c5ffh                                             ; f7b5    cd ff c5     . . .
+    call ESC_PAUSE_OR_BREAK                                             ; f7b5    cd ff c5     . . .
     jp nz,SET_FLAG_TO_LESS_THAN                                ; f7b8    c2 0f da     . . .
     set 3,(iy+WS_CASE_SENSITIVITY)                             ; f7bb    fd cb 41 de     . . A .
     ld a,(iy+014h)                                             ; f7bf    fd 7e 14     . ~ .
@@ -8658,7 +8693,7 @@ lf893h:
     pop bc                                                     ; f89c    c1     .
     pop hl                                                     ; f89d    e1     .
     pop ix                                                     ; f89e    dd e1     . .
-    call sub_c5ffh                                             ; f8a0    cd ff c5     . . .
+    call ESC_PAUSE_OR_BREAK                                             ; f8a0    cd ff c5     . . .
     jp nz,SET_FLAG_TO_LESS_THAN                                ; f8a3    c2 0f da     . . .
     set 3,(iy+WS_CASE_SENSITIVITY)                             ; f8a6    fd cb 41 de     . . A .
     ld a,(iy+014h)                                             ; f8aa    fd 7e 14     . ~ .
