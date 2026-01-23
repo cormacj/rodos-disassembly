@@ -26,7 +26,7 @@ ifndef debug
 rodos=debug_off.asm rodos${version}.asm
 else
 rodos=debug_on.asm rodos${version}.asm
-BUILDFILE=rodos-$(version)-debug.ROM
+BUILDFILE=rodos-$(version)-debug.rom
 endif
 
 help:
